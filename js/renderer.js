@@ -95,44 +95,48 @@ const Renderer = {
       const b = grp.bounds;
       const cs = G.CELL_SIZE;
 
+      ctx.beginPath();
+      for (const plat of grp.platforms) {
+        const x = plat.x * cs + cs * 0.03;
+        const y = plat.y * cs + cs * 0.03;
+        ctx.rect(x, y, cs * 0.94, cs * 0.94);
+      }
       ctx.fillStyle = '#C8BFA8';
+      ctx.fill();
+
+      ctx.strokeStyle = grp.color + '40';
+      ctx.lineWidth = 1;
       for (const plat of grp.platforms) {
         const cx = plat.x * cs + cs / 2;
         const cy = plat.y * cs + cs / 2;
-        const hw = cs * 0.45;
-        const hh = cs * 0.45;
-        ctx.fillRect(cx - hw, cy - hh, hw * 2, hh * 2);
-
-        ctx.strokeStyle = grp.color + '30';
-        ctx.lineWidth = 0.8;
+        const hw = cs * 0.38;
+        const hh = cs * 0.38;
         if (plat.dir === 'h') {
           ctx.beginPath();
-          ctx.moveTo(cx - hw, cy);
-          ctx.lineTo(cx + hw, cy);
+          ctx.moveTo(cx - hw, cy - cs * 0.1);
+          ctx.lineTo(cx + hw, cy - cs * 0.1);
+          ctx.moveTo(cx - hw, cy + cs * 0.1);
+          ctx.lineTo(cx + hw, cy + cs * 0.1);
           ctx.stroke();
         } else {
           ctx.beginPath();
-          ctx.moveTo(cx, cy - hh);
-          ctx.lineTo(cx, cy + hh);
+          ctx.moveTo(cx - cs * 0.1, cy - hh);
+          ctx.lineTo(cx - cs * 0.1, cy + hh);
+          ctx.moveTo(cx + cs * 0.1, cy - hh);
+          ctx.lineTo(cx + cs * 0.1, cy + hh);
           ctx.stroke();
         }
       }
 
-      const pad = 6;
-      const x0 = b.minX * cs + cs / 2 - pad;
-      const y0 = b.minY * cs + cs / 2 - pad;
-      const w0 = (b.maxX - b.minX) * cs + pad * 2;
-      const h0 = (b.maxY - b.minY) * cs + pad * 2;
-      const corner = 10;
+      const pad = 5;
+      const x0 = b.minX * cs + cs * 0.03 - pad;
+      const y0 = b.minY * cs + cs * 0.03 - pad;
+      const w0 = (b.maxX - b.minX + 1) * cs * 0.94 + pad * 2;
+      const h0 = (b.maxY - b.minY + 1) * cs * 0.94 + pad * 2;
 
-      ctx.strokeStyle = grp.color + '66';
+      ctx.strokeStyle = grp.color + '88';
       ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(x0 + corner, y0); ctx.lineTo(x0 + w0 - corner, y0);
-      ctx.moveTo(x0, y0 + corner); ctx.lineTo(x0, y0 + h0 - corner);
-      ctx.moveTo(x0 + w0, y0 + corner); ctx.lineTo(x0 + w0, y0 + h0 - corner);
-      ctx.moveTo(x0 + corner, y0 + h0); ctx.lineTo(x0 + w0 - corner, y0 + h0);
-      ctx.stroke();
+      ctx.strokeRect(x0, y0, w0, h0);
     }
   },
 
@@ -338,9 +342,6 @@ const Renderer = {
   drawPopup(ctx) {
     if (!G.popup) return;
     const pop = G.popup;
-    const invZ = 1 / G.zoom;
-    const screenW = this.canvas.width;
-    const screenH = this.canvas.height;
 
     let px, py;
     if (pop.worldX !== undefined) {
@@ -352,6 +353,7 @@ const Renderer = {
     }
     py += 24;
 
+    ctx.font = '12px sans-serif';
     const pad = 10;
     const lineH = 18;
     const lines = pop.lines.length;
@@ -359,13 +361,15 @@ const Renderer = {
     const w = maxW + pad * 2;
     const h = lines * lineH + pad * 2;
 
+    if (px + w > this.canvas.width) px = this.canvas.width - w - 4;
+    if (py + h > this.canvas.height) py = py - h - 40;
+
     ctx.fillStyle = 'rgba(40,40,40,0.92)';
     ctx.beginPath();
     ctx.roundRect(px, py, w, h, 6);
     ctx.fill();
 
     ctx.fillStyle = '#FFF';
-    ctx.font = '12px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     for (let i = 0; i < lines.length; i++) {

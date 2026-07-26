@@ -1,7 +1,7 @@
 const Train = {
   SPEED: 0.5,
-  ACCEL: 0.4,
-  DECEL: 0.6,
+  ACCEL: 1.0,
+  DECEL: 1.5,
 
   edgeDistance(k1, k2) {
     const [x1, y1] = k1.split(',').map(Number);
@@ -80,8 +80,9 @@ const Train = {
       const nextKey = train.toKey;
       const nextNeighbors = Graph.getNeighbors(nextKey);
       const exits = nextNeighbors.filter(nk => nk !== train.fromKey);
-      if (exits.length === 0) shouldSlow = true;
-      else if (this.isPlatformNode(nextKey)) {
+      if (exits.length === 0) {
+        shouldSlow = true;
+      } else if (this.isPlatformNode(nextKey)) {
         const plat = Station.platformAtKey(nextKey);
         if (plat && plat.stationId !== train.lastDockedStationId) shouldSlow = true;
       }
@@ -137,23 +138,14 @@ const Train = {
       G.passengersDeliveredToday += alighted;
       G.totalPassengersDelivered += alighted;
       this.boardAtStation(train, nodeKey);
-    } else if (plat && stationId === train.lastDockedStationId) {
-      train.lastDockedStationId = null;
-      if (nextKey) {
-        train.fromKey = nodeKey;
-        train.toKey = nextKey;
-        train.t = 0;
-        train.speed = 0;
-      } else {
-        this.reverseTrain(train);
-      }
     } else if (nextKey) {
-      train.lastDockedStationId = null;
+      if (!plat) train.lastDockedStationId = null;
       train.fromKey = nodeKey;
       train.toKey = nextKey;
       train.t = 0;
       train.speed = 0;
     } else {
+      if (!plat) train.lastDockedStationId = null;
       this.reverseTrain(train);
     }
   },

@@ -199,6 +199,7 @@ const Input = {
     G.platDrag.lastGY = gy;
     G.platDrag.dir = null;
     G.platDrag.locked = false;
+    G.platDrag.firstPlaced = false;
   },
 
   platformDragTo(startGX, startGY, gx, gy) {
@@ -212,6 +213,15 @@ const Input = {
       G.platDrag.locked = true;
     }
     if (!G.platDrag.dir) return;
+
+    if (!G.platDrag.firstPlaced) {
+      G.platDrag.firstPlaced = true;
+      if (G.platformComponents > 0) {
+        const result = Station.addPlatform(startGX, startGY, G.platDrag.dir);
+        if (result && typeof result !== 'string') this.dragBatchPlats.push({ type: 'add_platform', platform: result });
+        else if (typeof result === 'string') { G.platDrag.active = false; return; }
+      }
+    }
 
     let lgx = G.platDrag.lastGX;
     let lgy = G.platDrag.lastGY;
@@ -348,7 +358,7 @@ const Input = {
       return;
     }
 
-    const plat = Station.getPlatformAdjacent(clamped.x, clamped.y);
+    const plat = Station.getPlatformAdjacent(clamped.x, clamped.y) || Station.getPlatformAt(clamped.x, clamped.y);
     if (plat) {
       const sid = plat.stationId;
       const queue = G.stationQueues[sid] || {};
