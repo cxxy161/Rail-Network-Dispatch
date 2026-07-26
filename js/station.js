@@ -102,7 +102,7 @@ const Station = {
       G._passengerAccum[st.id] += RATE * dt;
       while (G._passengerAccum[st.id] >= 1) {
         G._passengerAccum[st.id] -= 1;
-        const others = G.stations.filter(s => s.id !== st.id);
+        const others = G.stations.filter(s => s.id !== st.id && this.stationHasTrackConnection(s.id));
         if (others.length === 0) continue;
         const dest = others[Math.floor(Math.random() * others.length)];
         if (!G.stationQueues[st.id]) G.stationQueues[st.id] = {};
