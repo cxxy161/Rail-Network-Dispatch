@@ -75,23 +75,30 @@ const Train = {
     const dist = this.edgeDistance(train.fromKey, train.toKey);
     const travelLeft = (1 - train.t) * dist;
 
-    let shouldSlow = false;
-    if (train.t < 0.7) {
+    let needStop = false;
+    if (travelLeft < 2) {
       const nextKey = train.toKey;
       const nextNeighbors = Graph.getNeighbors(nextKey);
       const exits = nextNeighbors.filter(nk => nk !== train.fromKey);
+
       if (exits.length === 0) {
-        shouldSlow = true;
+        needStop = true;
       } else if (this.isPlatformNode(nextKey)) {
         const plat = Station.platformAtKey(nextKey);
-        if (plat && plat.stationId !== train.lastDockedStationId) shouldSlow = true;
+        if (plat && plat.stationId !== train.lastDockedStationId) needStop = true;
       }
     }
 
-    if (shouldSlow && travelLeft < 1.5) {
-      train.speed = Math.max(0.05, train.speed - this.DECEL * dt);
-    } else {
-      train.speed = Math.min(this.SPEED, train.speed + this.ACCEL * dt);
+    let targetSpeed = this.SPEED;
+    if (needStop) {
+      const safe = Math.sqrt(2 * this.DECEL * Math.max(0, travelLeft - 0.02));
+      targetSpeed = Math.min(this.SPEED, safe);
+    }
+
+    if (train.speed < targetSpeed) {
+      train.speed = Math.min(targetSpeed, train.speed + this.ACCEL * dt);
+    } else if (train.speed > targetSpeed) {
+      train.speed = Math.max(targetSpeed, train.speed - this.DECEL * dt);
     }
 
     train.t += (train.speed * dt) / dist;
