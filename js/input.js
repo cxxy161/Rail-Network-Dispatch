@@ -311,9 +311,46 @@ const Input = {
   },
 
   // ── Operate ──
+  showDepotPopup(e) {
+    let html = '<b>车辆段</b>';
+    if (G.depotTrains.length === 0) {
+      html += '<br>暂无停放列车';
+    } else {
+      for (const train of G.depotTrains) {
+        html += `<br>列车 #${train.id} (${train.carCount}节) <span class="depot-dispatch-btn" data-id="${train.id}" style="color:#E8734A;cursor:pointer;font-weight:bold">[发车]</span>`;
+      }
+    }
+    showPopup(e, html);
+    setTimeout(() => {
+      const btns = document.querySelectorAll('.depot-dispatch-btn');
+      btns.forEach(btn => {
+        btn.onclick = (ev) => {
+          ev.stopPropagation();
+          const tid = parseInt(btn.dataset.id);
+          const idx = G.depotTrains.findIndex(t => t.id === tid);
+          if (idx >= 0) {
+            const train = G.depotTrains.splice(idx, 1)[0];
+            if (Train.dispatch(train)) {
+              hidePopup();
+            } else {
+              G.depotTrains.push(train);
+              Ui.flashMessage('车辆段未连接到铁路网！');
+            }
+          }
+        };
+      });
+    }, 0);
+  },
+
   operateClick(grid, e) {
     const clamped = clampGrid(grid.x, grid.y);
     const key = Graph.key(clamped.x, clamped.y);
+
+    if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
+        G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
+      this.showDepotPopup(e);
+      return;
+    }
 
     if (G.operateSubTool === 'stop') {
       const train = this.findTrainAt(clamped.x, clamped.y);

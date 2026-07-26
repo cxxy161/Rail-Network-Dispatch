@@ -65,7 +65,6 @@ const G = {
   platDrag: { active: false, startX: -1, startY: -1, dir: null },
 
   selectedItem: null,
-  dispatchDecisions: {},
   undoStack: [],
   eraserDragging: false,
   eraserLastGX: -1,
@@ -103,7 +102,6 @@ function resetGame() {
   G.trackDrag = { active: false, lastGX: -1, lastGY: -1 };
   G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
   G.selectedItem = null;
-  G.dispatchDecisions = {};
   G.undoStack = [];
   G.eraserDragging = false;
   G.eraserLastGX = -1;

@@ -51,12 +51,6 @@ const Ui = {
     });
 
     document.getElementById('btn-start-day').addEventListener('click', () => this.startDay());
-    document.getElementById('btn-dispatch-confirm').addEventListener('click', () => this.confirmDispatch());
-    document.getElementById('btn-dispatch-back').addEventListener('click', () => {
-      document.getElementById('dispatch-panel').classList.add('hidden');
-      this.hideOverlay();
-      this.startBuild();
-    });
     document.getElementById('btn-settle-continue').addEventListener('click', () => this.nextCycle());
     document.getElementById('btn-restart').addEventListener('click', () => {
       resetGame();
@@ -132,7 +126,6 @@ const Ui = {
     G.platDrag.dir = null;
 
     document.getElementById('sidebar').classList.remove('hidden');
-    document.getElementById('dispatch-panel').classList.add('hidden');
     document.getElementById('settlement-panel').classList.add('hidden');
     document.getElementById('gameover-panel').classList.add('hidden');
     document.getElementById('operate-tools').classList.add('hidden');
@@ -145,42 +138,6 @@ const Ui = {
   },
 
   startDay() {
-    G.phase = 'dispatch';
-    G.dispatchDecisions = {};
-    this.showDispatchPanel();
-    this.updateTopBar();
-  },
-
-  showDispatchPanel() {
-    const list = document.getElementById('depot-train-list');
-    list.innerHTML = '';
-    for (const train of G.depotTrains) {
-      const div = document.createElement('div');
-      div.className = 'depot-train-item';
-      div.innerHTML =
-        `<span>列车 #${train.id} (${train.carCount}节车厢)</span>
-         <span style="color:#E8734A;font-weight:bold">发车</span>`;
-      div.addEventListener('click', () => {
-        if (train.id in G.dispatchDecisions) {
-          delete G.dispatchDecisions[train.id];
-          div.querySelector('span:last-child').textContent = '发车';
-          div.querySelector('span:last-child').style.color = '#E8734A';
-          div.querySelector('span:last-child').style.fontWeight = 'bold';
-        } else {
-          G.dispatchDecisions[train.id] = true;
-          div.querySelector('span:last-child').textContent = '发车 ✓';
-          div.querySelector('span:last-child').style.color = '#50B86C';
-          div.querySelector('span:last-child').style.fontWeight = 'bold';
-        }
-      });
-      list.appendChild(div);
-    }
-
-    document.getElementById('dispatch-panel').classList.remove('hidden');
-    this.showOverlay();
-  },
-
-  confirmDispatch() {
     const depotKey = Graph.key(G.depotX, G.depotY);
     let depotConnected = false;
     const depotCells = [
@@ -197,18 +154,6 @@ const Ui = {
         break;
       }
     }
-    if (!depotConnected) {
-      this.flashMessage('车辆段未连接到铁路网！');
-      return;
-    }
-
-    for (const train of [...G.depotTrains]) {
-      if (G.dispatchDecisions[train.id]) {
-        const idx = G.depotTrains.indexOf(train);
-        if (idx >= 0) G.depotTrains.splice(idx, 1);
-        Train.dispatch(train);
-      }
-    }
 
     G.phase = 'operate';
     G.dayTime = 300;
@@ -217,7 +162,6 @@ const Ui = {
     this.updatePauseButton();
     this.updateSpeedButtons();
     this.updateTopBar();
-    this.hideOverlay();
 
     document.getElementById('sidebar').classList.add('hidden');
     document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn.build-only').forEach(b => b.classList.add('hidden'));
