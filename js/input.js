@@ -138,62 +138,45 @@ const Input = {
   // ── Track drag ──
   trackDown(gx, gy) {
     G.trackDrag.active = true;
-    G.trackDrag.lastGX = gx;
-    G.trackDrag.lastGY = gy;
-    G.trackDrag.firstGX = gx;
-    G.trackDrag.firstGY = gy;
+    G.trackDrag.startX = gx;
+    G.trackDrag.startY = gy;
   },
 
-  trackDragTo(gx, gy) {
+  trackUp(gx, gy) {
     if (!G.trackDrag.active) return;
-    let lgx = G.trackDrag.lastGX;
-    let lgy = G.trackDrag.lastGY;
-    if (lgx < 0 || lgy < 0) return;
+    G.trackDrag.active = false;
 
-    while (lgx !== gx || lgy !== gy) {
-      const dx = Math.sign(gx - lgx);
-      const dy = Math.sign(gy - lgy);
-      const nx = lgx + dx;
-      const ny = lgy + dy;
+    const sx = G.trackDrag.startX, sy = G.trackDrag.startY;
+    if (sx === gx && sy === gy) return;
 
-      if (Station.getPlatformAt(nx, ny)) {
-        G.trackDrag.active = false;
-        break;
+    const path = computeOptimalPath(sx, sy, gx, gy);
+    let prevX = sx, prevY = sy;
+    const edges = [];
+
+    for (const p of path) {
+      if (Station.getPlatformAt(p.x, p.y)) {
+        prevX = p.x; prevY = p.y;
+        continue;
       }
-
       if (G.trackFragments <= 0) {
-        G.trackDrag.active = false;
         Ui.flashMessage('轨道碎片不足！');
         break;
       }
-
-      const prevKey = Graph.key(lgx, lgy);
-      const nextKey = Graph.key(nx, ny);
-      if (!Graph.hasEdge(prevKey, nextKey)) {
-        Graph.addEdge(prevKey, nextKey);
+      const k1 = Graph.key(prevX, prevY), k2 = Graph.key(p.x, p.y);
+      if (!Graph.hasEdge(k1, k2) && k1 !== k2) {
+        Graph.addEdge(k1, k2);
         G.trackFragments--;
-        this.dragBatchEdges.push({ type: 'add_edge', k1: prevKey, k2: nextKey });
+        edges.push({ type: 'add_edge', k1, k2 });
       }
-
-      G.trackDrag.lastGX = nx;
-      G.trackDrag.lastGY = ny;
-      lgx = nx;
-      lgy = ny;
+      prevX = p.x; prevY = p.y;
     }
-  },
 
-  trackUp() {
-    if (!G.trackDrag.active) return;
-    G.trackDrag.active = false;
-    G.trackDrag.lastGX = -1;
-    G.trackDrag.lastGY = -1;
-    if (this.dragBatchEdges.length > 0) {
-      this.pushUndo({
-        type: 'add_edges',
-        pairs: this.dragBatchEdges.map(e => [e.k1, e.k2]),
-      });
-      this.dragBatchEdges = [];
+    if (edges.length > 0) {
+      this.pushUndo({ type: 'add_edges', pairs: edges.map(e => [e.k1, e.k2]) });
     }
+
+    G.trackDrag.startX = -1;
+    G.trackDrag.startY = -1;
   },
 
   // ── Platform drag ──
@@ -493,7 +476,6 @@ const Input = {
     G.mouseGridY = clamped.y;
 
     if (G.selectedTool === 'track' && G.trackDrag.active) {
-      this.trackDragTo(clamped.x, clamped.y);
     } else if (G.selectedTool === 'platform' && G.platDrag.active) {
       this.platformDragTo(G.platDrag.startX, G.platDrag.startY, clamped.x, clamped.y);
     } else if (G.selectedTool === 'eraser' && G.eraserDragging) {
@@ -516,7 +498,7 @@ const Input = {
     const clamped = clampGrid(grid.x, grid.y);
 
     if (G.selectedTool === 'track' && G.trackDrag.active) {
-      this.trackUp();
+      this.trackUp(clamped.x, clamped.y);
     } else if (G.selectedTool === 'platform' && G.platDrag.active) {
       this.platformUp(clamped.x, clamped.y);
     } else if (G.selectedTool === 'eraser') {
@@ -536,8 +518,8 @@ const Input = {
 
   switchTool(tool) {
     G.trackDrag.active = false;
-    G.trackDrag.lastGX = -1;
-    G.trackDrag.lastGY = -1;
+    G.trackDrag.startX = -1;
+    G.trackDrag.startY = -1;
     G.platDrag.active = false;
     G.platDrag.dir = null;
     G.eraserDragging = false;
@@ -600,4 +582,19 @@ function hidePopup() {
   const el = document.getElementById('info-popup');
   el.classList.add('hidden');
   el.classList.remove('clickable');
+}
+
+function computeOptimalPath(sx, sy, ex, ey) {
+  const dx = ex - sx, dy = ey - sy;
+  const adx = Math.abs(dx), ady = Math.abs(dy);
+  const diag = Math.min(adx, ady);
+  const straight = Math.max(adx, ady) - diag;
+  const sdx = Math.sign(dx), sdy = Math.sign(dy);
+  const path = [];
+  let cx = sx, cy = sy;
+  for (let i = 0; i < diag; i++) { cx += sdx; cy += sdy; path.push({ x: cx, y: cy }); }
+  let ddx = 0, ddy = 0;
+  if (adx > ady) { ddx = sdx; } else if (ady > adx) { ddy = sdy; }
+  for (let i = 0; i < straight; i++) { cx += ddx; cy += ddy; path.push({ x: cx, y: cy }); }
+  return path;
 }

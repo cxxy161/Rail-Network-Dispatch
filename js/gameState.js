@@ -61,7 +61,7 @@ const G = {
   panOffsetStartX: 0,
   panOffsetStartY: 0,
 
-  trackDrag: { active: false, lastGX: -1, lastGY: -1 },
+  trackDrag: { active: false, startX: -1, startY: -1 },
   platDrag: { active: false, startX: -1, startY: -1, dir: null },
 
   selectedItem: null,
@@ -100,7 +100,7 @@ function resetGame() {
   G.mouseGridX = -1;
   G.mouseGridY = -1;
   G.isPanning = false;
-  G.trackDrag = { active: false, lastGX: -1, lastGY: -1 };
+  G.trackDrag = { active: false, startX: -1, startY: -1 };
   G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
   G.selectedItem = null;
   G.undoStack = [];

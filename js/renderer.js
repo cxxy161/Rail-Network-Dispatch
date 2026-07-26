@@ -155,19 +155,60 @@ const Renderer = {
     if (!G.trackDrag.active) return;
     if (G.mouseGridX < 0 || G.mouseGridY < 0) return;
 
-    const gx = G.mouseGridX, gy = G.mouseGridY;
-    const lastGX = G.trackDrag.lastGX, lastGY = G.trackDrag.lastGY;
-    if (lastGX < 0 || lastGY < 0) return;
-    if (gx === lastGX && gy === lastGY) return;
+    const sx = G.trackDrag.startX, sy = G.trackDrag.startY;
+    const ex = G.mouseGridX, ey = G.mouseGridY;
+    if (sx < 0 || sy < 0) return;
+    if (sx === ex && sy === ey) return;
 
-    ctx.strokeStyle = '#E8734A88';
+    const dx = ex - sx, dy = ey - sy;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    const diag = Math.min(adx, ady);
+    const straight = Math.max(adx, ady) - diag;
+    const sdx = Math.sign(dx), sdy = Math.sign(dy);
+    const cs = G.CELL_SIZE;
+
+    ctx.setLineDash([6, 4]);
     ctx.lineWidth = 3;
-    ctx.setLineDash([8, 4]);
+
+    let px = sx * cs + cs / 2, py = sy * cs + cs / 2;
     ctx.beginPath();
-    ctx.moveTo(lastGX * G.CELL_SIZE + G.CELL_SIZE / 2, lastGY * G.CELL_SIZE + G.CELL_SIZE / 2);
-    ctx.lineTo(gx * G.CELL_SIZE + G.CELL_SIZE / 2, gy * G.CELL_SIZE + G.CELL_SIZE / 2);
+    ctx.moveTo(px, py);
+
+    let cx = sx, cy = sy;
+    for (let i = 0; i < diag; i++) {
+      cx += sdx; cy += sdy;
+      const nx = cx * cs + cs / 2, ny = cy * cs + cs / 2;
+      ctx.strokeStyle = '#E8734A88';
+      ctx.lineTo(nx, ny);
+      px = nx; py = ny;
+    }
     ctx.stroke();
+
+    const lastDiagX = cx, lastDiagY = cy;
+
+    let ddx = 0, ddy = 0;
+    if (adx > ady) ddx = sdx;
+    else if (ady > adx) ddy = sdy;
+
+    if (straight > 0) {
+      ctx.beginPath();
+      ctx.moveTo(lastDiagX * cs + cs / 2, lastDiagY * cs + cs / 2);
+      ctx.strokeStyle = '#E8B84A88';
+      for (let i = 0; i < straight; i++) {
+        cx += ddx; cy += ddy;
+        ctx.lineTo(cx * cs + cs / 2, cy * cs + cs / 2);
+      }
+      ctx.stroke();
+    }
+
     ctx.setLineDash([]);
+
+    if (diag > 0 && straight > 0) {
+      ctx.fillStyle = '#E8B84A';
+      ctx.beginPath();
+      ctx.arc(lastDiagX * cs + cs / 2, lastDiagY * cs + cs / 2, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
   },
 
   drawPlatformPreview(ctx) {
