@@ -1,5 +1,7 @@
 const Input = {
   canvas: null,
+  dragBatchEdges: [],
+  dragBatchPlats: [],
 
   init(canvas) {
     this.canvas = canvas;
@@ -22,6 +24,66 @@ const Input = {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   },
 
+  // ── Undo ──
+  pushUndo(action) {
+    if (G.undoStack.length > 50) G.undoStack.shift();
+    G.undoStack.push(action);
+  },
+
+  undoLast() {
+    if (G.undoStack.length === 0) return null;
+    const action = G.undoStack.pop();
+
+    if (action.type === 'add_edges') {
+      for (const pair of action.pairs) {
+        Graph.removeEdge(pair[0], pair[1]);
+        G.trackFragments++;
+      }
+      return true;
+    }
+    if (action.type === 'remove_edges') {
+      for (const pair of action.pairs) {
+        Graph.addEdge(pair[0], pair[1]);
+        G.trackFragments--;
+      }
+      return true;
+    }
+    if (action.type === 'add_platform') {
+      G.platforms.pop();
+      G.platformComponents++;
+      return true;
+    }
+    if (action.type === 'remove_platform') {
+      G.platforms.push(action.platform);
+      G.platformComponents--;
+      return true;
+    }
+    if (action.type === 'batch') {
+      for (let i = action.items.length - 1; i >= 0; i--) {
+        this.undoItem(action.items[i]);
+      }
+      return true;
+    }
+    return false;
+  },
+
+  undoItem(item) {
+    if (item.type === 'add_edge') {
+      Graph.removeEdge(item.k1, item.k2);
+      G.trackFragments++;
+    } else if (item.type === 'remove_edge') {
+      Graph.addEdge(item.k1, item.k2);
+      G.trackFragments--;
+    } else if (item.type === 'add_platform') {
+      G.platforms.pop();
+      G.platformComponents++;
+    } else if (item.type === 'remove_platform') {
+      G.platforms.push(item.platform);
+      G.platformComponents--;
+    }
+  },
+
+  // ── Mouse down ──
   onMouseDown(e) {
     const pos = this.getCanvasPos(e);
 
@@ -44,12 +106,18 @@ const Input = {
       const grid = screenToGrid(pos.x, pos.y);
       const clamped = clampGrid(grid.x, grid.y);
 
+      this.dragBatchEdges = [];
+      this.dragBatchPlats = [];
+
       if (G.selectedTool === 'track') {
         this.trackDown(clamped.x, clamped.y);
       } else if (G.selectedTool === 'platform') {
         this.platformDown(clamped.x, clamped.y);
       } else if (G.selectedTool === 'eraser') {
-        this.eraseClick(clamped.x, clamped.y, Graph.key(clamped.x, clamped.y), pos.x, pos.y);
+        G.eraserDragging = true;
+        G.eraserLastGX = clamped.x;
+        G.eraserLastGY = clamped.y;
+        this.eraserAt(clamped.x, clamped.y);
       }
     }
   },
@@ -59,6 +127,8 @@ const Input = {
     G.trackDrag.active = true;
     G.trackDrag.lastGX = gx;
     G.trackDrag.lastGY = gy;
+    G.trackDrag.firstGX = gx;
+    G.trackDrag.firstGY = gy;
   },
 
   trackDragTo(gx, gy) {
@@ -84,21 +154,28 @@ const Input = {
       if (!Graph.hasEdge(prevKey, nextKey)) {
         Graph.addEdge(prevKey, nextKey);
         G.trackFragments--;
+        this.dragBatchEdges.push({ type: 'add_edge', k1: prevKey, k2: nextKey });
       }
 
       G.trackDrag.lastGX = nx;
       G.trackDrag.lastGY = ny;
-      // Update refs for next iteration
-      // We need to update lgx, lgy for the while loop
       lgx = nx;
       lgy = ny;
     }
   },
 
   trackUp() {
+    if (!G.trackDrag.active) return;
     G.trackDrag.active = false;
     G.trackDrag.lastGX = -1;
     G.trackDrag.lastGY = -1;
+    if (this.dragBatchEdges.length > 0) {
+      this.pushUndo({
+        type: 'add_edges',
+        pairs: this.dragBatchEdges.map(e => [e.k1, e.k2]),
+      });
+      this.dragBatchEdges = [];
+    }
   },
 
   // ── Platform drag ──
@@ -113,9 +190,7 @@ const Input = {
     if (!G.platDrag.active) return;
     const dx = gx - startGX;
     const dy = gy - startGY;
-    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
-      G.platDrag.dir = null;
-    } else {
+    if (dx !== 0 || dy !== 0) {
       G.platDrag.dir = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v';
     }
   },
@@ -127,19 +202,28 @@ const Input = {
     if (!dir) return;
 
     const result = Station.addPlatform(gx, gy, dir);
-    if (result === 'err_not_in_area') {
-      Ui.flashMessage('站台必须在站点区域内（圆形虚线范围）');
-    } else if (result === 'err_dup') {
-      Ui.flashMessage('此格已有站台');
-    } else if (result === 'err_no_comp') {
-      Ui.flashMessage('站台组件不足！');
+    if (typeof result === 'string') {
+      if (result === 'err_not_in_area')
+        Ui.flashMessage('站台必须在站点区域内（圆形虚线范围）');
+      else if (result === 'err_dup')
+        Ui.flashMessage('此格已有站台');
+      else if (result === 'err_no_comp')
+        Ui.flashMessage('站台组件不足！');
+    } else if (result) {
+      this.pushUndo({ type: 'add_platform' });
     }
   },
 
   // ── Eraser ──
-  eraseClick(gx, gy, key, screenX, screenY) {
-    if (Station.getPlatformAt(gx, gy)) {
-      Station.removePlatform(gx, gy);
+  eraserAt(gx, gy) {
+    const key = Graph.key(gx, gy);
+
+    const plat = Station.getPlatformAt(gx, gy);
+    if (plat) {
+      const removed = Station.removePlatform(gx, gy);
+      if (removed) {
+        this.dragBatchPlats.push({ type: 'remove_platform', platform: removed });
+      }
       return;
     }
 
@@ -148,20 +232,23 @@ const Input = {
       for (const nk of neighbors) {
         Graph.removeEdge(key, nk);
         G.trackFragments++;
+        this.dragBatchEdges.push({ type: 'remove_edge', k1: key, k2: nk });
       }
       return;
     }
+  },
 
-    const clickedEdge = Renderer.edgeAtScreen(screenX, screenY);
-    if (clickedEdge) {
-      G.trackFragments++;
-      Graph.removeEdge(clickedEdge.k1, clickedEdge.k2);
-      for (const train of [...G.activeTrains]) {
-        const keys = [train.fromKey, train.toKey].filter(Boolean);
-        if (keys.includes(clickedEdge.k1) || keys.includes(clickedEdge.k2)) {
-          Train.recall(train);
-        }
-      }
+  eraserUp() {
+    if (!G.eraserDragging) return;
+    G.eraserDragging = false;
+    G.eraserLastGX = -1;
+    G.eraserLastGY = -1;
+
+    const items = [...this.dragBatchPlats, ...this.dragBatchEdges];
+    this.dragBatchPlats = [];
+    this.dragBatchEdges = [];
+    if (items.length > 0) {
+      this.pushUndo({ type: 'batch', items });
     }
   },
 
@@ -189,11 +276,9 @@ const Input = {
       const py = wy1 + (wy2 - wy1) * train.t;
       if (Math.hypot(cw - px, ch - py) < G.CELL_SIZE) {
         if (train.state === 'moving') {
-          train.state = 'stopped';
-          Ui.flashMessage('列车已停车');
+          train.state = 'stopped'; Ui.flashMessage('列车已停车');
         } else if (train.state === 'stopped') {
-          train.state = 'moving';
-          Ui.flashMessage('列车已启动');
+          train.state = 'moving'; Ui.flashMessage('列车已启动');
         }
         return;
       }
@@ -219,6 +304,12 @@ const Input = {
       this.trackDragTo(clamped.x, clamped.y);
     } else if (G.selectedTool === 'platform' && G.platDrag.active) {
       this.platformDragTo(G.platDrag.startX, G.platDrag.startY, clamped.x, clamped.y);
+    } else if (G.selectedTool === 'eraser' && G.eraserDragging) {
+      if (clamped.x !== G.eraserLastGX || clamped.y !== G.eraserLastGY) {
+        G.eraserLastGX = clamped.x;
+        G.eraserLastGY = clamped.y;
+        this.eraserAt(clamped.x, clamped.y);
+      }
     }
   },
 
@@ -236,6 +327,8 @@ const Input = {
       this.trackUp();
     } else if (G.selectedTool === 'platform' && G.platDrag.active) {
       this.platformUp(clamped.x, clamped.y);
+    } else if (G.selectedTool === 'eraser') {
+      this.eraserUp();
     }
   },
 
@@ -255,11 +348,18 @@ const Input = {
     G.trackDrag.lastGY = -1;
     G.platDrag.active = false;
     G.platDrag.dir = null;
+    G.eraserDragging = false;
     G.selectedTool = tool;
     Ui.updateToolButtons();
   },
 
   onKeyDown(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      e.preventDefault();
+      this.undoLast();
+      return;
+    }
+
     if (e.key === ' ' || e.code === 'Space') {
       e.preventDefault();
       if (G.phase === 'operate') {
@@ -277,18 +377,8 @@ const Input = {
       G.trackDrag.active = false;
       G.platDrag.active = false;
       G.platDrag.dir = null;
+      G.eraserDragging = false;
       G.selectedItem = null;
-    }
-
-    if (e.key === 'Delete' && G.phase === 'build') {
-      const edge = Renderer.edgeAtScreen(
-        G.mouseGridX < 0 ? 0 : G.mouseGridX * G.CELL_SIZE * G.zoom + G.offsetX,
-        G.mouseGridY < 0 ? 0 : G.mouseGridY * G.CELL_SIZE * G.zoom + G.offsetY
-      );
-      if (edge) {
-        G.trackFragments++;
-        Graph.removeEdge(edge.k1, edge.k2);
-      }
     }
   },
 };

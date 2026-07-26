@@ -1,5 +1,6 @@
 let lastTimestamp = 0;
 let accumulator = 0;
+let resizePending = true;
 const TICK = 1 / 60;
 
 function init() {
@@ -28,6 +29,12 @@ function gameLoop(ts) {
   lastTimestamp = ts;
   if (dt > 0.1) dt = 0.1;
 
+  if (resizePending) {
+    Renderer.resize();
+    Renderer.centerCamera();
+    resizePending = false;
+  }
+
   accumulator += dt;
   while (accumulator >= TICK) {
     update(TICK);
@@ -40,6 +47,7 @@ function gameLoop(ts) {
 
 function update(dt) {
   Ui.updateTopBar();
+  Ui.updateShopDisplay();
   if (G.phase === 'operate') updateOperate(dt);
 }
 

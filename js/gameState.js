@@ -66,6 +66,10 @@ const G = {
 
   selectedItem: null,
   dispatchDecisions: {},
+  undoStack: [],
+  eraserDragging: false,
+  eraserLastGX: -1,
+  eraserLastGY: -1,
 };
 
 function resetGame() {
@@ -98,6 +102,10 @@ function resetGame() {
   G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
   G.selectedItem = null;
   G.dispatchDecisions = {};
+  G.undoStack = [];
+  G.eraserDragging = false;
+  G.eraserLastGX = -1;
+  G.eraserLastGY = -1;
 }
 
 function worldToScreen(wx, wy) {

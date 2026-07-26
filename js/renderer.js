@@ -46,11 +46,11 @@ const Renderer = {
 
     this.drawGrid(ctx);
     this.drawStationGroups(ctx);
+    this.drawStationAreas(ctx);
     this.drawTracks(ctx);
+    this.drawPlatforms(ctx);
     this.drawPreview(ctx);
     this.drawSwitches(ctx);
-    this.drawStationAreas(ctx);
-    this.drawPlatforms(ctx);
     this.drawDepot(ctx);
     this.drawTrains(ctx);
     this.drawPassengerNumbers(ctx);
@@ -60,8 +60,8 @@ const Renderer = {
   },
 
   drawGrid(ctx) {
-    ctx.strokeStyle = '#CCC8BD';
-    ctx.lineWidth = 0.5;
+      ctx.strokeStyle = '#B8A898';
+      ctx.lineWidth = 0.7;
     const cs = G.CELL_SIZE;
     const invZ = 1 / G.zoom;
 
@@ -235,7 +235,7 @@ const Renderer = {
       const hw = plat.dir === 'h' ? G.CELL_SIZE * 0.38 : G.CELL_SIZE * 0.18;
       const hh = plat.dir === 'h' ? G.CELL_SIZE * 0.18 : G.CELL_SIZE * 0.38;
 
-      ctx.fillStyle = color + '55';
+      ctx.fillStyle = '#E8E0D5';
       ctx.fillRect(cx - hw, cy - hh, hw * 2, hh * 2);
 
       ctx.strokeStyle = color;
@@ -337,7 +337,7 @@ const Renderer = {
       ctx.font = `bold ${G.CELL_SIZE * 0.35}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(total.toString(), cx, cy + G.CELL_SIZE * 0.5);
+      ctx.fillText(total + '', cx, cy + G.CELL_SIZE * 0.45);
     }
   },
 

@@ -174,7 +174,6 @@ const Ui = {
     this.updateTopBar();
     this.hideOverlay();
 
-    Station.refreshAllConnections();
     Station.generatePassengers();
   },
 

@@ -1,4 +1,8 @@
 const Station = {
+  getStationById(id) {
+    return G.stations.find(s => s.id === id) || null;
+  },
+
   isInStationArea(gx, gy, station) {
     return Math.abs(gx - station.x) <= 1 && Math.abs(gy - station.y) <= 1;
   },
@@ -11,65 +15,50 @@ const Station = {
     return G.platforms.find(p => p.x === gx && p.y === gy) || null;
   },
 
+  getPlatformAdjacent(gx, gy) {
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const p = this.getPlatformAt(gx + dx, gy + dy);
+        if (p) return p;
+      }
+    }
+    return null;
+  },
+
+  platformAtKey(key) {
+    const [x, y] = key.split(',').map(Number);
+    return this.getPlatformAdjacent(x, y);
+  },
+
   addPlatform(gx, gy, dir) {
     const station = this.findStationForGrid(gx, gy);
     if (!station) return 'err_not_in_area';
     if (this.getPlatformAt(gx, gy)) return 'err_dup';
     if (G.platformComponents <= 0) return 'err_no_comp';
 
-    const plat = { x: gx, y: gy, dir: dir, stationId: station.id };
-    G.platforms.push(plat);
+    G.platforms.push({ x: gx, y: gy, dir: dir, stationId: station.id });
     G.platformComponents--;
-
-    this.connectPlatformToTracks(plat);
-    return 'ok';
+    return { type: 'add_platform', x: gx, y: gy, dir: dir, stationId: station.id };
   },
 
   removePlatform(gx, gy) {
     const idx = G.platforms.findIndex(p => p.x === gx && p.y === gy);
-    if (idx < 0) return false;
-    const plat = G.platforms[idx];
-    G.platforms.splice(idx, 1);
+    if (idx < 0) return null;
+    const removed = G.platforms.splice(idx, 1)[0];
     G.platformComponents++;
-
-    const key = Graph.key(gx, gy);
-    if (G.connectionMap[key]) {
-      const neighbors = [...Graph.getNeighbors(key)];
-      for (const nk of neighbors) {
-        Graph.removeEdge(key, nk);
-      }
-    }
-    return true;
+    return removed;
   },
 
-  connectPlatformToTracks(plat) {
-    const key = Graph.key(plat.x, plat.y);
-    let connected = false;
-
+  hasTrackConnection(plat) {
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
         if (dx === 0 && dy === 0) continue;
         const nk = Graph.key(plat.x + dx, plat.y + dy);
-        const c = clampGrid(plat.x + dx, plat.y + dy);
-        if (G.connectionMap[Graph.key(c.x, c.y)]) {
-          Graph.addEdge(key, Graph.key(c.x, c.y));
-          connected = true;
-        }
+        if (G.connectionMap[nk] && Graph.getDegree(nk) > 0) return true;
       }
     }
-    return connected;
-  },
-
-  hasTrackConnection(plat) {
-    const key = Graph.key(plat.x, plat.y);
-    const deg = Graph.getDegree(key);
-    return deg > 0;
-  },
-
-  refreshAllConnections() {
-    for (const plat of G.platforms) {
-      this.connectPlatformToTracks(plat);
-    }
+    return false;
   },
 
   getStationGroups() {
@@ -132,14 +121,13 @@ const Station = {
     return boarded;
   },
 
-  alightPassengers(train, platformKey) {
-    const plat = G.platforms.find(p => Graph.key(p.x, p.y) === platformKey);
+  alightPassengers(train, nodeKey) {
+    const plat = this.platformAtKey(nodeKey);
     if (!plat) return 0;
-    const stationId = plat.stationId;
     let count = 0;
-    if (train.passengers[stationId]) {
-      count = train.passengers[stationId];
-      delete train.passengers[stationId];
+    if (train.passengers[plat.stationId]) {
+      count = train.passengers[plat.stationId];
+      delete train.passengers[plat.stationId];
     }
     return count;
   },
