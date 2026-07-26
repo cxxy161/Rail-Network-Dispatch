@@ -60,20 +60,17 @@ const Renderer = {
     ctx.strokeStyle = '#E0DCD4';
     ctx.lineWidth = 0.3;
     const cs = G.CELL_SIZE;
-
-    let startX = 0, startY = 0;
-    let endX = G.GRID_W * cs, endY = G.GRID_H * cs;
-
     const invZ = 1 / G.zoom;
-    const visLeft = (-G.offsetX) * invZ - cs;
-    const visRight = (G.offsetX + this.canvas.width) * invZ + cs;
-    const visTop = (-G.offsetY) * invZ - cs;
-    const visBottom = (G.offsetY + this.canvas.height) * invZ + cs;
 
-    startX = Math.max(0, Math.floor(visLeft / cs) * cs);
-    startY = Math.max(0, Math.floor(visTop / cs) * cs);
-    endX = Math.min(G.GRID_W * cs, Math.ceil(visRight / cs) * cs);
-    endY = Math.min(G.GRID_H * cs, Math.ceil(visBottom / cs) * cs);
+    const visLeft = (-G.offsetX) * invZ - cs;
+    const visRight = (this.canvas.width - G.offsetX) * invZ + cs;
+    const visTop = (-G.offsetY) * invZ - cs;
+    const visBottom = (this.canvas.height - G.offsetY) * invZ + cs;
+
+    const startX = Math.max(0, Math.floor(visLeft / cs) * cs);
+    const startY = Math.max(0, Math.floor(visTop / cs) * cs);
+    const endX = Math.min(G.GRID_W * cs, Math.ceil(visRight / cs) * cs);
+    const endY = Math.min(G.GRID_H * cs, Math.ceil(visBottom / cs) * cs);
 
     ctx.beginPath();
     for (let x = startX; x <= endX; x += cs) {
