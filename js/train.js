@@ -1,7 +1,7 @@
 const Train = {
-  SPEED: 0.5,
-  ACCEL: 0.8,
-  DECEL: 0.6,
+  SPEED: 1.0,
+  ACCEL: 1.5,
+  DECEL: 1.2,
 
   edgeDistance(k1, k2) {
     const [x1, y1] = k1.split(',').map(Number);
@@ -87,12 +87,12 @@ const Train = {
       }
     }
 
-    const DECEL_START = 0.35, DECEL_END = 0.06, MIN_SPEED = 0.04;
+    const DECEL_START = 0.7, DECEL_END = 0.06, MIN_SPEED = 0.04;
     let targetSpeed;
     if (!needStop || travelLeft > DECEL_START) {
       targetSpeed = this.SPEED;
     } else {
-      if (travelLeft <= DECEL_END) { train.t = 1; return; }
+      if (travelLeft <= DECEL_END) { this.arriveNode(train, train.toKey, train.fromKey); return; }
       const frac = (travelLeft - DECEL_END) / (DECEL_START - DECEL_END);
       targetSpeed = MIN_SPEED + frac * (this.SPEED - MIN_SPEED);
     }
