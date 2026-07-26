@@ -221,14 +221,28 @@ const Renderer = {
   },
 
   drawSwitches(ctx) {
+    const cs = G.CELL_SIZE;
     for (const key of Object.keys(G.activeSwitches)) {
       const [x, y] = key.split(',').map(Number);
-      const cx = x * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const cy = y * G.CELL_SIZE + G.CELL_SIZE / 2;
+      const cx = x * cs + cs / 2;
+      const cy = y * cs + cs / 2;
       ctx.fillStyle = '#4A90D9';
       ctx.beginPath();
       ctx.arc(cx, cy, 7, 0, Math.PI * 2);
       ctx.fill();
+
+      const dir = Graph.getSwitchExitDirection(key);
+      if (dir) {
+        const len = cs * 0.25;
+        const ex = cx + dir.x * len;
+        const ey = cy + dir.y * len;
+        ctx.strokeStyle = '#FFF';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(ex, ey);
+        ctx.stroke();
+      }
     }
   },
 

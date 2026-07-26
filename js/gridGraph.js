@@ -69,6 +69,17 @@ const Graph = {
     return options[idx % options.length] || options[0];
   },
 
+  getSwitchExitDirection(key) {
+    const deg = this.getDegree(key);
+    if (deg < 3) return null;
+    const idx = G.activeSwitches[key] || 0;
+    const neighbors = this.getNeighbors(key);
+    const nkey = neighbors[idx % deg];
+    const [sx, sy] = key.split(',').map(Number);
+    const [tx, ty] = nkey.split(',').map(Number);
+    return { x: tx - sx, y: ty - sy };
+  },
+
   cycleSwitch(key) {
     const deg = this.getDegree(key);
     if (deg < 3) return;
