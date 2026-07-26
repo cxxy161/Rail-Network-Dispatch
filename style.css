@@ -209,3 +209,16 @@ body {
   width: 100%;
 }
 .back-btn:hover { color: #555; }
+
+#info-popup {
+  position: fixed;
+  background: rgba(40,40,40,0.92);
+  color: #FFF;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 50;
+  white-space: nowrap;
+}

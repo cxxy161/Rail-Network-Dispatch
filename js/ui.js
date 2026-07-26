@@ -8,12 +8,12 @@ const Ui = {
 
     document.getElementById('btn-operate-stop').addEventListener('click', () => {
       G.operateSubTool = G.operateSubTool === 'stop' ? null : 'stop';
-      G.popup = null;
+      hidePopup();
       this.updateOperateToolButtons();
     });
     document.getElementById('btn-operate-reverse').addEventListener('click', () => {
       G.operateSubTool = G.operateSubTool === 'reverse' ? null : 'reverse';
-      G.popup = null;
+      hidePopup();
       this.updateOperateToolButtons();
     });
 

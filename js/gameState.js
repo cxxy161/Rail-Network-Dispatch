@@ -71,7 +71,6 @@ const G = {
   eraserLastGX: -1,
   eraserLastGY: -1,
 
-  popup: null,
   operateSubTool: null,
 };
 
@@ -109,7 +108,6 @@ function resetGame() {
   G.eraserDragging = false;
   G.eraserLastGX = -1;
   G.eraserLastGY = -1;
-  G.popup = null;
   G.operateSubTool = null;
 }
 

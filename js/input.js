@@ -105,7 +105,7 @@ const Input = {
 
     if (e.button === 0) {
       if (G.phase === 'operate') {
-        this.operateClick(screenToGrid(pos.x, pos.y));
+        this.operateClick(screenToGrid(pos.x, pos.y), e);
         return;
       }
       if (G.phase !== 'build') return;
@@ -311,11 +311,9 @@ const Input = {
   },
 
   // ── Operate ──
-  operateClick(grid) {
+  operateClick(grid, e) {
     const clamped = clampGrid(grid.x, grid.y);
     const key = Graph.key(clamped.x, clamped.y);
-    const cw = clamped.x * G.CELL_SIZE + G.CELL_SIZE / 2;
-    const ch = clamped.y * G.CELL_SIZE + G.CELL_SIZE / 2;
 
     if (G.operateSubTool === 'stop') {
       const train = this.findTrainAt(clamped.x, clamped.y);
@@ -340,21 +338,18 @@ const Input = {
 
     if (G.activeSwitches[key] !== undefined) {
       Graph.cycleSwitch(key);
-      G.popup = null;
+      hidePopup();
       return;
     }
 
     const train = this.findTrainAt(clamped.x, clamped.y);
     if (train) {
       const load = Object.values(train.passengers).reduce((a,b)=>a+b,0);
-      const lines = [
-        `列车 #${train.id}  (${train.carCount}节)`,
-        `载客: ${load} / ${Train.maxLoad(train)}`,
-      ];
+      let html = `<b>列车 #${train.id}</b> (${train.carCount}节)<br>载客: ${load} / ${Train.maxLoad(train)}`;
       for (const [dest, cnt] of Object.entries(train.passengers)) {
-        if (cnt > 0) lines.push(`  → ${dest}站: ${cnt}人`);
+        if (cnt > 0) html += `<br>&nbsp;&nbsp;→ ${dest}站: ${cnt}人`;
       }
-      G.popup = { worldX: cw, worldY: ch, lines };
+      showPopup(e, html);
       return;
     }
 
@@ -363,20 +358,15 @@ const Input = {
       const sid = plat.stationId;
       const queue = G.stationQueues[sid] || {};
       const total = Object.values(queue).reduce((a,b)=>a+b,0);
-      const lines = [`${sid}站  待乘: ${total}`];
+      let html = `<b>${sid}站</b> 待乘: ${total}`;
       for (const [dest, cnt] of Object.entries(queue)) {
-        if (cnt > 0) lines.push(`  → ${dest}站: ${cnt}人`);
+        if (cnt > 0) html += `<br>&nbsp;&nbsp;→ ${dest}站: ${cnt}人`;
       }
-      const st = Station.getStationById(sid);
-      if (st) {
-        G.popup = { worldX: st.x * G.CELL_SIZE + G.CELL_SIZE / 2, worldY: st.y * G.CELL_SIZE + G.CELL_SIZE / 2, lines };
-      } else {
-        G.popup = { worldX: cw, worldY: ch, lines };
-      }
+      showPopup(e, html);
       return;
     }
 
-    G.popup = null;
+    hidePopup();
   },
 
   findTrainAt(gx, gy) {
@@ -462,6 +452,7 @@ const Input = {
     G.platDrag.dir = null;
     G.eraserDragging = false;
     G.selectedTool = tool;
+    hidePopup();
     Ui.updateToolButtons();
   },
 
@@ -491,6 +482,24 @@ const Input = {
       G.platDrag.dir = null;
       G.eraserDragging = false;
       G.selectedItem = null;
+      hidePopup();
     }
   },
 };
+
+function showPopup(e, html) {
+  const el = document.getElementById('info-popup');
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+  const pad = 12;
+  let x = e.clientX + pad;
+  let y = e.clientY + pad;
+  if (x + el.offsetWidth > window.innerWidth) x = e.clientX - el.offsetWidth - pad;
+  if (y + el.offsetHeight > window.innerHeight) y = e.clientY - el.offsetHeight - pad;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+}
+
+function hidePopup() {
+  document.getElementById('info-popup').classList.add('hidden');
+}

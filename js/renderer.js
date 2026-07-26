@@ -57,7 +57,6 @@ const Renderer = {
     this.drawCursorHighlight(ctx);
 
     ctx.restore();
-    this.drawPopup(ctx);
   },
 
   drawGrid(ctx) {
@@ -310,44 +309,6 @@ const Renderer = {
       ctx.fillText(load + '/' + max, 0, 1);
 
       ctx.restore();
-    }
-  },
-
-  drawPopup(ctx) {
-    if (!G.popup || !G.popup.lines || G.popup.lines.length === 0) return;
-    const pop = G.popup;
-
-    let px, py;
-    if (pop.worldX !== undefined) {
-      const s = worldToScreen(pop.worldX, pop.worldY);
-      px = s.x; py = s.y;
-    } else {
-      px = G.mouseGridX * G.CELL_SIZE * G.zoom + G.offsetX + G.CELL_SIZE * G.zoom;
-      py = G.mouseGridY * G.CELL_SIZE * G.zoom + G.offsetY;
-    }
-    py += 24;
-
-    ctx.font = '12px sans-serif';
-    const pad = 10;
-    const lineH = 18;
-    const lines = pop.lines.length;
-    const maxW = Math.max(...pop.lines.map(l => ctx.measureText(l).width));
-    const w = maxW + pad * 2;
-    const h = lines * lineH + pad * 2;
-
-    if (px + w > this.canvas.width) px = this.canvas.width - w - 4;
-    if (px < 4) px = 4;
-    if (py + h > this.canvas.height) py = py - h - 40;
-    if (py < 4) py = 4;
-
-    ctx.fillStyle = 'rgba(40,40,40,0.92)';
-    ctx.fillRect(px, py, w, h);
-
-    ctx.fillStyle = '#FFF';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(pop.lines[i], px + pad, py + pad + lineH * i + lineH / 2);
     }
   },
 
