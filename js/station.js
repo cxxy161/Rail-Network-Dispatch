@@ -17,8 +17,8 @@ const Station = {
 
   getPlatformAdjacent(gx, gy) {
     for (const plat of G.platforms) {
-      if (plat.dir === 'h' && plat.y === gy && (plat.x === gx + 1 || plat.x === gx - 1)) return plat;
-      if (plat.dir === 'v' && plat.x === gx && (plat.y === gy + 1 || plat.y === gy - 1)) return plat;
+      if (plat.dir === 'h' && plat.x === gx && (plat.y === gy + 1 || plat.y === gy - 1)) return plat;
+      if (plat.dir === 'v' && plat.y === gy && (plat.x === gx + 1 || plat.x === gx - 1)) return plat;
     }
     return null;
   },
@@ -49,18 +49,23 @@ const Station = {
 
   hasTrackConnection(plat) {
     if (plat.dir === 'h') {
-      const lk = Graph.key(plat.x - 1, plat.y);
-      const rk = Graph.key(plat.x + 1, plat.y);
-      return (G.connectionMap[lk] && Graph.getDegree(lk) > 0) ||
-             (G.connectionMap[rk] && Graph.getDegree(rk) > 0);
-    }
-    if (plat.dir === 'v') {
       const uk = Graph.key(plat.x, plat.y - 1);
       const dk = Graph.key(plat.x, plat.y + 1);
       return (G.connectionMap[uk] && Graph.getDegree(uk) > 0) ||
              (G.connectionMap[dk] && Graph.getDegree(dk) > 0);
     }
+    if (plat.dir === 'v') {
+      const lk = Graph.key(plat.x - 1, plat.y);
+      const rk = Graph.key(plat.x + 1, plat.y);
+      return (G.connectionMap[lk] && Graph.getDegree(lk) > 0) ||
+             (G.connectionMap[rk] && Graph.getDegree(rk) > 0);
+    }
     return false;
+  },
+
+  stationHasTrackConnection(stationId) {
+    const plats = G.platforms.filter(p => p.stationId === stationId);
+    return plats.some(p => this.hasTrackConnection(p));
   },
 
   getStationGroups() {
@@ -81,44 +86,45 @@ const Station = {
         minY: Math.min(...ys),
         maxY: Math.max(...ys),
       };
+      grp.cx = (grp.bounds.minX + grp.bounds.maxX) / 2;
+      grp.cy = (grp.bounds.minY + grp.bounds.maxY) / 2;
     }
     return groups;
   },
 
   generatePassengers() {
     G.stationQueues = {};
-    for (const plat of G.platforms) {
-      if (!this.hasTrackConnection(plat)) continue;
-      const key = Graph.key(plat.x, plat.y);
+    for (const st of G.stations) {
+      if (!this.stationHasTrackConnection(st.id)) continue;
       const count = 5 + Math.floor(Math.random() * 11);
       const dests = {};
       for (let i = 0; i < count; i++) {
-        const others = G.stations.filter(s => s.id !== plat.stationId);
+        const others = G.stations.filter(s => s.id !== st.id);
         if (others.length === 0) continue;
         const dest = others[Math.floor(Math.random() * others.length)];
         dests[dest.id] = (dests[dest.id] || 0) + 1;
       }
       if (Object.keys(dests).length > 0) {
-        G.stationQueues[key] = dests;
+        G.stationQueues[st.id] = dests;
       }
     }
   },
 
-  boardPassengers(key, trainDestIds) {
-    if (!G.stationQueues[key]) return {};
+  boardPassengers(stationId, trainDestIds) {
+    if (!G.stationQueues[stationId]) return {};
     const boarded = {};
-    for (const destId of Object.keys(G.stationQueues[key])) {
-      if (G.stationQueues[key][destId] === 0) continue;
+    for (const destId of Object.keys(G.stationQueues[stationId])) {
+      if (G.stationQueues[stationId][destId] === 0) continue;
       if (trainDestIds.includes(destId)) {
-        boarded[destId] = G.stationQueues[key][destId];
-        G.stationQueues[key][destId] = 0;
+        boarded[destId] = G.stationQueues[stationId][destId];
+        G.stationQueues[stationId][destId] = 0;
       }
     }
     for (const destId of Object.keys(boarded)) {
-      delete G.stationQueues[key][destId];
+      delete G.stationQueues[stationId][destId];
     }
-    if (Object.keys(G.stationQueues[key]).length === 0) {
-      delete G.stationQueues[key];
+    if (Object.keys(G.stationQueues[stationId]).length === 0) {
+      delete G.stationQueues[stationId];
     }
     return boarded;
   },

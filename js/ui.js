@@ -158,14 +158,17 @@ const Ui = {
   },
 
   confirmDispatch() {
+    const depotKey = Graph.key(G.depotX, G.depotY);
+    if (Graph.getDegree(depotKey) === 0) {
+      this.flashMessage('车辆段未连接到铁路网！');
+      return;
+    }
+
     for (const train of [...G.depotTrains]) {
       if (G.dispatchDecisions[train.id]) {
         const idx = G.depotTrains.indexOf(train);
         if (idx >= 0) G.depotTrains.splice(idx, 1);
-        if (!Train.dispatch(train)) {
-          this.flashMessage('车辆段未连接到铁路网！');
-          return;
-        }
+        Train.dispatch(train);
       }
     }
 

@@ -92,16 +92,17 @@ const Renderer = {
     for (const [sid, grp] of Object.entries(groups)) {
       const b = grp.bounds;
       if (!b) continue;
-      const cx1 = b.minX * G.CELL_SIZE;
-      const cy1 = b.minY * G.CELL_SIZE;
-      const cx2 = (b.maxX + 1) * G.CELL_SIZE;
-      const cy2 = (b.maxY + 1) * G.CELL_SIZE;
-      const pad = 10;
-      ctx.strokeStyle = grp.color + '88';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([8, 4]);
-      ctx.strokeRect(cx1 - pad, cy1 - pad, cx2 - cx1 + pad * 2, cy2 - cy1 + pad * 2);
+      const pad = 12;
+
+      ctx.strokeStyle = grp.color + '55';
+      ctx.lineWidth = 3;
       ctx.setLineDash([]);
+      ctx.strokeRect(
+        b.minX * G.CELL_SIZE + G.CELL_SIZE / 2 - pad,
+        b.minY * G.CELL_SIZE + G.CELL_SIZE / 2 - pad,
+        (b.maxX - b.minX) * G.CELL_SIZE + pad * 2,
+        (b.maxY - b.minY) * G.CELL_SIZE + pad * 2
+      );
     }
   },
 
@@ -326,18 +327,27 @@ const Renderer = {
   },
 
   drawPassengerNumbers(ctx) {
-    for (const [key, dests] of Object.entries(G.stationQueues)) {
+    const groups = Station.getStationGroups();
+    for (const [sid, grp] of Object.entries(groups)) {
+      if (!grp.bounds) continue;
+      const dests = G.stationQueues[sid];
+      if (!dests) continue;
       const total = Object.values(dests).reduce((a, b) => a + b, 0);
       if (total <= 0) continue;
-      const [x, y] = key.split(',').map(Number);
-      const cx = x * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const cy = y * G.CELL_SIZE + G.CELL_SIZE / 2;
+
+      const cx = grp.cx * G.CELL_SIZE + G.CELL_SIZE / 2;
+      const cy = grp.cy * G.CELL_SIZE + G.CELL_SIZE / 2;
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(cx, cy, G.CELL_SIZE * 0.25, 0, Math.PI * 2);
+      ctx.fill();
 
       ctx.fillStyle = '#333';
       ctx.font = `bold ${G.CELL_SIZE * 0.35}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(total + '', cx, cy + G.CELL_SIZE * 0.45);
+      ctx.fillText(total + '', cx, cy + 1);
     }
   },
 

@@ -150,6 +150,11 @@ const Input = {
       const nx = lgx + dx;
       const ny = lgy + dy;
 
+      if (Station.getPlatformAt(nx, ny)) {
+        G.trackDrag.active = false;
+        break;
+      }
+
       if (G.trackFragments <= 0) {
         G.trackDrag.active = false;
         Ui.flashMessage('轨道碎片不足！');

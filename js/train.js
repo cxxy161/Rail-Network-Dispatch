@@ -124,8 +124,8 @@ const Train = {
   boardAtStation(train, nodeKey) {
     const plat = Station.platformAtKey(nodeKey);
     if (!plat) return 0;
-    const platKey = Graph.key(plat.x, plat.y);
-    if (!G.stationQueues[platKey]) return 0;
+    const stationId = plat.stationId;
+    if (!G.stationQueues[stationId]) return 0;
 
     const capacity = this.maxLoad(train);
     const currentLoad = Object.values(train.passengers).reduce((a, b) => a + b, 0);
@@ -133,7 +133,7 @@ const Train = {
     if (remaining <= 0) return 0;
 
     const reach = this.reachableStationIds(train);
-    const boarded = Station.boardPassengers(platKey, reach);
+    const boarded = Station.boardPassengers(stationId, reach);
     let total = 0;
     for (const [destId, count] of Object.entries(boarded)) {
       const take = Math.min(count, remaining - total);
@@ -141,8 +141,8 @@ const Train = {
         train.passengers[destId] = (train.passengers[destId] || 0) + take;
         total += take;
         if (count > take) {
-          if (!G.stationQueues[platKey]) G.stationQueues[platKey] = {};
-          G.stationQueues[platKey][destId] = (G.stationQueues[platKey][destId] || 0) + (count - take);
+          if (!G.stationQueues[stationId]) G.stationQueues[stationId] = {};
+          G.stationQueues[stationId][destId] = (G.stationQueues[stationId][destId] || 0) + (count - take);
         }
       }
     }
