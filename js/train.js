@@ -12,7 +12,7 @@ const Train = {
   },
 
   reachableStationIds(train) {
-    return G.stations.map(s => s.id).filter(id => id !== train.currentStationId);
+    return G.stations.map(s => s.id).filter(() => true);
   },
 
   create(carCount) {
@@ -79,6 +79,11 @@ const Train = {
     }
   },
 
+  isPlatformNode(key) {
+    const [x, y] = key.split(',').map(Number);
+    return !!Station.getPlatformAt(x, y);
+  },
+
   arriveNode(train, nodeKey, fromKey) {
     if (nodeKey === Graph.key(G.depotX, G.depotY)) {
       this.recall(train);
@@ -95,7 +100,7 @@ const Train = {
       if (!nextKey || !exits.includes(nextKey)) nextKey = exits[0];
     }
 
-    if (G.platformMap[nodeKey]) {
+    if (this.isPlatformNode(nodeKey)) {
       train.fromKey = nodeKey;
       train.toKey = nextKey || fromKey;
       train.dockedTimer = 3;

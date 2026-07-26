@@ -32,7 +32,7 @@ const G = {
   connectionMap: {},
   activeSwitches: {},
 
-  platformMap: {},
+  platforms: [],
 
   stations: [
     { id: 'A', x: 6, y: 12, color: '#E84A4A' },
@@ -61,14 +61,10 @@ const G = {
   panOffsetStartX: 0,
   panOffsetStartY: 0,
 
-  currentTrackNodes: [],
-  previewEndX: -1,
-  previewEndY: -1,
+  trackDrag: { active: false, lastGX: -1, lastGY: -1 },
+  platDrag: { active: false, startX: -1, startY: -1, dir: null },
 
   selectedItem: null,
-
-  showShop: true,
-
   dispatchDecisions: {},
 };
 
@@ -89,7 +85,7 @@ function resetGame() {
   G.wagons = 4;
   G.connectionMap = {};
   G.activeSwitches = {};
-  G.platformMap = {};
+  G.platforms = [];
   G.depotTrains = [{ id: 1, carCount: 2, passengers: {} }];
   G.activeTrains = [];
   G.nextTrainId = 2;
@@ -98,11 +94,9 @@ function resetGame() {
   G.mouseGridX = -1;
   G.mouseGridY = -1;
   G.isPanning = false;
-  G.currentTrackNodes = [];
-  G.previewEndX = -1;
-  G.previewEndY = -1;
+  G.trackDrag = { active: false, lastGX: -1, lastGY: -1 };
+  G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
   G.selectedItem = null;
-  G.showShop = true;
   G.dispatchDecisions = {};
 }
 

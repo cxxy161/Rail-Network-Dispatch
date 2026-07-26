@@ -10,13 +10,16 @@ const Renderer = {
   resize() {
     const topBar = document.getElementById('top-bar');
     const bottomBar = document.getElementById('bottom-bar');
-    const w = document.body.clientWidth;
+    const sidebar = document.getElementById('sidebar');
+    const sbW = sidebar ? sidebar.offsetWidth : 0;
+    const w = document.body.clientWidth - sbW;
     const h = document.body.clientHeight - topBar.offsetHeight - bottomBar.offsetHeight;
     this.canvas.width = w;
     this.canvas.height = h;
     this.canvas.style.width = w + 'px';
     this.canvas.style.height = h + 'px';
-    if (G.offsetX === 0 && G.offsetY === 0) {
+    this.canvas.style.left = sbW + 'px';
+    if (G.offsetX === 0) {
       this.centerCamera();
     }
   },
@@ -34,7 +37,6 @@ const Renderer = {
     const h = this.canvas.height;
 
     ctx.clearRect(0, 0, w, h);
-
     ctx.save();
     ctx.fillStyle = '#F5F0E8';
     ctx.fillRect(0, 0, w, h);
@@ -43,6 +45,7 @@ const Renderer = {
     ctx.scale(G.zoom, G.zoom);
 
     this.drawGrid(ctx);
+    this.drawStationGroups(ctx);
     this.drawTracks(ctx);
     this.drawPreview(ctx);
     this.drawSwitches(ctx);
@@ -57,8 +60,8 @@ const Renderer = {
   },
 
   drawGrid(ctx) {
-    ctx.strokeStyle = '#E0DCD4';
-    ctx.lineWidth = 0.3;
+    ctx.strokeStyle = '#CCC8BD';
+    ctx.lineWidth = 0.5;
     const cs = G.CELL_SIZE;
     const invZ = 1 / G.zoom;
 
@@ -82,6 +85,24 @@ const Renderer = {
       ctx.lineTo(endX, y);
     }
     ctx.stroke();
+  },
+
+  drawStationGroups(ctx) {
+    const groups = Station.getStationGroups();
+    for (const [sid, grp] of Object.entries(groups)) {
+      const b = grp.bounds;
+      if (!b) continue;
+      const cx1 = b.minX * G.CELL_SIZE;
+      const cy1 = b.minY * G.CELL_SIZE;
+      const cx2 = (b.maxX + 1) * G.CELL_SIZE;
+      const cy2 = (b.maxY + 1) * G.CELL_SIZE;
+      const pad = 10;
+      ctx.strokeStyle = grp.color + '88';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 4]);
+      ctx.strokeRect(cx1 - pad, cy1 - pad, cx2 - cx1 + pad * 2, cy2 - cy1 + pad * 2);
+      ctx.setLineDash([]);
+    }
   },
 
   drawTracks(ctx) {
@@ -117,19 +138,58 @@ const Renderer = {
   },
 
   drawPreview(ctx) {
-    if (G.selectedTool !== 'track') return;
-    if (G.currentTrackNodes.length === 0) return;
-    const last = G.currentTrackNodes[G.currentTrackNodes.length - 1];
-    const endX = G.previewEndX >= 0 ? G.previewEndX : G.mouseGridX;
-    const endY = G.previewEndY >= 0 ? G.previewEndY : G.mouseGridY;
-    if (endX < 0 || endY < 0) return;
+    this.drawTrackPreview(ctx);
+    this.drawPlatformPreview(ctx);
+  },
 
-    ctx.strokeStyle = '#E8734A';
+  drawTrackPreview(ctx) {
+    if (G.selectedTool !== 'track') return;
+    if (!G.trackDrag.active) return;
+    if (G.mouseGridX < 0 || G.mouseGridY < 0) return;
+
+    const gx = G.mouseGridX, gy = G.mouseGridY;
+    const lastGX = G.trackDrag.lastGX, lastGY = G.trackDrag.lastGY;
+    if (lastGX < 0 || lastGY < 0) return;
+    if (gx === lastGX && gy === lastGY) return;
+
+    ctx.strokeStyle = '#E8734A88';
     ctx.lineWidth = 3;
     ctx.setLineDash([8, 4]);
     ctx.beginPath();
-    ctx.moveTo(last.x * G.CELL_SIZE + G.CELL_SIZE / 2, last.y * G.CELL_SIZE + G.CELL_SIZE / 2);
-    ctx.lineTo(endX * G.CELL_SIZE + G.CELL_SIZE / 2, endY * G.CELL_SIZE + G.CELL_SIZE / 2);
+    ctx.moveTo(lastGX * G.CELL_SIZE + G.CELL_SIZE / 2, lastGY * G.CELL_SIZE + G.CELL_SIZE / 2);
+    ctx.lineTo(gx * G.CELL_SIZE + G.CELL_SIZE / 2, gy * G.CELL_SIZE + G.CELL_SIZE / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  },
+
+  drawPlatformPreview(ctx) {
+    if (G.selectedTool !== 'platform') return;
+    if (!G.platDrag.active) return;
+    if (G.mouseGridX < 0 || G.mouseGridY < 0) return;
+
+    const gx = G.mouseGridX, gy = G.mouseGridY;
+    const dir = G.platDrag.dir || 'h';
+    const cx = gx * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const cy = gy * G.CELL_SIZE + G.CELL_SIZE / 2;
+
+    const station = Station.findStationForGrid(gx, gy);
+    const hasPlat = !!Station.getPlatformAt(gx, gy);
+
+    if (!station || hasPlat || G.platformComponents <= 0) {
+      ctx.fillStyle = 'rgba(232,74,74,0.25)';
+      ctx.strokeStyle = '#E84A4A';
+    } else {
+      ctx.fillStyle = station.color + '40';
+      ctx.strokeStyle = station.color;
+    }
+
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    const hw = dir === 'h' ? G.CELL_SIZE * 0.35 : G.CELL_SIZE * 0.15;
+    const hh = dir === 'h' ? G.CELL_SIZE * 0.15 : G.CELL_SIZE * 0.35;
+    ctx.beginPath();
+    ctx.roundRect(cx - hw, cy - hh, hw * 2, hh * 2, 4);
+    ctx.fill();
     ctx.stroke();
     ctx.setLineDash([]);
   },
@@ -150,12 +210,12 @@ const Renderer = {
     for (const st of G.stations) {
       const cx = st.x * G.CELL_SIZE + G.CELL_SIZE / 2;
       const cy = st.y * G.CELL_SIZE + G.CELL_SIZE / 2;
-      ctx.fillStyle = st.color + '20';
+      ctx.fillStyle = st.color + '15';
       ctx.beginPath();
       ctx.arc(cx, cy, G.CELL_SIZE * 1.5, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = st.color + '80';
+      ctx.strokeStyle = st.color + '60';
       ctx.lineWidth = 2;
       ctx.setLineDash([4, 2]);
       ctx.beginPath();
@@ -166,19 +226,29 @@ const Renderer = {
   },
 
   drawPlatforms(ctx) {
-    for (const [key, stationId] of Object.entries(G.platformMap)) {
-      const [x, y] = key.split(',').map(Number);
-      const station = Station.getStationById(stationId);
-      if (!station) continue;
-      const cx = x * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const cy = y * G.CELL_SIZE + G.CELL_SIZE / 2;
+    for (const plat of G.platforms) {
+      const cx = plat.x * G.CELL_SIZE + G.CELL_SIZE / 2;
+      const cy = plat.y * G.CELL_SIZE + G.CELL_SIZE / 2;
+      const station = Station.getStationById(plat.stationId);
+      const color = station ? station.color : '#999';
 
-      ctx.fillStyle = station.color + '60';
-      ctx.fillRect(cx - G.CELL_SIZE * 0.4, cy - G.CELL_SIZE * 0.4, G.CELL_SIZE * 0.8, G.CELL_SIZE * 0.8);
+      const hw = plat.dir === 'h' ? G.CELL_SIZE * 0.38 : G.CELL_SIZE * 0.18;
+      const hh = plat.dir === 'h' ? G.CELL_SIZE * 0.18 : G.CELL_SIZE * 0.38;
 
-      ctx.strokeStyle = station.color;
+      ctx.fillStyle = color + '55';
+      ctx.fillRect(cx - hw, cy - hh, hw * 2, hh * 2);
+
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2;
-      ctx.strokeRect(cx - G.CELL_SIZE * 0.4, cy - G.CELL_SIZE * 0.4, G.CELL_SIZE * 0.8, G.CELL_SIZE * 0.8);
+      ctx.strokeRect(cx - hw, cy - hh, hw * 2, hh * 2);
+
+      if (!Station.hasTrackConnection(plat)) {
+        ctx.fillStyle = '#E84A4A';
+        ctx.font = `bold ${G.CELL_SIZE * 0.22}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('无轨道', cx, cy + hh + 4);
+      }
     }
   },
 
@@ -188,14 +258,18 @@ const Renderer = {
     const half = G.CELL_SIZE * 1.2;
 
     ctx.fillStyle = '#8B5CF6';
-    ctx.fillRect(cx - half, cy - half, half * 2, half * 2);
+    ctx.beginPath();
+    ctx.roundRect(cx - half, cy - half, half * 2, half * 2, 6);
+    ctx.fill();
 
     ctx.strokeStyle = '#6D3DD6';
     ctx.lineWidth = 3;
-    ctx.strokeRect(cx - half, cy - half, half * 2, half * 2);
+    ctx.beginPath();
+    ctx.roundRect(cx - half, cy - half, half * 2, half * 2, 6);
+    ctx.stroke();
 
     ctx.fillStyle = '#FFF';
-    ctx.font = `${G.CELL_SIZE * 0.5}px sans-serif`;
+    ctx.font = `bold ${G.CELL_SIZE * 0.45}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('段', cx, cy);
@@ -216,8 +290,8 @@ const Renderer = {
       const py = wy1 + (wy2 - wy1) * train.t;
 
       const angle = Math.atan2(wy2 - wy1, wx2 - wx1);
-      const length = train.carCount * G.CELL_SIZE * 0.8;
-      const width = G.CELL_SIZE * 0.5;
+      const length = train.carCount * G.CELL_SIZE * 0.7;
+      const width = G.CELL_SIZE * 0.45;
 
       ctx.save();
       ctx.translate(px, py);
@@ -225,26 +299,14 @@ const Renderer = {
 
       ctx.fillStyle = '#E8734A';
       ctx.beginPath();
-      this.roundRect(ctx, -length / 2, -width / 2, length, width, 6);
+      this.roundRect(ctx, -length / 2, -width / 2, length, width, 5);
       ctx.fill();
 
       ctx.strokeStyle = '#D06040';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      this.roundRect(ctx, -length / 2, -width / 2, length, width, 6);
+      this.roundRect(ctx, -length / 2, -width / 2, length, width, 5);
       ctx.stroke();
-
-      if (train.state === 'docked') {
-        ctx.fillStyle = '#FFF';
-        ctx.font = `${G.CELL_SIZE * 0.3}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        for (let c = 0; c < train.carCount; c++) {
-          const carCX = -length / 2 + length * (c + 0.5) / train.carCount;
-          const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
-          ctx.fillText(Math.min(load, train.carCount * 20).toString(), carCX, 0);
-        }
-      }
 
       ctx.restore();
     }
@@ -272,10 +334,10 @@ const Renderer = {
       const cy = y * G.CELL_SIZE + G.CELL_SIZE / 2;
 
       ctx.fillStyle = '#333';
-      ctx.font = `bold ${G.CELL_SIZE * 0.4}px sans-serif`;
+      ctx.font = `bold ${G.CELL_SIZE * 0.35}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(total.toString(), cx, cy + G.CELL_SIZE * 0.6);
+      ctx.fillText(total.toString(), cx, cy + G.CELL_SIZE * 0.5);
     }
   },
 
@@ -292,29 +354,12 @@ const Renderer = {
       ctx.setLineDash([4, 4]);
       ctx.strokeRect(cx - G.CELL_SIZE * 0.5, cy - G.CELL_SIZE * 0.5, G.CELL_SIZE, G.CELL_SIZE);
       ctx.setLineDash([]);
-    } else if (G.selectedTool === 'platform') {
-      const station = Station.findStationForGrid(gx, gy);
-      if (station && G.connectionMap[Graph.key(gx, gy)]) {
-        ctx.strokeStyle = station.color;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - G.CELL_SIZE * 0.5, cy - G.CELL_SIZE * 0.5, G.CELL_SIZE, G.CELL_SIZE);
-      }
-    }
-
-    if (G.currentTrackNodes.length > 0) {
-      for (const node of G.currentTrackNodes) {
-        ctx.fillStyle = '#E8734A';
-        ctx.beginPath();
-        ctx.arc(node.x * G.CELL_SIZE + G.CELL_SIZE / 2, node.y * G.CELL_SIZE + G.CELL_SIZE / 2, 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
     }
   },
 
   nodeAtScreen(sx, sy) {
     const grid = screenToGrid(sx, sy);
-    const key = Graph.key(grid.x, grid.y);
-    return { x: grid.x, y: grid.y, key };
+    return { x: grid.x, y: grid.y, key: Graph.key(grid.x, grid.y) };
   },
 
   switchAtScreen(sx, sy) {

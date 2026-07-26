@@ -5,16 +5,18 @@ const TICK = 1 / 60;
 function init() {
   const canvas = document.getElementById('game-canvas');
   Renderer.init(canvas);
-  Renderer.resize();
-  Renderer.centerCamera();
 
-  Input.init(canvas);
   Ui.init();
   Ui.updateToolButtons();
   Ui.startBuild();
 
+  Renderer.resize();
+  Renderer.centerCamera();
+
+  Input.init(canvas);
   window.addEventListener('resize', () => {
     Renderer.resize();
+    Renderer.centerCamera();
   });
 
   lastTimestamp = performance.now();
@@ -24,7 +26,6 @@ function init() {
 function gameLoop(ts) {
   let dt = (ts - lastTimestamp) / 1000;
   lastTimestamp = ts;
-
   if (dt > 0.1) dt = 0.1;
 
   accumulator += dt;
@@ -39,24 +40,18 @@ function gameLoop(ts) {
 
 function update(dt) {
   Ui.updateTopBar();
-
-  if (G.phase === 'operate') {
-    updateOperate(dt);
-  }
+  if (G.phase === 'operate') updateOperate(dt);
 }
 
 function updateOperate(dt) {
   if (G.paused) return;
-
   const realDt = dt * G.speedMultiplier;
   G.dayTime -= realDt;
-
   if (G.dayTime <= 0) {
     G.dayTime = 0;
     endDay();
     return;
   }
-
   for (const train of G.activeTrains) {
     Train.update(train, realDt);
   }
@@ -64,15 +59,9 @@ function updateOperate(dt) {
 
 function endDay() {
   G.phase = 'settlement';
-
   for (const train of [...G.activeTrains]) {
     Train.recall(train);
   }
-
-  G.currentTrackNodes = [];
-  G.previewEndX = -1;
-  G.previewEndY = -1;
-
   Ui.showSettlement();
 }
 

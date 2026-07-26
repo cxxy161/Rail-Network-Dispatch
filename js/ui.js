@@ -47,20 +47,6 @@ const Ui = {
       Renderer.centerCamera();
       this.startBuild();
     });
-    document.getElementById('btn-shop-close').addEventListener('click', () => {
-      G.showShop = false;
-      document.getElementById('shop-panel').classList.add('hidden');
-      this.hideOverlay();
-      document.getElementById('btn-reopen-shop').classList.remove('hidden');
-    });
-
-    document.getElementById('btn-reopen-shop').addEventListener('click', () => {
-      G.showShop = true;
-      document.getElementById('shop-panel').classList.remove('hidden');
-      this.showOverlay();
-      document.getElementById('btn-reopen-shop').classList.add('hidden');
-      this.updateShopDisplay();
-    });
 
     for (const btn of document.querySelectorAll('.buy-btn')) {
       btn.addEventListener('click', () => {
@@ -82,6 +68,7 @@ const Ui = {
     document.getElementById('gold-val').textContent = G.gold;
     document.getElementById('delivered-val').textContent = G.passengersDeliveredToday;
     document.getElementById('day-val').textContent = G.dayNumber;
+    document.getElementById('sidebar-gold').textContent = G.gold;
 
     if (G.phase === 'operate') {
       const min = Math.floor(G.dayTime / 60);
@@ -94,8 +81,7 @@ const Ui = {
   },
 
   updatePauseButton() {
-    const btn = document.getElementById('btn-pause');
-    btn.textContent = G.paused ? '继续' : '暂停';
+    document.getElementById('btn-pause').textContent = G.paused ? '继续' : '暂停';
   },
 
   updateSpeedButtons() {
@@ -114,24 +100,25 @@ const Ui = {
 
   startBuild() {
     G.phase = 'build';
-    G.showShop = true;
     G.passengersDeliveredToday = 0;
     G.paused = false;
 
+    G.trackDrag.active = false;
+    G.trackDrag.lastGX = -1;
+    G.trackDrag.lastGY = -1;
+    G.platDrag.active = false;
+    G.platDrag.dir = null;
+
     this.updateTopBar();
-    document.getElementById('shop-panel').classList.remove('hidden');
-    document.getElementById('btn-reopen-shop').classList.add('hidden');
     document.getElementById('dispatch-panel').classList.add('hidden');
     document.getElementById('settlement-panel').classList.add('hidden');
     document.getElementById('gameover-panel').classList.add('hidden');
-    this.showOverlay();
+    this.hideOverlay();
     this.updateShopDisplay();
   },
 
   startDay() {
     G.phase = 'dispatch';
-    document.getElementById('shop-panel').classList.add('hidden');
-
     G.dispatchDecisions = {};
     this.showDispatchPanel();
     this.updateTopBar();
@@ -163,6 +150,7 @@ const Ui = {
     }
 
     document.getElementById('dispatch-panel').classList.remove('hidden');
+    this.showOverlay();
   },
 
   confirmDispatch() {
@@ -170,10 +158,8 @@ const Ui = {
       if (G.dispatchDecisions[train.id]) {
         const idx = G.depotTrains.indexOf(train);
         if (idx >= 0) G.depotTrains.splice(idx, 1);
-        if (Train.dispatch(train)) {
-          // dispatched
-        } else {
-          Ui.flashMessage('车辆段未连接到铁路网！');
+        if (!Train.dispatch(train)) {
+          this.flashMessage('车辆段未连接到铁路网！');
           return;
         }
       }
@@ -183,17 +169,13 @@ const Ui = {
     G.dayTime = 300;
     G.paused = false;
     G.speedMultiplier = 1;
-    G.currentTrackNodes = [];
-    G.previewEndX = -1;
-    G.previewEndY = -1;
     this.updatePauseButton();
     this.updateSpeedButtons();
     this.updateTopBar();
     this.hideOverlay();
 
-    if (Object.keys(G.platformMap).length > 0) {
-      Station.generatePassengers();
-    }
+    Station.refreshAllConnections();
+    Station.generatePassengers();
   },
 
   nextCycle() {
@@ -223,7 +205,6 @@ const Ui = {
 
     document.getElementById('settlement-panel').classList.remove('hidden');
     document.getElementById('dispatch-panel').classList.add('hidden');
-    document.getElementById('shop-panel').classList.add('hidden');
     this.showOverlay();
     this.updateTopBar();
   },

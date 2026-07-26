@@ -13,7 +13,7 @@
   <span id="delivered-label">今日: <strong id="delivered-val">0</strong> 人</span>
   <span id="day-label">周期: <strong id="day-val">1</strong></span>
   <div id="time-control">
-    <span id="time-display">⏱ 05:00</span>
+    <span id="time-display">⏱ --:--</span>
     <button id="time-dropdown-btn">▾</button>
     <div id="time-dropdown" class="hidden">
       <button id="btn-pause">暂停</button>
@@ -26,39 +26,47 @@
   </div>
 </div>
 
-<canvas id="game-canvas"></canvas>
+<div id="main-area">
+  <div id="sidebar">
+    <div id="shop-panel">
+      <h3>商店</h3>
+      <div class="shop-row">
+        <span>轨道碎片</span>
+        <span class="shop-val"><strong id="res-track">30</strong></span>
+        <button class="buy-btn" data-resource="trackFragment">+10g</button>
+      </div>
+      <div class="shop-row">
+        <span>站台组件</span>
+        <span class="shop-val"><strong id="res-platform">5</strong></span>
+        <button class="buy-btn" data-resource="platformComponent">+30g</button>
+      </div>
+      <div class="shop-row">
+        <span>车厢库存</span>
+        <span class="shop-val"><strong id="res-wagon">4</strong></span>
+        <button class="buy-btn" data-resource="wagon">+50g</button>
+      </div>
+      <div class="shop-row">
+        <span>当前资金</span>
+        <span class="shop-val"><strong id="sidebar-gold">500</strong>g</span>
+      </div>
+      <button id="btn-start-day" class="primary-btn">开始运营 ▸</button>
+    </div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+</div>
 
 <div id="bottom-bar">
   <button id="tool-track" class="tool-btn active">铺轨</button>
   <button id="tool-platform" class="tool-btn">站台</button>
   <button id="tool-eraser" class="tool-btn">拆除</button>
-  <button id="btn-reopen-shop" class="tool-btn">商店</button>
 </div>
 
 <div id="overlay" class="overlay hidden">
-  <div id="shop-panel" class="panel">
-    <h2>商店</h2>
-    <div class="shop-row">
-      <span>轨道碎片: <strong id="res-track">30</strong></span>
-      <button class="buy-btn" data-resource="trackFragment">购买 (10g)</button>
-    </div>
-    <div class="shop-row">
-      <span>站台组件: <strong id="res-platform">5</strong></span>
-      <button class="buy-btn" data-resource="platformComponent">购买 (30g)</button>
-    </div>
-    <div class="shop-row">
-      <span>车厢库存: <strong id="res-wagon">4</strong></span>
-      <button class="buy-btn" data-resource="wagon">购买 (50g)</button>
-    </div>
-    <br>
-    <button id="btn-start-day">开始运营 ▸</button>
-    <button id="btn-shop-close" class="close-btn">收起</button>
-  </div>
-
   <div id="dispatch-panel" class="panel hidden">
     <h2>车辆段 · 发车</h2>
     <div id="depot-train-list"></div>
-    <button id="btn-dispatch-confirm">确认 ▸</button>
+    <button id="btn-dispatch-confirm" class="primary-btn">确认 ▸</button>
   </div>
 
   <div id="settlement-panel" class="panel hidden">
@@ -68,14 +76,14 @@
     <p>维护费: <strong id="settle-maintenance">30</strong> 金</p>
     <hr>
     <p>当前资金: <strong id="settle-gold">500</strong> 金</p>
-    <button id="btn-settle-continue">下一周期 ▸</button>
+    <button id="btn-settle-continue" class="primary-btn">下一周期 ▸</button>
   </div>
 
   <div id="gameover-panel" class="panel hidden">
     <h2>破产！</h2>
     <p>总运送: <strong id="gameover-total">0</strong> 人</p>
     <p>存活周期: <strong id="gameover-days">1</strong></p>
-    <button id="btn-restart">重新开始</button>
+    <button id="btn-restart" class="primary-btn secondary">重新开始</button>
   </div>
 </div>
 

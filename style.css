@@ -10,7 +10,6 @@ body {
   user-select: none;
 }
 
-/* ─── top bar ─── */
 #top-bar {
   display: flex;
   align-items: center;
@@ -61,19 +60,86 @@ body {
 }
 #time-dropdown button:hover { background: #F5F0E8; }
 .speed-btns { display: flex; border-top: 1px solid #EEE; margin-top: 4px; padding-top: 4px; }
-.speed-btn {
-  flex: 1; text-align: center; padding: 4px 8px; font-size: 12px;
-}
+.speed-btn { flex: 1; text-align: center; padding: 4px 8px; font-size: 12px; }
 .active-speed { color: #E8734A; font-weight: bold; }
 
-/* ─── canvas ─── */
-#game-canvas {
+#main-area {
+  display: flex;
   flex: 1;
-  display: block;
-  cursor: crosshair;
+  overflow: hidden;
+  position: relative;
 }
 
-/* ─── bottom bar ─── */
+#sidebar {
+  width: 180px;
+  background: #F5F0E8;
+  border-right: 1px solid #D8D0C0;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+#shop-panel h3 {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E0D8C8;
+}
+
+.shop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 6px 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.shop-row > span:first-child { width: 56px; flex-shrink: 0; }
+.shop-val { min-width: 24px; text-align: right; }
+.shop-val strong { color: #333; }
+
+.buy-btn {
+  padding: 2px 8px;
+  border: 1px solid #50B86C;
+  border-radius: 3px;
+  background: #FFF;
+  color: #50B86C;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.buy-btn:hover { background: #F0FFF4; }
+.buy-btn:disabled { opacity: 0.3; cursor: default; }
+
+.primary-btn {
+  margin-top: 16px;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #E8734A;
+  color: #FFF;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+.primary-btn:hover { background: #D06040; }
+.primary-btn.secondary { background: #555; }
+.primary-btn.secondary:hover { background: #444; }
+
+#game-canvas {
+  display: block;
+  cursor: crosshair;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
 #bottom-bar {
   display: flex;
   align-items: center;
@@ -95,19 +161,9 @@ body {
 }
 .tool-btn:hover { border-color: #bbb; }
 .tool-btn.active { background: #555; color: #FFF; border-color: #555; }
-#btn-reopen-shop {
-  padding: 6px 16px;
-  border: 1px solid #D8D0C0;
-  border-radius: 4px;
-  background: #FFF;
-  cursor: pointer;
-  font-size: 13px;
-  color: #555;
-}
-#btn-reopen-shop:hover { background: #F5F0E8; }
 
-/* ─── overlay & panels ─── */
 .hidden { display: none !important; }
+
 .overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -129,64 +185,6 @@ body {
 .panel strong { color: #333; }
 .panel hr { border: none; border-top: 1px solid #EEE; margin: 8px 0; }
 
-.shop-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 6px 0;
-  font-size: 13px;
-}
-.shop-row span { color: #555; }
-.buy-btn {
-  padding: 4px 12px;
-  border: 1px solid #50B86C;
-  border-radius: 4px;
-  background: #FFF;
-  color: #50B86C;
-  cursor: pointer;
-  font-size: 12px;
-}
-.buy-btn:hover { background: #F0FFF4; }
-.buy-btn:disabled { opacity: 0.4; cursor: default; }
-
-.close-btn {
-  padding: 4px 12px;
-  border: 1px solid #D8D0C0;
-  border-radius: 4px;
-  background: #FFF;
-  cursor: pointer;
-  font-size: 12px;
-  color: #888;
-  margin-left: 8px;
-}
-
-#btn-start-day, #btn-dispatch-confirm, #btn-settle-continue {
-  margin-top: 12px;
-  padding: 8px 24px;
-  border: none;
-  border-radius: 4px;
-  background: #E8734A;
-  color: #FFF;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-}
-#btn-start-day:hover, #btn-dispatch-confirm:hover, #btn-settle-continue:hover {
-  background: #D06040;
-}
-
-#btn-restart {
-  margin-top: 12px;
-  padding: 8px 24px;
-  border: none;
-  border-radius: 4px;
-  background: #555;
-  color: #FFF;
-  cursor: pointer;
-  font-size: 14px;
-}
-#btn-restart:hover { background: #444; }
-
 .depot-train-item {
   display: flex;
   align-items: center;
@@ -194,15 +192,6 @@ body {
   padding: 6px 0;
   font-size: 13px;
   border-bottom: 1px solid #EEE;
+  cursor: pointer;
 }
 .depot-train-item span { color: #555; }
-.depot-btn {
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  border: none;
-  margin-left: 4px;
-}
-.depot-btn.dispatch { background: #E8734A; color: #FFF; }
-.depot-btn.layup { background: #EEE; color: #888; }
