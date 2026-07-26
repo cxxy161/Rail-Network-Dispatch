@@ -41,6 +41,11 @@ const Ui = {
 
     document.getElementById('btn-start-day').addEventListener('click', () => this.startDay());
     document.getElementById('btn-dispatch-confirm').addEventListener('click', () => this.confirmDispatch());
+    document.getElementById('btn-dispatch-back').addEventListener('click', () => {
+      document.getElementById('dispatch-panel').classList.add('hidden');
+      this.hideOverlay();
+      this.startBuild();
+    });
     document.getElementById('btn-settle-continue').addEventListener('click', () => this.nextCycle());
     document.getElementById('btn-restart').addEventListener('click', () => {
       resetGame();
@@ -159,7 +164,22 @@ const Ui = {
 
   confirmDispatch() {
     const depotKey = Graph.key(G.depotX, G.depotY);
-    if (Graph.getDegree(depotKey) === 0) {
+    let depotConnected = false;
+    const depotCells = [
+      { x: G.depotX - 1, y: G.depotY - 1 },
+      { x: G.depotX,     y: G.depotY - 1 },
+      { x: G.depotX - 1, y: G.depotY },
+      { x: G.depotX,     y: G.depotY },
+    ];
+    for (const cell of depotCells) {
+      const key = Graph.key(cell.x, cell.y);
+      if (Graph.getDegree(key) > 0) {
+        Graph.addEdge(depotKey, key);
+        depotConnected = true;
+        break;
+      }
+    }
+    if (!depotConnected) {
       this.flashMessage('车辆段未连接到铁路网！');
       return;
     }

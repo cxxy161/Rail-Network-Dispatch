@@ -195,3 +195,17 @@ body {
   cursor: pointer;
 }
 .depot-train-item span { color: #555; }
+
+.back-btn {
+  display: block;
+  margin-top: 8px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+  width: 100%;
+}
+.back-btn:hover { color: #555; }

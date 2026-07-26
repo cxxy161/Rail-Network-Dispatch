@@ -90,18 +90,27 @@ const Renderer = {
   drawStationGroups(ctx) {
     const groups = Station.getStationGroups();
     for (const [sid, grp] of Object.entries(groups)) {
+      if (grp.platforms.length === 0) continue;
       const b = grp.bounds;
-      if (!b) continue;
-      const pad = 12;
+      const pad = 4;
+      const cs = G.CELL_SIZE;
 
-      ctx.strokeStyle = grp.color + '55';
+      ctx.fillStyle = '#E8E0D5';
+      ctx.beginPath();
+      for (const plat of grp.platforms) {
+        const x = plat.x * cs + cs / 2 - cs * 0.45;
+        const y = plat.y * cs + cs / 2 - cs * 0.45;
+        ctx.rect(x, y, cs * 0.9, cs * 0.9);
+      }
+      ctx.fill();
+
+      ctx.strokeStyle = grp.color + '88';
       ctx.lineWidth = 3;
-      ctx.setLineDash([]);
       ctx.strokeRect(
-        b.minX * G.CELL_SIZE + G.CELL_SIZE / 2 - pad,
-        b.minY * G.CELL_SIZE + G.CELL_SIZE / 2 - pad,
-        (b.maxX - b.minX) * G.CELL_SIZE + pad * 2,
-        (b.maxY - b.minY) * G.CELL_SIZE + pad * 2
+        b.minX * cs + cs / 2 - pad,
+        b.minY * cs + cs / 2 - pad,
+        (b.maxX - b.minX) * cs + pad * 2,
+        (b.maxY - b.minY) * cs + pad * 2
       );
     }
   },
@@ -228,49 +237,33 @@ const Renderer = {
 
   drawPlatforms(ctx) {
     for (const plat of G.platforms) {
+      if (Station.hasTrackConnection(plat)) continue;
       const cx = plat.x * G.CELL_SIZE + G.CELL_SIZE / 2;
       const cy = plat.y * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const station = Station.getStationById(plat.stationId);
-      const color = station ? station.color : '#999';
-
-      const hw = plat.dir === 'h' ? G.CELL_SIZE * 0.38 : G.CELL_SIZE * 0.18;
-      const hh = plat.dir === 'h' ? G.CELL_SIZE * 0.18 : G.CELL_SIZE * 0.38;
-
-      ctx.fillStyle = '#E8E0D5';
-      ctx.fillRect(cx - hw, cy - hh, hw * 2, hh * 2);
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cx - hw, cy - hh, hw * 2, hh * 2);
-
-      if (!Station.hasTrackConnection(plat)) {
-        ctx.fillStyle = '#E84A4A';
-        ctx.font = `bold ${G.CELL_SIZE * 0.22}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText('无轨道', cx, cy + hh + 4);
-      }
+      ctx.fillStyle = '#E84A4A';
+      ctx.font = `bold ${G.CELL_SIZE * 0.22}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('无轨道', cx, cy + G.CELL_SIZE * 0.3);
     }
   },
 
   drawDepot(ctx) {
-    const cx = G.depotX * G.CELL_SIZE + G.CELL_SIZE / 2;
-    const cy = G.depotY * G.CELL_SIZE + G.CELL_SIZE / 2;
-    const half = G.CELL_SIZE * 1.2;
+    const cs = G.CELL_SIZE;
+    const x0 = (G.depotX - 1) * cs, y0 = (G.depotY - 1) * cs;
+    const x1 = (G.depotX + 1) * cs, y1 = (G.depotY + 1) * cs;
 
     ctx.fillStyle = '#8B5CF6';
-    ctx.beginPath();
-    ctx.roundRect(cx - half, cy - half, half * 2, half * 2, 6);
-    ctx.fill();
+    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 
     ctx.strokeStyle = '#6D3DD6';
     ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.roundRect(cx - half, cy - half, half * 2, half * 2, 6);
-    ctx.stroke();
+    ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
 
+    const cx = x0 + (x1 - x0) / 2;
+    const cy = y0 + (y1 - y0) / 2;
     ctx.fillStyle = '#FFF';
-    ctx.font = `bold ${G.CELL_SIZE * 0.45}px sans-serif`;
+    ctx.font = `bold ${cs * 0.4}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('段', cx, cy);
