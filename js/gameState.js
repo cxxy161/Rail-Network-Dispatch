@@ -70,6 +70,9 @@ const G = {
   eraserDragging: false,
   eraserLastGX: -1,
   eraserLastGY: -1,
+
+  popup: null,
+  operateSubTool: null,
 };
 
 function resetGame() {
@@ -106,6 +109,8 @@ function resetGame() {
   G.eraserDragging = false;
   G.eraserLastGX = -1;
   G.eraserLastGY = -1;
+  G.popup = null;
+  G.operateSubTool = null;
 }
 
 function worldToScreen(wx, wy) {
@@ -130,4 +135,12 @@ function clampGrid(gx, gy) {
     x: Math.max(0, Math.min(G.GRID_W - 1, gx)),
     y: Math.max(0, Math.min(G.GRID_H - 1, gy)),
   };
+}
+
+function dayTimeToClock() {
+  const progress = 1 - (G.dayTime / 300);
+  const totalMin = 6 * 60 + progress * 18 * 60;
+  const h = Math.floor(totalMin / 60);
+  const m = Math.floor(totalMin % 60);
+  return { h, m };
 }

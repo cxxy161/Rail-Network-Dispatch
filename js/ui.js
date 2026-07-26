@@ -6,6 +6,17 @@ const Ui = {
     document.getElementById('tool-platform').addEventListener('click', () => Input.switchTool('platform'));
     document.getElementById('tool-eraser').addEventListener('click', () => Input.switchTool('eraser'));
 
+    document.getElementById('btn-operate-stop').addEventListener('click', () => {
+      G.operateSubTool = G.operateSubTool === 'stop' ? null : 'stop';
+      G.popup = null;
+      this.updateOperateToolButtons();
+    });
+    document.getElementById('btn-operate-reverse').addEventListener('click', () => {
+      G.operateSubTool = G.operateSubTool === 'reverse' ? null : 'reverse';
+      G.popup = null;
+      this.updateOperateToolButtons();
+    });
+
     document.getElementById('time-dropdown-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       const dd = document.getElementById('time-dropdown');
@@ -69,6 +80,13 @@ const Ui = {
     document.getElementById('tool-eraser').classList.toggle('active', G.selectedTool === 'eraser');
   },
 
+  updateOperateToolButtons() {
+    const stopBtn = document.getElementById('btn-operate-stop');
+    const revBtn = document.getElementById('btn-operate-reverse');
+    if (stopBtn) stopBtn.classList.toggle('active', G.operateSubTool === 'stop');
+    if (revBtn) revBtn.classList.toggle('active', G.operateSubTool === 'reverse');
+  },
+
   updateTopBar() {
     document.getElementById('gold-val').textContent = G.gold;
     document.getElementById('delivered-val').textContent = G.passengersDeliveredToday;
@@ -76,10 +94,9 @@ const Ui = {
     document.getElementById('sidebar-gold').textContent = G.gold;
 
     if (G.phase === 'operate') {
-      const min = Math.floor(G.dayTime / 60);
-      const sec = Math.floor(G.dayTime % 60);
+      const clk = dayTimeToClock();
       document.getElementById('time-display').textContent =
-        '⏱ ' + String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+        '⏱ ' + String(clk.h).padStart(2, '0') + ':' + String(clk.m).padStart(2, '0');
     } else {
       document.getElementById('time-display').textContent = '⏱ --:--';
     }
@@ -119,7 +136,8 @@ const Ui = {
     document.getElementById('settlement-panel').classList.add('hidden');
     document.getElementById('gameover-panel').classList.add('hidden');
     document.getElementById('operate-tools').classList.add('hidden');
-    document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('hidden'));
+    document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn.build-only').forEach(b => b.classList.remove('hidden'));
+    G.operateSubTool = null;
     this.hideOverlay();
     this.updateShopDisplay();
     this.updateTopBar();
@@ -202,8 +220,10 @@ const Ui = {
     this.hideOverlay();
 
     document.getElementById('sidebar').classList.add('hidden');
-    document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn').forEach(b => b.classList.add('hidden'));
+    document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn.build-only').forEach(b => b.classList.add('hidden'));
     document.getElementById('operate-tools').classList.remove('hidden');
+    G.operateSubTool = null;
+    Ui.updateOperateToolButtons();
     Input.switchTool('track');
     Renderer.resize();
 

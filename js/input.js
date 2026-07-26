@@ -304,14 +304,74 @@ const Input = {
   operateClick(grid) {
     const clamped = clampGrid(grid.x, grid.y);
     const key = Graph.key(clamped.x, clamped.y);
+    const cw = clamped.x * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const ch = clamped.y * G.CELL_SIZE + G.CELL_SIZE / 2;
 
-    if (G.activeSwitches[key] !== undefined) {
-      Graph.cycleSwitch(key);
+    if (G.operateSubTool === 'stop') {
+      const train = this.findTrainAt(clamped.x, clamped.y);
+      if (train) {
+        if (train.state === 'moving') {
+          train.state = 'stopped';
+        } else if (train.state === 'stopped') {
+          train.state = 'moving';
+          train.speed = 0;
+        }
+      }
       return;
     }
 
-    const cw = clamped.x * G.CELL_SIZE + G.CELL_SIZE / 2;
-    const ch = clamped.y * G.CELL_SIZE + G.CELL_SIZE / 2;
+    if (G.operateSubTool === 'reverse') {
+      const train = this.findTrainAt(clamped.x, clamped.y);
+      if (train) {
+        Train.reverseTrain(train);
+      }
+      return;
+    }
+
+    if (G.activeSwitches[key] !== undefined) {
+      Graph.cycleSwitch(key);
+      G.popup = null;
+      return;
+    }
+
+    const train = this.findTrainAt(clamped.x, clamped.y);
+    if (train) {
+      const load = Object.values(train.passengers).reduce((a,b)=>a+b,0);
+      const lines = [
+        `列车 #${train.id}  (${train.carCount}节)`,
+        `载客: ${load} / ${Train.maxLoad(train)}`,
+      ];
+      for (const [dest, cnt] of Object.entries(train.passengers)) {
+        if (cnt > 0) lines.push(`  → ${dest}站: ${cnt}人`);
+      }
+      G.popup = { worldX: cw, worldY: ch, lines };
+      return;
+    }
+
+    const plat = Station.getPlatformAdjacent(clamped.x, clamped.y);
+    if (plat) {
+      const sid = plat.stationId;
+      const queue = G.stationQueues[sid] || {};
+      const total = Object.values(queue).reduce((a,b)=>a+b,0);
+      const lines = [`${sid}站  待乘: ${total}`];
+      for (const [dest, cnt] of Object.entries(queue)) {
+        if (cnt > 0) lines.push(`  → ${dest}站: ${cnt}人`);
+      }
+      const st = Station.getStationById(sid);
+      if (st) {
+        G.popup = { worldX: st.x * G.CELL_SIZE + G.CELL_SIZE / 2, worldY: st.y * G.CELL_SIZE + G.CELL_SIZE / 2, lines };
+      } else {
+        G.popup = { worldX: cw, worldY: ch, lines };
+      }
+      return;
+    }
+
+    G.popup = null;
+  },
+
+  findTrainAt(gx, gy) {
+    const cw = gx * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const ch = gy * G.CELL_SIZE + G.CELL_SIZE / 2;
     for (const train of G.activeTrains) {
       if (!train.fromKey || !train.toKey) continue;
       const [x1, y1] = train.fromKey.split(',').map(Number);
@@ -322,15 +382,9 @@ const Input = {
       const wy2 = y2 * G.CELL_SIZE + G.CELL_SIZE / 2;
       const px = wx1 + (wx2 - wx1) * train.t;
       const py = wy1 + (wy2 - wy1) * train.t;
-      if (Math.hypot(cw - px, ch - py) < G.CELL_SIZE) {
-        if (train.state === 'moving') {
-          train.state = 'stopped'; Ui.flashMessage('列车已停车');
-        } else if (train.state === 'stopped') {
-          train.state = 'moving'; Ui.flashMessage('列车已启动');
-        }
-        return;
-      }
+      if (Math.hypot(cw - px, ch - py) < G.CELL_SIZE) return train;
     }
+    return null;
   },
 
   // ── Mouse move ──

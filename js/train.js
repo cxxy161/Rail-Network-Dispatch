@@ -1,5 +1,7 @@
 const Train = {
   SPEED: 0.5,
+  ACCEL: 0.4,
+  DECEL: 0.6,
 
   edgeDistance(k1, k2) {
     const [x1, y1] = k1.split(',').map(Number);
@@ -26,6 +28,7 @@ const Train = {
       state: 'in_depot',
       dockedTimer: 0,
       passengers: {},
+      lastDockedStationId: null,
     };
   },
 
@@ -41,6 +44,7 @@ const Train = {
     train.state = 'moving';
     train.dockedTimer = 0;
     train.passengers = {};
+    train.lastDockedStationId = null;
     G.activeTrains.push(train);
     return true;
   },
@@ -68,9 +72,27 @@ const Train = {
 
     if (train.state !== 'moving') return;
 
-    train.speed = this.SPEED;
-
     const dist = this.edgeDistance(train.fromKey, train.toKey);
+    const travelLeft = (1 - train.t) * dist;
+
+    let shouldSlow = false;
+    if (train.t < 0.7) {
+      const nextKey = train.toKey;
+      const nextNeighbors = Graph.getNeighbors(nextKey);
+      const exits = nextNeighbors.filter(nk => nk !== train.fromKey);
+      if (exits.length === 0) shouldSlow = true;
+      else if (this.isPlatformNode(nextKey)) {
+        const plat = Station.platformAtKey(nextKey);
+        if (plat && plat.stationId !== train.lastDockedStationId) shouldSlow = true;
+      }
+    }
+
+    if (shouldSlow && travelLeft < 1.5) {
+      train.speed = Math.max(0.05, train.speed - this.DECEL * dt);
+    } else {
+      train.speed = Math.min(this.SPEED, train.speed + this.ACCEL * dt);
+    }
+
     train.t += (train.speed * dt) / dist;
 
     if (train.t >= 1) {
@@ -99,26 +121,51 @@ const Train = {
       if (!nextKey || !exits.includes(nextKey)) nextKey = exits[0];
     }
 
-    if (this.isPlatformNode(nodeKey)) {
+    const plat = Station.platformAtKey(nodeKey);
+    const stationId = plat ? plat.stationId : null;
+
+    if (plat && stationId !== train.lastDockedStationId) {
       train.fromKey = nodeKey;
       train.toKey = nextKey || fromKey;
       train.dockedTimer = 3;
       train.t = 0;
       train.speed = 0;
       train.state = 'docked';
+      train.lastDockedStationId = stationId;
 
       const alighted = Station.alightPassengers(train, nodeKey);
       G.passengersDeliveredToday += alighted;
       G.totalPassengersDelivered += alighted;
       this.boardAtStation(train, nodeKey);
+    } else if (plat && stationId === train.lastDockedStationId) {
+      train.lastDockedStationId = null;
+      if (nextKey) {
+        train.fromKey = nodeKey;
+        train.toKey = nextKey;
+        train.t = 0;
+        train.speed = 0;
+      } else {
+        this.reverseTrain(train);
+      }
     } else if (nextKey) {
+      train.lastDockedStationId = null;
       train.fromKey = nodeKey;
       train.toKey = nextKey;
       train.t = 0;
       train.speed = 0;
     } else {
-      train.state = 'stopped';
+      this.reverseTrain(train);
     }
+  },
+
+  reverseTrain(train) {
+    train.lastDockedStationId = null;
+    const tmp = train.fromKey;
+    train.fromKey = train.toKey;
+    train.toKey = tmp;
+    train.t = 0;
+    train.speed = 0;
+    train.state = 'moving';
   },
 
   boardAtStation(train, nodeKey) {

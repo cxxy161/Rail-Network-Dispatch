@@ -57,6 +57,7 @@ const Renderer = {
     this.drawCursorHighlight(ctx);
 
     ctx.restore();
+    this.drawPopup(ctx);
   },
 
   drawGrid(ctx) {
@@ -92,26 +93,46 @@ const Renderer = {
     for (const [sid, grp] of Object.entries(groups)) {
       if (grp.platforms.length === 0) continue;
       const b = grp.bounds;
-      const pad = 4;
       const cs = G.CELL_SIZE;
 
-      ctx.fillStyle = '#E8E0D5';
-      ctx.beginPath();
+      ctx.fillStyle = '#C8BFA8';
       for (const plat of grp.platforms) {
-        const x = plat.x * cs + cs / 2 - cs * 0.45;
-        const y = plat.y * cs + cs / 2 - cs * 0.45;
-        ctx.rect(x, y, cs * 0.9, cs * 0.9);
-      }
-      ctx.fill();
+        const cx = plat.x * cs + cs / 2;
+        const cy = plat.y * cs + cs / 2;
+        const hw = cs * 0.45;
+        const hh = cs * 0.45;
+        ctx.fillRect(cx - hw, cy - hh, hw * 2, hh * 2);
 
-      ctx.strokeStyle = grp.color + '88';
+        ctx.strokeStyle = grp.color + '30';
+        ctx.lineWidth = 0.8;
+        if (plat.dir === 'h') {
+          ctx.beginPath();
+          ctx.moveTo(cx - hw, cy);
+          ctx.lineTo(cx + hw, cy);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - hh);
+          ctx.lineTo(cx, cy + hh);
+          ctx.stroke();
+        }
+      }
+
+      const pad = 6;
+      const x0 = b.minX * cs + cs / 2 - pad;
+      const y0 = b.minY * cs + cs / 2 - pad;
+      const w0 = (b.maxX - b.minX) * cs + pad * 2;
+      const h0 = (b.maxY - b.minY) * cs + pad * 2;
+      const corner = 10;
+
+      ctx.strokeStyle = grp.color + '66';
       ctx.lineWidth = 3;
-      ctx.strokeRect(
-        b.minX * cs + cs / 2 - pad,
-        b.minY * cs + cs / 2 - pad,
-        (b.maxX - b.minX) * cs + pad * 2,
-        (b.maxY - b.minY) * cs + pad * 2
-      );
+      ctx.beginPath();
+      ctx.moveTo(x0 + corner, y0); ctx.lineTo(x0 + w0 - corner, y0);
+      ctx.moveTo(x0, y0 + corner); ctx.lineTo(x0, y0 + h0 - corner);
+      ctx.moveTo(x0 + w0, y0 + corner); ctx.lineTo(x0 + w0, y0 + h0 - corner);
+      ctx.moveTo(x0 + corner, y0 + h0); ctx.lineTo(x0 + w0 - corner, y0 + h0);
+      ctx.stroke();
     }
   },
 
@@ -302,7 +323,53 @@ const Renderer = {
       this.roundRect(ctx, -length / 2, -width / 2, length, width, 5);
       ctx.stroke();
 
+      const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+      const max = Train.maxLoad(train);
+      ctx.fillStyle = '#FFF';
+      ctx.font = `bold ${G.CELL_SIZE * 0.24}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(load + '/' + max, 0, 1);
+
       ctx.restore();
+    }
+  },
+
+  drawPopup(ctx) {
+    if (!G.popup) return;
+    const pop = G.popup;
+    const invZ = 1 / G.zoom;
+    const screenW = this.canvas.width;
+    const screenH = this.canvas.height;
+
+    let px, py;
+    if (pop.worldX !== undefined) {
+      const s = worldToScreen(pop.worldX, pop.worldY);
+      px = s.x; py = s.y;
+    } else {
+      px = G.mouseGridX * G.CELL_SIZE * G.zoom + G.offsetX + G.CELL_SIZE * G.zoom;
+      py = G.mouseGridY * G.CELL_SIZE * G.zoom + G.offsetY;
+    }
+    py += 24;
+
+    const pad = 10;
+    const lineH = 18;
+    const lines = pop.lines.length;
+    const maxW = Math.max(...pop.lines.map(l => ctx.measureText(l).width));
+    const w = maxW + pad * 2;
+    const h = lines * lineH + pad * 2;
+
+    ctx.fillStyle = 'rgba(40,40,40,0.92)';
+    ctx.beginPath();
+    ctx.roundRect(px, py, w, h, 6);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFF';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(pop.lines[i], px + pad, py + pad + lineH * i + lineH / 2);
     }
   },
 
