@@ -58,6 +58,13 @@ const Input = {
       G.platformComponents--;
       return true;
     }
+    if (action.type === 'remove_platforms') {
+      for (const item of action.items) {
+        G.platforms.push(item.platform);
+        G.platformComponents--;
+      }
+      return true;
+    }
     if (action.type === 'batch') {
       for (let i = action.items.length - 1; i >= 0; i--) {
         this.undoItem(action.items[i]);
@@ -183,34 +190,70 @@ const Input = {
     G.platDrag.active = true;
     G.platDrag.startX = gx;
     G.platDrag.startY = gy;
+    G.platDrag.lastGX = gx;
+    G.platDrag.lastGY = gy;
     G.platDrag.dir = null;
+    G.platDrag.locked = false;
   },
 
   platformDragTo(startGX, startGY, gx, gy) {
     if (!G.platDrag.active) return;
-    const dx = gx - startGX;
-    const dy = gy - startGY;
-    if (dx !== 0 || dy !== 0) {
-      G.platDrag.dir = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v';
+
+    const dx = Math.abs(gx - startGX);
+    const dy = Math.abs(gy - startGY);
+
+    if (!G.platDrag.locked && (dx > 0 || dy > 0)) {
+      G.platDrag.dir = dx >= dy ? 'h' : 'v';
+      G.platDrag.locked = true;
+    }
+    if (!G.platDrag.dir) return;
+
+    let lgx = G.platDrag.lastGX;
+    let lgy = G.platDrag.lastGY;
+
+    while (true) {
+      if (G.platDrag.dir === 'h' && lgx === gx) break;
+      if (G.platDrag.dir === 'v' && lgy === gy) break;
+
+      const sx = Math.sign(gx - lgx);
+      const sy = Math.sign(gy - lgy);
+
+      const nx = G.platDrag.dir === 'h' ? lgx + sx : startGX;
+      const ny = G.platDrag.dir === 'v' ? lgy + sy : startGY;
+
+      if ((G.platDrag.dir === 'h' && sx === 0) || (G.platDrag.dir === 'v' && sy === 0)) break;
+
+      if (G.platformComponents <= 0) {
+        G.platDrag.active = false;
+        Ui.flashMessage('站台组件不足！');
+        break;
+      }
+
+      const result = Station.addPlatform(nx, ny, G.platDrag.dir);
+      if (typeof result === 'string') break;
+      if (result) this.dragBatchPlats.push({ type: 'add_platform', platform: result });
+
+      G.platDrag.lastGX = nx;
+      G.platDrag.lastGY = ny;
+      lgx = nx;
+      lgy = ny;
     }
   },
 
   platformUp(gx, gy) {
     G.platDrag.active = false;
-    const dir = G.platDrag.dir;
     G.platDrag.dir = null;
-    if (!dir) return;
+    G.platDrag.locked = false;
+    G.platDrag.lastGX = -1;
+    G.platDrag.lastGY = -1;
 
-    const result = Station.addPlatform(gx, gy, dir);
-    if (typeof result === 'string') {
-      if (result === 'err_not_in_area')
-        Ui.flashMessage('站台必须在站点区域内（圆形虚线范围）');
-      else if (result === 'err_dup')
-        Ui.flashMessage('此格已有站台');
-      else if (result === 'err_no_comp')
-        Ui.flashMessage('站台组件不足！');
-    } else if (result) {
-      this.pushUndo({ type: 'add_platform' });
+    if (this.dragBatchPlats.length > 0) {
+      const plats = [...this.dragBatchPlats];
+      this.dragBatchPlats = [];
+      this.pushUndo({
+        type: 'remove_platforms',
+        items: plats,
+      });
     }
   },
 

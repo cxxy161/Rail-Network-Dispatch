@@ -16,12 +16,9 @@ const Station = {
   },
 
   getPlatformAdjacent(gx, gy) {
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
-        if (dx === 0 && dy === 0) continue;
-        const p = this.getPlatformAt(gx + dx, gy + dy);
-        if (p) return p;
-      }
+    for (const plat of G.platforms) {
+      if (plat.dir === 'h' && plat.y === gy && (plat.x === gx + 1 || plat.x === gx - 1)) return plat;
+      if (plat.dir === 'v' && plat.x === gx && (plat.y === gy + 1 || plat.y === gy - 1)) return plat;
     }
     return null;
   },
@@ -51,12 +48,17 @@ const Station = {
   },
 
   hasTrackConnection(plat) {
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
-        if (dx === 0 && dy === 0) continue;
-        const nk = Graph.key(plat.x + dx, plat.y + dy);
-        if (G.connectionMap[nk] && Graph.getDegree(nk) > 0) return true;
-      }
+    if (plat.dir === 'h') {
+      const lk = Graph.key(plat.x - 1, plat.y);
+      const rk = Graph.key(plat.x + 1, plat.y);
+      return (G.connectionMap[lk] && Graph.getDegree(lk) > 0) ||
+             (G.connectionMap[rk] && Graph.getDegree(rk) > 0);
+    }
+    if (plat.dir === 'v') {
+      const uk = Graph.key(plat.x, plat.y - 1);
+      const dk = Graph.key(plat.x, plat.y + 1);
+      return (G.connectionMap[uk] && Graph.getDegree(uk) > 0) ||
+             (G.connectionMap[dk] && Graph.getDegree(dk) > 0);
     }
     return false;
   },

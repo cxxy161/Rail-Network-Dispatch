@@ -122,7 +122,7 @@ function gridToWorld(gx, gy) {
 
 function screenToGrid(sx, sy) {
   const w = screenToWorld(sx, sy);
-  return { x: Math.round(w.x / G.CELL_SIZE), y: Math.round(w.y / G.CELL_SIZE) };
+  return { x: Math.floor(w.x / G.CELL_SIZE), y: Math.floor(w.y / G.CELL_SIZE) };
 }
 
 function clampGrid(gx, gy) {

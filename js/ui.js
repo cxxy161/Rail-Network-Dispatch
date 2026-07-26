@@ -109,12 +109,16 @@ const Ui = {
     G.platDrag.active = false;
     G.platDrag.dir = null;
 
-    this.updateTopBar();
+    document.getElementById('sidebar').classList.remove('hidden');
     document.getElementById('dispatch-panel').classList.add('hidden');
     document.getElementById('settlement-panel').classList.add('hidden');
     document.getElementById('gameover-panel').classList.add('hidden');
+    document.getElementById('operate-tools').classList.add('hidden');
+    document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('hidden'));
     this.hideOverlay();
     this.updateShopDisplay();
+    this.updateTopBar();
+    Renderer.resize();
   },
 
   startDay() {
@@ -173,6 +177,12 @@ const Ui = {
     this.updateSpeedButtons();
     this.updateTopBar();
     this.hideOverlay();
+
+    document.getElementById('sidebar').classList.add('hidden');
+    document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn').forEach(b => b.classList.add('hidden'));
+    document.getElementById('operate-tools').classList.remove('hidden');
+    Input.switchTool('track');
+    Renderer.resize();
 
     Station.generatePassengers();
   },

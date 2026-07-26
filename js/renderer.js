@@ -11,7 +11,7 @@ const Renderer = {
     const topBar = document.getElementById('top-bar');
     const bottomBar = document.getElementById('bottom-bar');
     const sidebar = document.getElementById('sidebar');
-    const sbW = sidebar ? sidebar.offsetWidth : 0;
+    const sbW = sidebar.classList.contains('hidden') ? 0 : sidebar.offsetWidth;
     const w = document.body.clientWidth - sbW;
     const h = document.body.clientHeight - topBar.offsetHeight - bottomBar.offsetHeight;
     this.canvas.width = w;
@@ -176,7 +176,7 @@ const Renderer = {
     const hasPlat = !!Station.getPlatformAt(gx, gy);
 
     if (!station || hasPlat || G.platformComponents <= 0) {
-      ctx.fillStyle = 'rgba(232,74,74,0.25)';
+      ctx.fillStyle = 'rgba(232,74,74,0.4)';
       ctx.strokeStyle = '#E84A4A';
     } else {
       ctx.fillStyle = station.color + '40';
