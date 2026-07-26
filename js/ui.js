@@ -6,12 +6,6 @@ const Ui = {
     document.getElementById('tool-platform').addEventListener('click', () => Input.switchTool('platform'));
     document.getElementById('tool-eraser').addEventListener('click', () => Input.switchTool('eraser'));
 
-    document.getElementById('btn-end-day').addEventListener('click', () => {
-      if (G.phase === 'operate') {
-        G.dayTime = 0;
-      }
-    });
-
     document.getElementById('time-dropdown-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       const dd = document.getElementById('time-dropdown');
