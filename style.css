@@ -95,17 +95,16 @@ body {
 }
 .tool-btn:hover { border-color: #bbb; }
 .tool-btn.active { background: #555; color: #FFF; border-color: #555; }
-#btn-end-day {
-  margin-left: auto;
+#btn-reopen-shop {
   padding: 6px 16px;
   border: 1px solid #D8D0C0;
   border-radius: 4px;
   background: #FFF;
   cursor: pointer;
   font-size: 13px;
-  color: #E84A4A;
+  color: #555;
 }
-#btn-end-day:hover { background: #FFF0F0; }
+#btn-reopen-shop:hover { background: #F5F0E8; }
 
 /* ─── overlay & panels ─── */
 .hidden { display: none !important; }
