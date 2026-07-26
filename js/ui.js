@@ -159,6 +159,8 @@ const Ui = {
     G.dayTime = 300;
     G.paused = false;
     G.speedMultiplier = 1;
+    G._passengerAccum = {};
+    G.stationQueues = {};
     this.updatePauseButton();
     this.updateSpeedButtons();
     this.updateTopBar();
@@ -171,7 +173,6 @@ const Ui = {
     Input.switchTool('track');
     Renderer.resize();
 
-    Station.generatePassengers();
   },
 
   nextCycle() {

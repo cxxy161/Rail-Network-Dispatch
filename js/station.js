@@ -92,20 +92,21 @@ const Station = {
     return groups;
   },
 
-  generatePassengers() {
-    G.stationQueues = {};
+  generatePassengers() {},
+
+  tickPassengers(dt) {
+    const RATE = 2.0;
     for (const st of G.stations) {
       if (!this.stationHasTrackConnection(st.id)) continue;
-      const count = 5 + Math.floor(Math.random() * 11);
-      const dests = {};
-      for (let i = 0; i < count; i++) {
+      if (st.id in G._passengerAccum === false) G._passengerAccum[st.id] = 0;
+      G._passengerAccum[st.id] += RATE * dt;
+      while (G._passengerAccum[st.id] >= 1) {
+        G._passengerAccum[st.id] -= 1;
         const others = G.stations.filter(s => s.id !== st.id);
         if (others.length === 0) continue;
         const dest = others[Math.floor(Math.random() * others.length)];
-        dests[dest.id] = (dests[dest.id] || 0) + 1;
-      }
-      if (Object.keys(dests).length > 0) {
-        G.stationQueues[st.id] = dests;
+        if (!G.stationQueues[st.id]) G.stationQueues[st.id] = {};
+        G.stationQueues[st.id][dest.id] = (G.stationQueues[st.id][dest.id] || 0) + 1;
       }
     }
   },

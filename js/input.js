@@ -116,7 +116,6 @@ const Input = {
       if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
           G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
         this.showDepotBuildPopup(e);
-        hidePopup();
         return;
       }
 

@@ -71,6 +71,7 @@ const G = {
   eraserLastGY: -1,
 
   operateSubTool: null,
+  _passengerAccum: {},
 };
 
 function resetGame() {
@@ -107,6 +108,7 @@ function resetGame() {
   G.eraserLastGX = -1;
   G.eraserLastGY = -1;
   G.operateSubTool = null;
+  G._passengerAccum = {};
 }
 
 function worldToScreen(wx, wy) {

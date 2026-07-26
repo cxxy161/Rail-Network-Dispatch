@@ -55,6 +55,7 @@ function updateOperate(dt) {
   if (G.paused) return;
   const realDt = dt * G.speedMultiplier;
   G.dayTime -= realDt;
+  Station.tickPassengers(realDt);
   if (G.dayTime <= 0) {
     G.dayTime = 0;
     endDay();
