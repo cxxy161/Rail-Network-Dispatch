@@ -91,8 +91,9 @@ const Train = {
 
     let targetSpeed = this.SPEED;
     if (needStop) {
-      const safe = Math.sqrt(2 * this.DECEL * Math.max(0, travelLeft - 0.02));
-      targetSpeed = Math.min(this.SPEED, safe);
+      const safe = Math.sqrt(2 * this.DECEL * Math.max(0, travelLeft - 0.03));
+      targetSpeed = Math.max(0.04, Math.min(this.SPEED, safe));
+      if (travelLeft < 0.05) { train.t = 1; return; }
     }
 
     if (train.speed < targetSpeed) {
