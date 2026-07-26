@@ -282,23 +282,27 @@ const Renderer = {
       const py = wy1 + (wy2 - wy1) * train.t;
 
       const angle = Math.atan2(wy2 - wy1, wx2 - wx1);
-      const length = train.carCount * G.CELL_SIZE * 0.7;
-      const width = G.CELL_SIZE * 0.45;
+      const carW = G.CELL_SIZE * 0.7;
+      const carH = G.CELL_SIZE * 0.45;
+      const gap = 3;
+      const totalLen = train.carCount * carW + (train.carCount - 1) * gap;
 
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(angle);
 
-      ctx.fillStyle = '#E8734A';
-      ctx.beginPath();
-      this.roundRect(ctx, -length / 2, -width / 2, length, width, 5);
-      ctx.fill();
-
-      ctx.strokeStyle = '#D06040';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      this.roundRect(ctx, -length / 2, -width / 2, length, width, 5);
-      ctx.stroke();
+      for (let c = 0; c < train.carCount; c++) {
+        const cx = -totalLen / 2 + carW * (c + 0.5) + gap * c;
+        ctx.fillStyle = '#E8734A';
+        ctx.beginPath();
+        this.roundRect(ctx, cx - carW / 2, -carH / 2, carW, carH, 4);
+        ctx.fill();
+        ctx.strokeStyle = '#D06040';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        this.roundRect(ctx, cx - carW / 2, -carH / 2, carW, carH, 4);
+        ctx.stroke();
+      }
 
       const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
       const max = Train.maxLoad(train);

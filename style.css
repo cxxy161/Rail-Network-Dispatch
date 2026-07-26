@@ -222,3 +222,25 @@ body {
   z-index: 50;
   white-space: nowrap;
 }
+#info-popup.clickable {
+  pointer-events: auto;
+  white-space: normal;
+  min-width: 160px;
+  padding: 10px 14px;
+}
+#info-popup.clickable span {
+  cursor: pointer;
+  color: #E8734A;
+  font-weight: bold;
+}
+#info-popup.clickable button {
+  background: none;
+  border: 1px solid #888;
+  border-radius: 3px;
+  color: #FFF;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 6px;
+  margin-left: 4px;
+}
+#info-popup.clickable button:hover { border-color: #E8734A; }

@@ -113,6 +113,13 @@ const Input = {
       const grid = screenToGrid(pos.x, pos.y);
       const clamped = clampGrid(grid.x, grid.y);
 
+      if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
+          G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
+        this.showDepotBuildPopup(e);
+        hidePopup();
+        return;
+      }
+
       this.dragBatchEdges = [];
       this.dragBatchPlats = [];
 
@@ -317,10 +324,10 @@ const Input = {
       html += '<br>暂无停放列车';
     } else {
       for (const train of G.depotTrains) {
-        html += `<br>列车 #${train.id} (${train.carCount}节) <span class="depot-dispatch-btn" data-id="${train.id}" style="color:#E8734A;cursor:pointer;font-weight:bold">[发车]</span>`;
+        html += `<br>列车 #${train.id} (${train.carCount}节) <span class="depot-dispatch-btn" data-id="${train.id}">[发车]</span>`;
       }
     }
-    showPopup(e, html);
+    showPopup(e, html, true);
     setTimeout(() => {
       const btns = document.querySelectorAll('.depot-dispatch-btn');
       btns.forEach(btn => {
@@ -335,11 +342,58 @@ const Input = {
             } else {
               G.depotTrains.push(train);
               Ui.flashMessage('车辆段未连接到铁路网！');
+              hidePopup();
             }
           }
         };
       });
     }, 0);
+  },
+
+  showDepotBuildPopup(e) {
+    const self = this;
+    let body = `<b>车辆段</b><br>可用车厢: ${G.wagons}<hr>`;
+    body += `新编组: <button onclick="Input._depotChange(-1)">−</button> <span id="form-count">2</span> 节 <button onclick="Input._depotChange(1)">+</button>`;
+    body += ` <button onclick="Input._depotCreate()">创建</button><hr>`;
+    body += '现有列车:';
+    if (G.depotTrains.length === 0) {
+      body += '<br>暂无';
+    } else {
+      for (const train of G.depotTrains) {
+        body += `<br>#${train.id} (${train.carCount}节) <button onclick="Input._depotDelete(${train.id})">删除</button>`;
+      }
+    }
+    Input._depotFormCount = 2;
+    Input._depotEvent = e;
+    showPopup(e, body, true);
+  },
+
+  _depotChange(d) {
+    Input._depotFormCount = Math.max(1, Math.min(G.wagons, Input._depotFormCount + d));
+    const el = document.getElementById('form-count');
+    if (el) el.textContent = Input._depotFormCount;
+  },
+
+  _depotDelete(tid) {
+    const idx = G.depotTrains.findIndex(t => t.id === tid);
+    if (idx >= 0) {
+      G.wagons += G.depotTrains[idx].carCount;
+      G.depotTrains.splice(idx, 1);
+      Ui.updateShopDisplay();
+      Input.showDepotBuildPopup(Input._depotEvent);
+    }
+  },
+
+  _depotCreate() {
+    const n = Input._depotFormCount;
+    if (G.wagons < n) {
+      Ui.flashMessage('车厢碎屑不足！');
+      return;
+    }
+    G.wagons -= n;
+    G.depotTrains.push(Train.create(n));
+    Ui.updateShopDisplay();
+    Input.showDepotBuildPopup(Input._depotEvent);
   },
 
   operateClick(grid, e) {
@@ -524,19 +578,27 @@ const Input = {
   },
 };
 
-function showPopup(e, html) {
+function showPopup(e, html, interactive) {
   const el = document.getElementById('info-popup');
   el.innerHTML = html;
   el.classList.remove('hidden');
+  el.classList.toggle('clickable', !!interactive);
   const pad = 12;
-  let x = e.clientX + pad;
-  let y = e.clientY + pad;
-  if (x + el.offsetWidth > window.innerWidth) x = e.clientX - el.offsetWidth - pad;
-  if (y + el.offsetHeight > window.innerHeight) y = e.clientY - el.offsetHeight - pad;
-  el.style.left = x + 'px';
-  el.style.top = y + 'px';
+  requestAnimationFrame(() => {
+    let x = e.clientX + pad;
+    let y = e.clientY + pad;
+    const ew = el.offsetWidth, eh = el.offsetHeight;
+    if (x + ew > window.innerWidth) x = e.clientX - ew - pad;
+    if (y + eh > window.innerHeight) y = e.clientY - eh - pad;
+    if (x < 0) x = pad;
+    if (y < 0) y = pad;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  });
 }
 
 function hidePopup() {
-  document.getElementById('info-popup').classList.add('hidden');
+  const el = document.getElementById('info-popup');
+  el.classList.add('hidden');
+  el.classList.remove('clickable');
 }
