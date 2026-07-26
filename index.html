@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Rail Operations</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="top-bar">
+  <span id="gold-label">资金: <strong id="gold-val">500</strong></span>
+  <span id="delivered-label">今日: <strong id="delivered-val">0</strong> 人</span>
+  <span id="day-label">周期: <strong id="day-val">1</strong></span>
+  <div id="time-control">
+    <span id="time-display">⏱ 05:00</span>
+    <button id="time-dropdown-btn">▾</button>
+    <div id="time-dropdown" class="hidden">
+      <button id="btn-pause">暂停</button>
+      <div class="speed-btns">
+        <button id="btn-speed1" class="speed-btn active-speed">1x</button>
+        <button id="btn-speed2" class="speed-btn">2x</button>
+        <button id="btn-speed3" class="speed-btn">3x</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<canvas id="game-canvas"></canvas>
+
+<div id="bottom-bar">
+  <button id="tool-track" class="tool-btn active">铺轨</button>
+  <button id="tool-platform" class="tool-btn">站台</button>
+  <button id="tool-eraser" class="tool-btn">拆除</button>
+  <button id="btn-reopen-shop" class="tool-btn">商店</button>
+  <button id="btn-end-day">提前结算</button>
+</div>
+
+<div id="overlay" class="overlay hidden">
+  <div id="shop-panel" class="panel">
+    <h2>商店</h2>
+    <div class="shop-row">
+      <span>轨道碎片: <strong id="res-track">30</strong></span>
+      <button class="buy-btn" data-resource="trackFragment">购买 (10g)</button>
+    </div>
+    <div class="shop-row">
+      <span>站台组件: <strong id="res-platform">5</strong></span>
+      <button class="buy-btn" data-resource="platformComponent">购买 (30g)</button>
+    </div>
+    <div class="shop-row">
+      <span>车厢库存: <strong id="res-wagon">4</strong></span>
+      <button class="buy-btn" data-resource="wagon">购买 (50g)</button>
+    </div>
+    <br>
+    <button id="btn-start-day">开始运营 ▸</button>
+    <button id="btn-shop-close" class="close-btn">收起</button>
+  </div>
+
+  <div id="dispatch-panel" class="panel hidden">
+    <h2>车辆段 · 发车</h2>
+    <div id="depot-train-list"></div>
+    <button id="btn-dispatch-confirm">确认 ▸</button>
+  </div>
+
+  <div id="settlement-panel" class="panel hidden">
+    <h2>结算</h2>
+    <p>今日运送: <strong id="settle-delivered">0</strong> 人</p>
+    <p>收入: <strong id="settle-income">0</strong> 金</p>
+    <p>维护费: <strong id="settle-maintenance">30</strong> 金</p>
+    <hr>
+    <p>当前资金: <strong id="settle-gold">500</strong> 金</p>
+    <button id="btn-settle-continue">下一周期 ▸</button>
+  </div>
+
+  <div id="gameover-panel" class="panel hidden">
+    <h2>破产！</h2>
+    <p>总运送: <strong id="gameover-total">0</strong> 人</p>
+    <p>存活周期: <strong id="gameover-days">1</strong></p>
+    <button id="btn-restart">重新开始</button>
+  </div>
+</div>
+
+<script src="js/gameState.js"></script>
+<script src="js/gridGraph.js"></script>
+<script src="js/station.js"></script>
+<script src="js/train.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/input.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
