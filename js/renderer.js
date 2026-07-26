@@ -97,46 +97,20 @@ const Renderer = {
 
       ctx.beginPath();
       for (const plat of grp.platforms) {
-        const x = plat.x * cs + cs * 0.03;
-        const y = plat.y * cs + cs * 0.03;
-        ctx.rect(x, y, cs * 0.94, cs * 0.94);
+        const x = plat.x * cs + cs * 0.05;
+        const y = plat.y * cs + cs * 0.05;
+        ctx.rect(x, y, cs * 0.9, cs * 0.9);
       }
-      ctx.fillStyle = '#C8BFA8';
+      ctx.fillStyle = grp.color + '55';
       ctx.fill();
 
-      ctx.strokeStyle = grp.color + '40';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = grp.color;
+      ctx.lineWidth = 2;
       for (const plat of grp.platforms) {
-        const cx = plat.x * cs + cs / 2;
-        const cy = plat.y * cs + cs / 2;
-        const hw = cs * 0.38;
-        const hh = cs * 0.38;
-        if (plat.dir === 'h') {
-          ctx.beginPath();
-          ctx.moveTo(cx - hw, cy - cs * 0.1);
-          ctx.lineTo(cx + hw, cy - cs * 0.1);
-          ctx.moveTo(cx - hw, cy + cs * 0.1);
-          ctx.lineTo(cx + hw, cy + cs * 0.1);
-          ctx.stroke();
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(cx - cs * 0.1, cy - hh);
-          ctx.lineTo(cx - cs * 0.1, cy + hh);
-          ctx.moveTo(cx + cs * 0.1, cy - hh);
-          ctx.lineTo(cx + cs * 0.1, cy + hh);
-          ctx.stroke();
-        }
+        const x = plat.x * cs + cs * 0.05;
+        const y = plat.y * cs + cs * 0.05;
+        ctx.strokeRect(x, y, cs * 0.9, cs * 0.9);
       }
-
-      const pad = 5;
-      const x0 = b.minX * cs + cs * 0.03 - pad;
-      const y0 = b.minY * cs + cs * 0.03 - pad;
-      const w0 = (b.maxX - b.minX + 1) * cs * 0.94 + pad * 2;
-      const h0 = (b.maxY - b.minY + 1) * cs * 0.94 + pad * 2;
-
-      ctx.strokeStyle = grp.color + '88';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x0, y0, w0, h0);
     }
   },
 
@@ -340,7 +314,7 @@ const Renderer = {
   },
 
   drawPopup(ctx) {
-    if (!G.popup) return;
+    if (!G.popup || !G.popup.lines || G.popup.lines.length === 0) return;
     const pop = G.popup;
 
     let px, py;
@@ -362,12 +336,12 @@ const Renderer = {
     const h = lines * lineH + pad * 2;
 
     if (px + w > this.canvas.width) px = this.canvas.width - w - 4;
+    if (px < 4) px = 4;
     if (py + h > this.canvas.height) py = py - h - 40;
+    if (py < 4) py = 4;
 
     ctx.fillStyle = 'rgba(40,40,40,0.92)';
-    ctx.beginPath();
-    ctx.roundRect(px, py, w, h, 6);
-    ctx.fill();
+    ctx.fillRect(px, py, w, h);
 
     ctx.fillStyle = '#FFF';
     ctx.textAlign = 'left';

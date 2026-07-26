@@ -1,7 +1,7 @@
 const Train = {
   SPEED: 0.5,
-  ACCEL: 1.0,
-  DECEL: 1.5,
+  ACCEL: 1.5,
+  DECEL: 2.5,
 
   edgeDistance(k1, k2) {
     const [x1, y1] = k1.split(',').map(Number);
@@ -143,7 +143,6 @@ const Train = {
       train.fromKey = nodeKey;
       train.toKey = nextKey;
       train.t = 0;
-      train.speed = 0;
     } else {
       if (!plat) train.lastDockedStationId = null;
       this.reverseTrain(train);
