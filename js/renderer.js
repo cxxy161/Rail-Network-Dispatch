@@ -167,48 +167,25 @@ const Renderer = {
     const sdx = Math.sign(dx), sdy = Math.sign(dy);
     const cs = G.CELL_SIZE;
 
-    ctx.setLineDash([6, 4]);
-    ctx.lineWidth = 3;
-
-    let px = sx * cs + cs / 2, py = sy * cs + cs / 2;
+    ctx.strokeStyle = '#999999';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(px, py);
+    ctx.moveTo(sx * cs + cs / 2, sy * cs + cs / 2);
 
     let cx = sx, cy = sy;
     for (let i = 0; i < diag; i++) {
       cx += sdx; cy += sdy;
-      const nx = cx * cs + cs / 2, ny = cy * cs + cs / 2;
-      ctx.strokeStyle = '#E8734A88';
-      ctx.lineTo(nx, ny);
-      px = nx; py = ny;
+      ctx.lineTo(cx * cs + cs / 2, cy * cs + cs / 2);
     }
-    ctx.stroke();
-
-    const lastDiagX = cx, lastDiagY = cy;
-
     let ddx = 0, ddy = 0;
     if (adx > ady) ddx = sdx;
     else if (ady > adx) ddy = sdy;
-
-    if (straight > 0) {
-      ctx.beginPath();
-      ctx.moveTo(lastDiagX * cs + cs / 2, lastDiagY * cs + cs / 2);
-      ctx.strokeStyle = '#E8B84A88';
-      for (let i = 0; i < straight; i++) {
-        cx += ddx; cy += ddy;
-        ctx.lineTo(cx * cs + cs / 2, cy * cs + cs / 2);
-      }
-      ctx.stroke();
+    for (let i = 0; i < straight; i++) {
+      cx += ddx; cy += ddy;
+      ctx.lineTo(cx * cs + cs / 2, cy * cs + cs / 2);
     }
-
-    ctx.setLineDash([]);
-
-    if (diag > 0 && straight > 0) {
-      ctx.fillStyle = '#E8B84A';
-      ctx.beginPath();
-      ctx.arc(lastDiagX * cs + cs / 2, lastDiagY * cs + cs / 2, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.stroke();
   },
 
   drawPlatformPreview(ctx) {
