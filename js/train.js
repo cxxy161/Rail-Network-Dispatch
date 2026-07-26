@@ -1,7 +1,7 @@
 const Train = {
   SPEED: 0.5,
-  ACCEL: 1.5,
-  DECEL: 2.5,
+  ACCEL: 0.8,
+  DECEL: 0.6,
 
   edgeDistance(k1, k2) {
     const [x1, y1] = k1.split(',').map(Number);
@@ -78,9 +78,7 @@ const Train = {
     let needStop = false;
     if (travelLeft < 2) {
       const nextKey = train.toKey;
-      const nextNeighbors = Graph.getNeighbors(nextKey);
-      const exits = nextNeighbors.filter(nk => nk !== train.fromKey);
-
+      const exits = Graph.getNeighbors(nextKey).filter(nk => nk !== train.fromKey);
       if (exits.length === 0) {
         needStop = true;
       } else if (this.isPlatformNode(nextKey)) {
@@ -89,21 +87,22 @@ const Train = {
       }
     }
 
-    let targetSpeed = this.SPEED;
-    if (needStop) {
-      const safe = Math.sqrt(2 * this.DECEL * Math.max(0, travelLeft - 0.03));
-      targetSpeed = Math.max(0.04, Math.min(this.SPEED, safe));
-      if (travelLeft < 0.05) { train.t = 1; return; }
+    const DECEL_START = 0.35, DECEL_END = 0.06, MIN_SPEED = 0.04;
+    let targetSpeed;
+    if (!needStop || travelLeft > DECEL_START) {
+      targetSpeed = this.SPEED;
+    } else {
+      if (travelLeft <= DECEL_END) { train.t = 1; return; }
+      const frac = (travelLeft - DECEL_END) / (DECEL_START - DECEL_END);
+      targetSpeed = MIN_SPEED + frac * (this.SPEED - MIN_SPEED);
     }
 
-    if (train.speed < targetSpeed) {
-      train.speed = Math.min(targetSpeed, train.speed + this.ACCEL * dt);
-    } else if (train.speed > targetSpeed) {
+    if (train.speed > targetSpeed)
       train.speed = Math.max(targetSpeed, train.speed - this.DECEL * dt);
-    }
+    else if (train.speed < targetSpeed)
+      train.speed = Math.min(targetSpeed, train.speed + this.ACCEL * dt);
 
     train.t += (train.speed * dt) / dist;
-
     if (train.t >= 1) {
       train.t = 1;
       this.arriveNode(train, train.toKey, train.fromKey);
