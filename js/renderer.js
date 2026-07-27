@@ -272,9 +272,8 @@ const Renderer = {
         const [nx, ny] = nk.split(',').map(Number);
         const ndx = nx - sx, ndy = ny - sy;
 
-        const oppKey = Graph.key(sx - ndx, sy - ndy);
-        const isThrough = neighbors.includes(oppKey);
         const isSelected = dir && ndx === dir.x && ndy === dir.y;
+        const isThrough = dir && ndx === -dir.x && ndy === -dir.y;
 
         if (isThrough || isSelected) {
           ctx.beginPath();
