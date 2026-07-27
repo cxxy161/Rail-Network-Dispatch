@@ -105,6 +105,11 @@ function resetGame(opts) {
   G._passengerAccum = {};
   G.infoTarget = null;
 
+  const mapScale = opts.mapScale || 0.5;
+  G.GRID_W = Math.floor(192 * mapScale);
+  G.GRID_H = Math.floor(144 * mapScale);
+  G.zoom = 0.11 / mapScale;
+
   Terrain.generateMap(opts || {});
 }
 

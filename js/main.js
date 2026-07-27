@@ -34,7 +34,9 @@ function init() {
   document.getElementById('cfg-start').addEventListener('click', () => {
     const mRatio = parseInt(document.getElementById('cfg-mountain').value) / 100;
     const rRatio = parseInt(document.getElementById('cfg-river').value) / 100;
-    startNewGame({ mountainRatio: mRatio, riverRatio: rRatio });
+    const stationCount = parseInt(document.getElementById('cfg-stations').value);
+    const mapScale = parseInt(document.getElementById('cfg-mapscale').value) / 10;
+    startNewGame({ mountainRatio: mRatio, riverRatio: rRatio, stationCount, mapScale });
   });
 
   document.getElementById('cfg-back').addEventListener('click', () => {
@@ -55,6 +57,18 @@ function init() {
     document.getElementById('cfg-mountain').max = Math.min(50, 80 - rv);
     const mv = parseInt(document.getElementById('cfg-mountain').value);
     document.getElementById('cfg-plain-val').textContent = (100 - mv - rv) + '%';
+  });
+
+  document.getElementById('cfg-stations').addEventListener('input', () => {
+    document.getElementById('cfg-stations-val').textContent =
+      document.getElementById('cfg-stations').value + ' 个';
+  });
+
+  document.getElementById('cfg-mapscale').addEventListener('input', () => {
+    const scale = parseInt(document.getElementById('cfg-mapscale').value) / 10;
+    const w = Math.floor(192 * scale);
+    const h = Math.floor(144 * scale);
+    document.getElementById('cfg-mapscale-val').textContent = w + '×' + h;
   });
 
   document.getElementById('menu-continue').addEventListener('click', () => {

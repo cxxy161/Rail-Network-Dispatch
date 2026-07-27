@@ -188,9 +188,9 @@ const Terrain = {
     this._smoothMountains(terrain);
   },
 
-  _placeStations(terrain, seed) {
+  _placeStations(terrain, seed, count) {
     const rng = (n) => this._rand(seed + 500 + n * 3571);
-    const count = this._randBetween(3, 7, rng(0));
+    count = count || this._randBetween(3, 7, rng(0));
     let s = 1;
 
     const candidates = [];
@@ -313,7 +313,7 @@ const Terrain = {
 
     this._generateTerrain(terrain, riverRatio, mountainRatio, seed);
 
-    G.stations = this._placeStations(terrain, seed);
+    G.stations = this._placeStations(terrain, seed, opts.stationCount);
     const dp = this._placeDepot(terrain, seed);
     G.depotX = dp.x;
     G.depotY = dp.y;

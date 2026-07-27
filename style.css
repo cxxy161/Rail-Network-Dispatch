@@ -475,8 +475,8 @@ body {
   cursor: pointer;
 }
 .config-future {
-  margin-top: 44px;
-  margin-bottom: 12px;
+  margin-top: 24px;
+  margin-bottom: 8px;
   font-size: 12px;
   color: #CCC;
   letter-spacing: 0.15em;

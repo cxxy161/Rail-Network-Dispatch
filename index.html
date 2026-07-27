@@ -38,8 +38,18 @@
         <span>平原</span>
         <span id="cfg-plain-val">60%</span>
       </div>
-      <div class="config-row config-future">
-        ─── 未来选项 ───
+      <div class="config-row config-future config-section-label">
+        ─── 高级选项 ───
+      </div>
+      <div class="config-row">
+        <span>车站</span>
+        <input type="range" id="cfg-stations" min="3" max="8" value="4" step="1">
+        <span id="cfg-stations-val">4 个</span>
+      </div>
+      <div class="config-row">
+        <span>地图</span>
+        <input type="range" id="cfg-mapscale" min="2" max="10" value="5" step="1">
+        <span id="cfg-mapscale-val">96×72</span>
       </div>
       <div class="config-btns">
         <button id="cfg-start" class="menu-btn">开 始 游 戏</button>
