@@ -147,7 +147,8 @@ const Train = {
         train.speed = 0;
         train.state = 'docked';
         train.lastDockedStationId = stationId;
-        const alighted = Station.alightPassengers(train, nodeKey);
+
+        const alighted = Station.alightPassengers(train, stationId);
         G.passengersDeliveredToday += alighted;
         G.totalPassengersDelivered += alighted;
         this.boardAtStation(train, nodeKey);

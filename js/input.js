@@ -309,7 +309,7 @@ const Input = {
         html += `<br>列车 #${train.id} (${train.carCount}节) <span class="depot-dispatch-btn" data-id="${train.id}">[发车]</span>`;
       }
     }
-    showPopup(e, html, true);
+    updateRightPanel(html);
     setTimeout(() => {
       const btns = document.querySelectorAll('.depot-dispatch-btn');
       btns.forEach(btn => {
@@ -320,11 +320,11 @@ const Input = {
           if (idx >= 0) {
             const train = G.depotTrains.splice(idx, 1)[0];
             if (Train.dispatch(train)) {
-              hidePopup();
+              hideRightPanel();
             } else {
               G.depotTrains.push(train);
               Ui.flashMessage('车辆段未连接到铁路网！');
-              hidePopup();
+              hideRightPanel();
             }
           }
         };
@@ -333,7 +333,6 @@ const Input = {
   },
 
   showDepotBuildPopup(e) {
-    const self = this;
     let body = `<b>车辆段</b><br>可用车厢: ${G.wagons}<hr>`;
     body += `新编组: <button onclick="Input._depotChange(-1)">−</button> <span id="form-count">2</span> 节 <button onclick="Input._depotChange(1)">+</button>`;
     body += ` <button onclick="Input._depotCreate()">创建</button><hr>`;
@@ -346,8 +345,7 @@ const Input = {
       }
     }
     Input._depotFormCount = 2;
-    Input._depotEvent = e;
-    showPopup(e, body, true);
+    updateRightPanel(body);
   },
 
   _depotChange(d) {
@@ -362,20 +360,20 @@ const Input = {
       G.wagons += G.depotTrains[idx].carCount;
       G.depotTrains.splice(idx, 1);
       Ui.updateShopDisplay();
-      Input.showDepotBuildPopup(Input._depotEvent);
+      Input.showDepotBuildPopup();
     }
   },
 
   _depotCreate() {
     const n = Input._depotFormCount;
     if (G.wagons < n) {
-      Ui.flashMessage('车厢碎屑不足！');
+      Ui.flashMessage('车厢不足！');
       return;
     }
     G.wagons -= n;
     G.depotTrains.push(Train.create(n));
     Ui.updateShopDisplay();
-    Input.showDepotBuildPopup(Input._depotEvent);
+    Input.showDepotBuildPopup();
   },
 
   operateClick(grid, e) {
@@ -411,26 +409,25 @@ const Input = {
 
     if (G.activeSwitches[key] !== undefined) {
       Graph.cycleSwitch(key);
-      hidePopup();
       return;
     }
 
     const train = this.findTrainAt(clamped.x, clamped.y);
     if (train) {
       G.infoTarget = { type: 'train', id: train.id };
-      updateInfoPopup();
+      updateRightPanel();
       return;
     }
 
     const plat = Station.getPlatformAdjacent(clamped.x, clamped.y) || Station.getPlatformAt(clamped.x, clamped.y);
     if (plat) {
       G.infoTarget = { type: 'station', id: plat.stationId };
-      updateInfoPopup();
+      updateRightPanel();
       return;
     }
 
     G.infoTarget = null;
-    hidePopup();
+    hideRightPanel();
   },
 
   findTrainAt(gx, gy) {
@@ -515,7 +512,7 @@ const Input = {
     G.platDrag.dir = null;
     G.eraserDragging = false;
     G.selectedTool = tool;
-    hidePopup();
+    hideRightPanel();
     Ui.updateToolButtons();
   },
 
@@ -545,36 +542,10 @@ const Input = {
       G.platDrag.dir = null;
       G.eraserDragging = false;
       G.selectedItem = null;
-      hidePopup();
+      hideRightPanel();
     }
   },
 };
-
-function showPopup(e, html, interactive) {
-  const el = document.getElementById('info-popup');
-  el.innerHTML = html;
-  el.classList.remove('hidden');
-  el.classList.toggle('clickable', !!interactive);
-  const pad = 12;
-  requestAnimationFrame(() => {
-    let x = e.clientX + pad;
-    let y = e.clientY + pad;
-    const ew = el.offsetWidth, eh = el.offsetHeight;
-    if (x + ew > window.innerWidth) x = e.clientX - ew - pad;
-    if (y + eh > window.innerHeight) y = e.clientY - eh - pad;
-    if (x < 0) x = pad;
-    if (y < 0) y = pad;
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
-  });
-}
-
-function hidePopup() {
-  G.infoTarget = null;
-  const el = document.getElementById('info-popup');
-  el.classList.add('hidden');
-  el.classList.remove('clickable');
-}
 
 function computeOptimalPath(sx, sy, ex, ey) {
   const dx = ex - sx, dy = ey - sy;
@@ -591,14 +562,27 @@ function computeOptimalPath(sx, sy, ex, ey) {
   return path;
 }
 
+function updateRightPanel(html) {
+  const el = document.getElementById('right-panel');
+  if (html !== undefined) el.innerHTML = html;
+  if (el.innerHTML) el.classList.remove('hidden');
+}
+
+function hideRightPanel() {
+  G.infoTarget = null;
+  const el = document.getElementById('right-panel');
+  el.classList.add('hidden');
+  el.innerHTML = '';
+}
+
 function updateInfoPopup() {
-  if (!G.infoTarget) return;
-  const el = document.getElementById('info-popup');
+  if (!G.infoTarget) { hideRightPanel(); return; }
+  const el = document.getElementById('right-panel');
   let html = '';
 
   if (G.infoTarget.type === 'train') {
     const train = G.activeTrains.find(t => t.id === G.infoTarget.id);
-    if (!train) { hidePopup(); return; }
+    if (!train) { hideRightPanel(); return; }
     const load = Object.values(train.passengers).reduce((a,b)=>a+b,0);
     html = `<b>列车 #${train.id}</b> (${train.carCount}节)<br>载客: ${load} / ${Train.maxLoad(train)}`;
     for (const [dest, cnt] of Object.entries(train.passengers)) {
@@ -616,5 +600,4 @@ function updateInfoPopup() {
 
   el.innerHTML = html;
   el.classList.remove('hidden');
-  el.classList.remove('clickable');
 }

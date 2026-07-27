@@ -16,8 +16,6 @@ const Station = {
   },
 
   getPlatformAdjacent(gx, gy) {
-    const same = this.getPlatformAt(gx, gy);
-    if (same) return same;
     for (const plat of G.platforms) {
       if (plat.dir === 'h' && plat.x === gx && (plat.y === gy + 1 || plat.y === gy - 1)) return plat;
       if (plat.dir === 'v' && plat.y === gy && (plat.x === gx + 1 || plat.x === gx - 1)) return plat;
@@ -132,13 +130,11 @@ const Station = {
     return boarded;
   },
 
-  alightPassengers(train, nodeKey) {
-    const plat = this.platformAtKey(nodeKey);
-    if (!plat) return 0;
+  alightPassengers(train, stationId) {
     let count = 0;
-    if (train.passengers[plat.stationId]) {
-      count = train.passengers[plat.stationId];
-      delete train.passengers[plat.stationId];
+    if (train.passengers[stationId]) {
+      count = train.passengers[stationId];
+      delete train.passengers[stationId];
     }
     return count;
   },

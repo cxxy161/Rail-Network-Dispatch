@@ -223,37 +223,33 @@ body {
 }
 .back-btn:hover { color: #555; }
 
-#info-popup {
+#right-panel {
   position: fixed;
+  right: 12px;
+  bottom: 52px;
   background: rgba(40,40,40,0.92);
   color: #FFF;
   font-size: 12px;
   line-height: 18px;
   padding: 8px 12px;
-  border-radius: 4px;
-  pointer-events: none;
+  border-radius: 6px;
   z-index: 50;
-  white-space: nowrap;
-}
-#info-popup.clickable {
+  min-width: 140px;
+  max-width: 200px;
+  max-height: 40vh;
+  overflow-y: auto;
   pointer-events: auto;
-  white-space: normal;
-  min-width: 160px;
-  padding: 10px 14px;
 }
-#info-popup.clickable span {
-  cursor: pointer;
-  color: #E8734A;
-  font-weight: bold;
-}
-#info-popup.clickable button {
+#right-panel b { color: #E8734A; }
+#right-panel button {
   background: none;
   border: 1px solid #888;
   border-radius: 3px;
   color: #FFF;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   padding: 1px 6px;
-  margin-left: 4px;
+  margin: 1px 2px;
 }
-#info-popup.clickable button:hover { border-color: #E8734A; }
+#right-panel button:hover { border-color: #E8734A; }
+#right-panel hr { border: none; border-top: 1px solid #555; margin: 4px 0; }

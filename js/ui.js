@@ -8,12 +8,12 @@ const Ui = {
 
     document.getElementById('btn-operate-stop').addEventListener('click', () => {
       G.operateSubTool = G.operateSubTool === 'stop' ? null : 'stop';
-      hidePopup();
+      hideRightPanel();
       this.updateOperateToolButtons();
     });
     document.getElementById('btn-operate-reverse').addEventListener('click', () => {
       G.operateSubTool = G.operateSubTool === 'reverse' ? null : 'reverse';
-      hidePopup();
+      hideRightPanel();
       this.updateOperateToolButtons();
     });
 
@@ -130,7 +130,7 @@ const Ui = {
     document.getElementById('settlement-panel').classList.add('hidden');
     document.getElementById('gameover-panel').classList.add('hidden');
     document.getElementById('operate-tools').classList.add('hidden');
-    document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn.build-only').forEach(b => b.classList.remove('hidden'));
+    document.getElementById('tool-track').parentElement.querySelectorAll('.build-only').forEach(b => b.classList.remove('hidden'));
     G.operateSubTool = null;
     this.hideOverlay();
     this.updateShopDisplay();
@@ -167,7 +167,7 @@ const Ui = {
     this.updateTopBar();
 
     document.getElementById('sidebar').classList.add('hidden');
-    document.getElementById('tool-track').parentElement.querySelectorAll('.tool-btn.build-only').forEach(b => b.classList.add('hidden'));
+    document.getElementById('tool-track').parentElement.querySelectorAll('.build-only').forEach(b => b.classList.add('hidden'));
     document.getElementById('operate-tools').classList.remove('hidden');
     G.operateSubTool = null;
     Ui.updateOperateToolButtons();
