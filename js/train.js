@@ -117,6 +117,7 @@ const Train = {
   },
 
   recordTrail(train) {
+    if (!train.trail) train.trail = [];
     if (!train.fromKey || !train.toKey) return;
     const [x1, y1] = train.fromKey.split(',').map(Number);
     const [x2, y2] = train.toKey.split(',').map(Number);

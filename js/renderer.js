@@ -494,7 +494,7 @@ const Renderer = {
       const gap = 4;
       const trailGap = 55;
 
-      const trail = train.trail;
+      const trail = train.trail || [];
       for (let c = 0; c < train.carCount; c++) {
         const idx = c * trailGap;
         if (idx >= trail.length) break;
