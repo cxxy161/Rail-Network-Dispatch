@@ -48,6 +48,7 @@ const Renderer = {
     this.drawStationGroups(ctx);
     this.drawStationAreas(ctx);
     this.drawTracks(ctx);
+    this.drawSwitchConnections(ctx);
     this.drawPlatforms(ctx);
     this.drawPreview(ctx);
     this.drawSwitches(ctx);
@@ -133,30 +134,16 @@ const Renderer = {
         let bx = x2 * cs + cs / 2, by = y2 * cs + cs / 2;
 
         if (G.activeSwitches[key] !== undefined) {
-          const dir = Graph.getSwitchExitDirection(key);
-          const ndx = x2 - x1, ndy = y2 - y1;
-          const notSelected = !dir || ndx !== dir.x || ndy !== dir.y;
-          const throughKey = Graph.key(x1 - ndx, y1 - ndy);
-          const isThrough = G.connectionMap[key] && G.connectionMap[key].includes(throughKey);
-          if (notSelected && !isThrough) {
-            const gap = cs * 0.33;
-            const d = Math.hypot(bx - ax, by - ay);
-            ax += (bx - ax) / d * gap;
-            ay += (by - ay) / d * gap;
-          }
+          const gap = cs * 0.33;
+          const d = Math.hypot(bx - ax, by - ay);
+          ax += (bx - ax) / d * gap;
+          ay += (by - ay) / d * gap;
         }
         if (G.activeSwitches[nKey] !== undefined) {
-          const dir = Graph.getSwitchExitDirection(nKey);
-          const ndx = x1 - x2, ndy = y1 - y2;
-          const notSelected = !dir || ndx !== dir.x || ndy !== dir.y;
-          const throughKey = Graph.key(x2 - ndx, y2 - ndy);
-          const isThrough = G.connectionMap[nKey] && G.connectionMap[nKey].includes(throughKey);
-          if (notSelected && !isThrough) {
-            const gap = cs * 0.33;
-            const d = Math.hypot(ax - bx, ay - by);
-            bx += (ax - bx) / d * gap;
-            by += (ay - by) / d * gap;
-          }
+          const gap = cs * 0.33;
+          const d = Math.hypot(ax - bx, ay - by);
+          bx += (ax - bx) / d * gap;
+          by += (ay - by) / d * gap;
         }
 
         ctx.beginPath();
@@ -260,22 +247,40 @@ const Renderer = {
       const cx = x * cs + cs / 2;
       const cy = y * cs + cs / 2;
 
-      const dir = Graph.getSwitchExitDirection(key);
-      if (dir) {
-        const len = cs * 0.14;
-        ctx.strokeStyle = '#555555';
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + dir.x * len, cy + dir.y * len);
-        ctx.stroke();
-      }
-
       ctx.fillStyle = '#333';
       ctx.beginPath();
       ctx.arc(cx, cy, 4, 0, Math.PI * 2);
       ctx.fill();
+    }
+  },
+
+  drawSwitchConnections(ctx) {
+    const cs = G.CELL_SIZE;
+    ctx.strokeStyle = '#555555';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+
+    for (const key of Object.keys(G.activeSwitches)) {
+      const [x, y] = key.split(',').map(Number);
+      const cx = x * cs + cs / 2;
+      const cy = y * cs + cs / 2;
+
+      const dir = Graph.getSwitchExitDirection(key);
+      if (!dir) continue;
+      const len = cs * 0.36;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + dir.x * len, cy + dir.y * len);
+      ctx.stroke();
+
+      const oppKey = Graph.key(x - dir.x, y - dir.y);
+      if (G.connectionMap[key] && G.connectionMap[key].includes(oppKey)) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx - dir.x * len, cy - dir.y * len);
+        ctx.stroke();
+      }
     }
   },
 
