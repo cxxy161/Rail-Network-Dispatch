@@ -84,7 +84,13 @@ const Train = {
         needStop = true;
       } else if (this.isPlatformNode(nextKey)) {
         const plat = Station.platformAtKey(nextKey);
-        if (plat && plat.stationId !== train.lastDockedStationId) needStop = true;
+        if (plat && plat.stationId !== train.lastDockedStationId) {
+          const hasFurther = exits.some(k => {
+            const np = Station.platformAtKey(k);
+            return np && np.stationId === plat.stationId;
+          });
+          if (!hasFurther) needStop = true;
+        }
       }
     }
 
