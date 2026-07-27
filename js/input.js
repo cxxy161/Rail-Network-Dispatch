@@ -320,11 +320,11 @@ const Input = {
           if (idx >= 0) {
             const train = G.depotTrains.splice(idx, 1)[0];
             if (Train.dispatch(train)) {
-              hideRightPanel();
+              Input.showDepotPopup();
             } else {
               G.depotTrains.push(train);
               Ui.flashMessage('车辆段未连接到铁路网！');
-              hideRightPanel();
+              Input.showDepotPopup();
             }
           }
         };
