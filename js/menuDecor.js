@@ -78,8 +78,22 @@ const MenuDecor = {
       ctx.fill();
     }
 
-    ctx.fillStyle = '#8B5CF6';
-    ctx.fillRect(this.depot.x - 7, this.depot.y - 7, 14, 14);
+    // ── 车辆段 ──
+    const dx = this.depot.x, dy = this.depot.y, s = 7;
+    ctx.fillStyle = '#ECE8E0';
+    ctx.strokeStyle = '#D0C8B8';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(dx - s*1.2, dy - s*1.2, s*2.4, s*2.4, 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#8B5CF618';
+    ctx.strokeStyle = '#8B5CF6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(dx - s*0.6, dy - s*0.5, s*1.6, s, 2);
+    ctx.fill();
+    ctx.stroke();
 
     const p = this.pointOnPath(this.trainT);
     ctx.fillStyle = '#E8734A';

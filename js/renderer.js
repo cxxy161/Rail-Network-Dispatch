@@ -384,23 +384,69 @@ const Renderer = {
 
   drawDepot(ctx) {
     const cs = G.CELL_SIZE;
-    const x0 = (G.depotX - 1) * cs, y0 = (G.depotY - 1) * cs;
-    const x1 = (G.depotX + 1) * cs, y1 = (G.depotY + 1) * cs;
+    const cx = G.depotX * cs;
+    const cy = G.depotY * cs;
+    const hw = cs * 0.88;
+    const hh = cs * 0.88;
 
-    ctx.fillStyle = '#8B5CF6';
-    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.save();
+    ctx.translate(cx, cy);
 
-    ctx.strokeStyle = '#6D3DD6';
+    // 1. 地面底板
+    ctx.fillStyle = '#ECE8E0';
+    ctx.strokeStyle = '#D0C8B8';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(-hw, -hh, hw * 2, hh * 2, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    // 2. 厂房建筑（紫色边框 + 半透明填充）
+    const bx = hw * 0.20, bw = hw * 1.1, by = -hh * 0.55, bh = hh * 1.1;
+    ctx.fillStyle = '#8B5CF618';
+    ctx.strokeStyle = '#8B5CF6';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 3. 厂房顶线（双坡屋顶）
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(bx + bw * 0.3, -hh * 0.65);
+    ctx.lineTo(bx + bw * 0.7, -hh * 0.65);
+    ctx.lineTo(bx + bw, by);
+    ctx.stroke();
+
+    // 4. 内部存车线（4条水平短轨）
+    ctx.strokeStyle = '#555';
     ctx.lineWidth = 3;
-    ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.lineCap = 'round';
+    const trackY = [-hh * 0.05, hh * 0.15, hh * 0.35, hh * 0.55];
+    if (trackY[3] < by + bh - 4) trackY.length = 3;
+    for (const ty of trackY) {
+      ctx.beginPath();
+      ctx.moveTo(bx + 4, ty);
+      ctx.lineTo(bx + bw - 4, ty);
+      ctx.stroke();
+    }
 
-    const cx = x0 + (x1 - x0) / 2;
-    const cy = y0 + (y1 - y0) / 2;
-    ctx.fillStyle = '#FFF';
-    ctx.font = `bold ${cs * 0.4}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('段', cx, cy);
+    // 5. 道岔汇合（多条线收敛到主线）
+    const exitX = hw * 1.0;
+    ctx.beginPath();
+    ctx.moveTo(bx + bw * 0.3, trackY[0]);
+    ctx.quadraticCurveTo(bx + bw * 0.6, trackY[0], bx + bw * 0.8, by + bh * 0.5);
+    ctx.lineTo(exitX, by + bh * 0.5);
+    ctx.stroke();
+
+    // 6. 主线出口延伸
+    ctx.beginPath();
+    ctx.moveTo(exitX, by + bh * 0.5);
+    ctx.lineTo(exitX + cs * 0.30, by + bh * 0.5);
+    ctx.stroke();
+
+    ctx.restore();
   },
 
   drawTrains(ctx) {
