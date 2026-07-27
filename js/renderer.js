@@ -226,22 +226,41 @@ const Renderer = {
       const [x, y] = key.split(',').map(Number);
       const cx = x * cs + cs / 2;
       const cy = y * cs + cs / 2;
+      const neighbors = Graph.getNeighbors(key);
+      const dotR = cs * 0.2;
+
+      ctx.fillStyle = '#999';
+      for (const nk of neighbors) {
+        const [nx, ny] = nk.split(',').map(Number);
+        const ndx = nx - x, ndy = ny - y;
+        const dotX = cx + ndx * dotR;
+        const dotY = cy + ndy * dotR;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       ctx.fillStyle = '#4A90D9';
       ctx.beginPath();
-      ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
       ctx.fill();
 
       const dir = Graph.getSwitchExitDirection(key);
       if (dir) {
-        const len = cs * 0.25;
+        const len = cs * 0.2;
         const ex = cx + dir.x * len;
         const ey = cy + dir.y * len;
         ctx.strokeStyle = '#FFF';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(ex, ey);
         ctx.stroke();
+
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.arc(ex, ey, 4.5, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
   },
