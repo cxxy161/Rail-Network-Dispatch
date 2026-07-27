@@ -57,7 +57,7 @@ const TUTORIAL_DATA = {
         null,
       ],
       allowActions: ['drag_track'],
-      check: () => Tutorial.helpers.pathBetweenStations('A', 'C'),
+      check: () => Tutorial.helpers.pathBetweenStations('A', 'C') && Tutorial.helpers.nodeConnected('14,12'),
     },
     {
       id: 's4',
@@ -111,7 +111,7 @@ const TUTORIAL_DATA = {
       text: '列车自动跑起来了！到站停车、乘客上下，全程自动驾驶。<br>试试右上角<span class="tut-hl">倍速按钮</span>——调成 3x 或 5x 看看加速效果。',
       highlight: { type: 'dom', selector: '#time-control', desc: '倍速控制' },
       allowActions: [],
-      bubblePin: 'top-right',
+      bubblePin: 'bottom-center',
       check: () => Tutorial.checkTimer(10),
     },
     {
@@ -172,10 +172,10 @@ const TUTORIAL_DATA = {
     },
     {
       id: 's15',
-      text: '从<span class="tut-hl">交叉路口</span>向B站斜向拖拽铺轨。这样主线就分叉了——三向道岔。',
+      text: '从交叉路口向B站<span class="tut-hl">斜向45°</span>拖拽铺轨。<br>轨道必须走斜线——道岔不支持直角转弯（90°不行，必须135°斜角）。',
       highlight: { type: 'zone', x: 14, y: 9, w: 5, h: 4, desc: '路口→B站' },
       allowActions: ['drag_track'],
-      check: () => Tutorial.helpers.stationInNetworkWithDepot('B'),
+      check: () => Tutorial.helpers.stationInNetworkWithDepot('B') && Tutorial.helpers.diagonalJunctionBranch('14,12', 14, 12),
     },
     {
       id: 's16',
@@ -197,7 +197,7 @@ const TUTORIAL_DATA = {
       text: '每次点道岔都会循环切换方向。试着多切几次，看列车跟着怎么走——<span class="tut-hl">进路控制</span>的核心就是这个。',
       highlight: null,
       allowActions: ['click_switch'],
-      bubblePin: 'top-right',
+      bubblePin: 'bottom-center',
       check: () => Tutorial.checkTimer(10),
     },
     {

@@ -516,6 +516,11 @@ body {
   pointer-events: none;
 }
 
+@keyframes tutSpotGreen {
+  0%   { background: rgba(80, 184, 108, 0.35); }
+  100% { background: transparent; }
+}
+
 #tutorial-bubble {
   position: fixed;
   z-index: 18;

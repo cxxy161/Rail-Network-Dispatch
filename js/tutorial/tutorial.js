@@ -146,6 +146,19 @@ const Tutorial = {
       }
       return cells;
     },
+
+    nodeConnected(key) {
+      return (G.connectionMap[key] || []).length >= 2;
+    },
+
+    diagonalJunctionBranch(jKey, jx, jy) {
+      const ns = G.connectionMap[jKey] || [];
+      for (const nk of ns) {
+        const [nx, ny] = nk.split(',').map(Number);
+        if ((nx - jx) !== 0 && (ny - jy) !== 0) return true;
+      }
+      return false;
+    },
   },
 
   start() {
@@ -154,6 +167,7 @@ const Tutorial = {
     this.stepPhase = 0;
     this.stepStartTime = 0;
     this.flags = { usedStop: false, usedReverse: false, switchToggled: false };
+    this._flashPending = false;
     this.data = TUTORIAL_DATA;
 
     MenuDecor.stop();
@@ -270,12 +284,32 @@ const Tutorial = {
   },
 
   _advanceStep() {
-    this.stepIdx++;
-    if (this.stepIdx >= this.data.steps.length) {
-      this._complete();
-      return;
+    if (this._flashPending) return;
+    this._flashPending = true;
+    this._flashComplete();
+    setTimeout(() => {
+      this._flashPending = false;
+      this.stepIdx++;
+      if (this.stepIdx >= this.data.steps.length) {
+        this._complete();
+        return;
+      }
+      this._enterStep();
+    }, 500);
+  },
+
+  _flashComplete() {
+    const bubble = document.getElementById('tutorial-text');
+    if (bubble) {
+      const orig = bubble.innerHTML;
+      bubble.innerHTML = '<span style="color:#50B86C;font-weight:600;">✓ 完成</span>';
+      setTimeout(() => { bubble.innerHTML = orig; }, 400);
     }
-    this._enterStep();
+    const spot = document.getElementById('tutorial-spotlight');
+    if (spot) {
+      spot.style.cssText = spot.style.cssText.replace(/pointer-events: none/, '') + 'animation: tutSpotGreen 0.5s ease-out';
+      setTimeout(() => { spot.style.animation = ''; }, 500);
+    }
   },
 
   currentStepRaw() {
@@ -362,14 +396,17 @@ const Tutorial = {
       let top, left;
 
       if (step.bubblePin === 'top-right') {
-        top = margin + 50;
+        top = 140;
         left = vw - bw - margin;
       } else if (step.bubblePin === 'top-center') {
         top = margin + 50;
         left = (vw - bw) / 2;
       } else if (step.bubblePin === 'bottom-center') {
-        top = vh - bh - margin;
+        top = vh - bh - margin - 40;
         left = (vw - bw) / 2;
+      } else if (step.bubblePin === 'bottom-right') {
+        top = vh - bh - margin - 40;
+        left = vw - bw - margin;
       } else {
         top = margin + 50;
         left = (vw - bw) / 2;
