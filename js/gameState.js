@@ -1,9 +1,9 @@
 const G = {
-  GRID_W: 96,
-  GRID_H: 72,
+  GRID_W: 192,
+  GRID_H: 144,
   CELL_SIZE: 64,
 
-  zoom: 0.22,
+  zoom: 0.11,
   offsetX: 0,
   offsetY: 0,
 
@@ -73,7 +73,7 @@ const G = {
 };
 
 function resetGame(opts) {
-  G.zoom = 0.22;
+  G.zoom = 0.11;
   G.offsetX = 0;
   G.offsetY = 0;
   G.phase = 'build';

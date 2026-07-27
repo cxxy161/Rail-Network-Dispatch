@@ -125,8 +125,8 @@ const Terrain = {
   _generateRiversValley(terrain, riverRatio, seed) {
     const W = G.GRID_W;
     const H = G.GRID_H;
-    const scale = 0.025;
-    const threshold = 0.93 - riverRatio * 0.3;
+    const scale = 0.0125;
+    const threshold = 0.95 - riverRatio * 0.2;
 
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {

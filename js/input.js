@@ -504,7 +504,7 @@ const Input = {
     e.preventDefault();
     const pos = this.getCanvasPos(e);
     const world = screenToWorld(pos.x, pos.y);
-    const newZoom = Math.max(0.10, Math.min(2.0, G.zoom * (e.deltaY < 0 ? 1.1 : 0.9)));
+    const newZoom = Math.max(0.05, Math.min(2.0, G.zoom * (e.deltaY < 0 ? 1.1 : 0.9)));
     G.offsetX = pos.x - world.x * newZoom;
     G.offsetY = pos.y - world.y * newZoom;
     G.zoom = newZoom;
