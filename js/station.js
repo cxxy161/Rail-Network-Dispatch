@@ -16,6 +16,8 @@ const Station = {
   },
 
   getPlatformAdjacent(gx, gy) {
+    const same = this.getPlatformAt(gx, gy);
+    if (same) return same;
     for (const plat of G.platforms) {
       if (plat.dir === 'h' && plat.x === gx && (plat.y === gy + 1 || plat.y === gy - 1)) return plat;
       if (plat.dir === 'v' && plat.y === gy && (plat.x === gx + 1 || plat.x === gx - 1)) return plat;
