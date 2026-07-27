@@ -217,12 +217,13 @@ const Ui = {
     }
 
     G.phase = 'operate';
-    G.dayTime = 300;
+    G.dayTime = 600;
     G.paused = false;
     G.speedMultiplier = 1;
     G._passengerAccum = {};
     G.stationQueues = {};
     G.totalGeneratedToday = 0;
+    G.lastDeductHour = 6;
     this.updatePauseButton();
     this.updateSpeedButtons();
     this.updateTopBar();
@@ -240,17 +241,6 @@ const Ui = {
   nextCycle() {
     G.gold += G.passengersDeliveredToday * G.passengerPrice;
     G.gold -= G.maintenanceCost;
-
-    if (G.totalGeneratedToday > 0) {
-      const rate = G.passengersDeliveredToday / G.totalGeneratedToday;
-      if (rate > 0.8) G.satisfaction = Math.min(100, G.satisfaction + 10);
-      else if (rate > 0.5) G.satisfaction = Math.min(100, G.satisfaction + 5);
-    }
-    const allZero = G.stations.every(st => {
-      const q = G.stationQueues[st.id] || {};
-      return Object.values(q).reduce((a,b)=>a+b,0) === 0;
-    });
-    if (allZero) G.satisfaction = Math.min(100, G.satisfaction + 3);
 
     if (G.satisfaction < 10) {
       G.lowSatisfactionDays++;
@@ -286,6 +276,24 @@ const Ui = {
     document.getElementById('settle-income').textContent = income;
     document.getElementById('settle-maintenance').textContent = G.maintenanceCost;
     document.getElementById('settle-gold').textContent = Math.max(0, nextGold);
+
+    let satChange = '';
+    const oldSat = G.satisfaction;
+    if (G.totalGeneratedToday > 0) {
+      const rate = G.passengersDeliveredToday / G.totalGeneratedToday;
+      if (rate > 0.8) { G.satisfaction = Math.min(100, oldSat + 10); satChange = '+10%'; }
+      else if (rate > 0.5) { G.satisfaction = Math.min(100, oldSat + 5); satChange = '+5%'; }
+    }
+    const allZero = G.stations.every(st => {
+      const q = G.stationQueues[st.id] || {};
+      return Object.values(q).reduce((a,b)=>a+b,0) === 0;
+    });
+    if (allZero) { G.satisfaction = Math.min(100, G.satisfaction + 3); satChange = (satChange ? satChange + ' +3%' : '+3%'); }
+    const satEl = document.getElementById('settle-satisfaction');
+    if (satEl) {
+      const newSat = Math.round(G.satisfaction);
+      satEl.textContent = satChange ? Math.round(oldSat) + '% → ' + newSat + '% (' + satChange + ')' : Math.round(oldSat) + '%';
+    }
 
     document.getElementById('settlement-panel').classList.remove('hidden');
     this.showOverlay();
@@ -352,14 +360,6 @@ const Ui = {
 
   closeSettings() {
     document.getElementById('settings-overlay').classList.add('hidden');
-  },
-
-  showSatisfactionAlert(text) {
-    const el = document.createElement('div');
-    el.className = 'satisfaction-alert';
-    el.textContent = text;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1500);
   },
 
   switchSettingsTab(tabId) {

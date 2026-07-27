@@ -143,16 +143,16 @@ function updateOperate(dt) {
   G.dayTime -= realDt;
   Station.tickPassengers(realDt);
 
-  for (const st of G.stations) {
-    const queue = G.stationQueues[st.id] || {};
-    const total = Object.values(queue).reduce((a, b) => a + b, 0);
-    const platformCells = G.platforms.filter(p => p.stationId === st.id).length;
-    const buffer = platformCells * 50;
-    let deduct = 0;
-    if (total > buffer + 50) deduct = 1.0;
-    else if (total > buffer) deduct = 0.5;
-    if (deduct > 0) {
-      G.satisfaction = Math.max(0, G.satisfaction - deduct * realDt);
+  const clk = dayTimeToClock();
+  if (clk.h !== G.lastDeductHour) {
+    G.lastDeductHour = clk.h;
+    for (const st of G.stations) {
+      const queue = G.stationQueues[st.id] || {};
+      const total = Object.values(queue).reduce((a, b) => a + b, 0);
+      const platformCells = G.platforms.filter(p => p.stationId === st.id).length;
+      const buffer = platformCells * 50;
+      if (total > buffer + 50) G.satisfaction = Math.max(0, G.satisfaction - 1.0);
+      else if (total > buffer) G.satisfaction = Math.max(0, G.satisfaction - 0.5);
     }
   }
 

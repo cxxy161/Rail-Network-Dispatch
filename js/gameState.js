@@ -73,6 +73,7 @@ const G = {
   satisfaction: 100,
   lowSatisfactionDays: 0,
   totalGeneratedToday: 0,
+  lastDeductHour: 6,
 };
 
 function resetGame(opts) {
@@ -166,15 +167,13 @@ function saveGame() {
     GRID_W: G.GRID_W, GRID_H: G.GRID_H, zoom: G.zoom,
     depotTrains: G.depotTrains, activeTrains: G.activeTrains, nextTrainId: G.nextTrainId,
     passengersDeliveredToday: G.passengersDeliveredToday, totalPassengersDelivered: G.totalPassengersDelivered,
+    satisfaction: G.satisfaction, totalGeneratedToday: G.totalGeneratedToday,
     offsetX: G.offsetX, offsetY: G.offsetY,
     undoStack: G.undoStack.map(a => a.type === 'add_edges' || a.type === 'remove_edges' ? { ...a } :
       a.type === 'batch' ? { ...a, items: a.items.map(i => ({ ...i })) } : { ...a }),
   };
   localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   G._dirty = false;
-  G.satisfaction = 100;
-  G.lowSatisfactionDays = 0;
-  G.totalGeneratedToday = 0;
 }
 
 function loadGame() {
@@ -220,6 +219,8 @@ function loadGame() {
     G.nextTrainId = data.nextTrainId || 2;
     G.passengersDeliveredToday = data.passengersDeliveredToday || 0;
     G.totalPassengersDelivered = data.totalPassengersDelivered || 0;
+    G.satisfaction = data.satisfaction != null ? data.satisfaction : 100;
+    G.totalGeneratedToday = data.totalGeneratedToday || 0;
     G.undoStack = data.undoStack || [];
     G._passengerAccum = {};
     G._dirty = false;
@@ -231,6 +232,8 @@ function loadGame() {
     G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
     G.selectedTool = 'track';
     G.mouseGridX = -1; G.mouseGridY = -1;
+    G.lowSatisfactionDays = 0;
+    G.lastDeductHour = 6;
     return true;
   } catch (e) { return false; }
 }

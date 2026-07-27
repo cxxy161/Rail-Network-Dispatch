@@ -497,17 +497,6 @@ const Renderer = {
         ctx.font = `bold ${G.CELL_SIZE * 0.18}px sans-serif`;
         ctx.fillText('⚠', cx, cy - G.CELL_SIZE * 0.3);
       }
-
-      const platformCells = G.platforms.filter(p => p.stationId === sid).length;
-      const buffer = platformCells * 50;
-      if (total > buffer) {
-        const rate = total > buffer + 50 ? '1.0' : '0.5';
-        ctx.fillStyle = '#E84A4A';
-        ctx.font = `${G.CELL_SIZE * 0.16}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('−' + rate + '%/s', cx, cy - G.CELL_SIZE * 0.36);
-      }
     }
   },
 
