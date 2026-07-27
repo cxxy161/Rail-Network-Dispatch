@@ -532,9 +532,9 @@ const Input = {
       return;
     }
 
-    if (e.key === '1') this.switchTool('track');
-    if (e.key === '2') this.switchTool('platform');
-    if (e.key === '3') this.switchTool('eraser');
+    if (e.key === '1') { if (G.phase === 'build') this.switchTool('track'); }
+    if (e.key === '2') { if (G.phase === 'build') this.switchTool('platform'); }
+    if (e.key === '3') { if (G.phase === 'build') this.switchTool('eraser'); }
 
     if (e.key === 'Escape') {
       G.trackDrag.active = false;

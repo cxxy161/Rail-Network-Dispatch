@@ -49,6 +49,16 @@ const Ui = {
       G.speedMultiplier = 3;
       this.updateSpeedButtons();
     });
+    document.getElementById('btn-speed5').addEventListener('click', (e) => {
+      e.stopPropagation();
+      G.speedMultiplier = 5;
+      this.updateSpeedButtons();
+    });
+    document.getElementById('btn-speed10').addEventListener('click', (e) => {
+      e.stopPropagation();
+      G.speedMultiplier = 10;
+      this.updateSpeedButtons();
+    });
 
     document.getElementById('btn-start-day').addEventListener('click', () => this.startDay());
     document.getElementById('btn-settle-continue').addEventListener('click', () => this.nextCycle());
@@ -91,7 +101,7 @@ const Ui = {
     if (G.phase === 'operate') {
       const clk = dayTimeToClock();
       document.getElementById('time-display').textContent =
-        '⏱ ' + String(clk.h).padStart(2, '0') + ':' + String(clk.m).padStart(2, '0');
+        '⏱ ' + String(clk.h).padStart(2, '0') + ':' + String(clk.m).padStart(2, '0') + ' ×' + G.speedMultiplier;
     } else {
       document.getElementById('time-display').textContent = '⏱ --:--';
     }
@@ -105,6 +115,8 @@ const Ui = {
     document.getElementById('btn-speed1').classList.toggle('active-speed', G.speedMultiplier === 1);
     document.getElementById('btn-speed2').classList.toggle('active-speed', G.speedMultiplier === 2);
     document.getElementById('btn-speed3').classList.toggle('active-speed', G.speedMultiplier === 3);
+    document.getElementById('btn-speed5').classList.toggle('active-speed', G.speedMultiplier === 5);
+    document.getElementById('btn-speed10').classList.toggle('active-speed', G.speedMultiplier === 10);
   },
 
   showOverlay() {
@@ -180,6 +192,7 @@ const Ui = {
     G.gold += G.passengersDeliveredToday * G.passengerPrice;
     G.gold -= G.maintenanceCost;
     G.passengersDeliveredToday = 0;
+    G.stationQueues = {};
 
     if (G.gold < 0) {
       this.showGameOver();
