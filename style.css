@@ -89,40 +89,49 @@ body {
   border-bottom: 1px solid #E0D8C8;
 }
 
+#shop-panel { flex: 1; }
+
+.shop-item { margin-bottom: 8px; }
+
 .shop-row {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin: 6px 0;
-  font-size: 11px;
+  gap: 4px;
+  margin: 3px 0;
+  font-size: 12px;
   color: #666;
 }
 
-.shop-row > span:first-child { width: 48px; flex-shrink: 0; }
-.shop-val { min-width: 18px; text-align: right; }
-.shop-val strong { color: #333; font-size: 11px; }
+.shop-row > span:first-child { width: 52px; flex-shrink: 0; }
+.shop-val { min-width: 20px; text-align: right; font-size: 12px; }
+.shop-val strong { color: #333; }
 
-.price-text { font-size: 9px; color: #999; width: 22px; text-align: right; }
+.price-text { font-size: 10px; color: #999; width: 24px; text-align: right; }
+
+.shop-btns { gap: 6px; margin-top: 2px; margin-left: 52px; }
 
 .buy-btn {
-  padding: 1px 3px;
+  padding: 2px 8px;
   border: 1px solid #50B86C;
   border-radius: 3px;
   background: #FFF;
   color: #50B86C;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   white-space: nowrap;
-  min-width: 14px;
-  text-align: center;
 }
 .buy-btn:hover { background: #F0FFF4; }
 .buy-btn:disabled { opacity: 0.3; cursor: default; }
 
+.sidebar-bottom {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .primary-btn {
   margin-top: 16px;
-  width: 100%;
-  padding: 8px 16px;
+  padding: 8px 20px;
   border: none;
   border-radius: 4px;
   background: #E8734A;
