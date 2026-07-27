@@ -139,7 +139,7 @@ const Terrain = {
     const W = G.GRID_W;
     const H = G.GRID_H;
     const maxRiverHalfWidth = 1.0 + riverRatio * 6.0;
-    const maskThreshold = 0.9 - riverRatio * 1.5;
+    const maskThreshold = 0.6 - riverRatio * 1.0;
     const mountainScale = 14;
 
     for (let y = 0; y < H; y++) {
@@ -158,13 +158,13 @@ const Terrain = {
           const gradLen = Math.sqrt(gx * gx + gy * gy) + 0.0001;
           const baseDist = Math.abs(n - 0.5) / gradLen;
 
-          const macroMask = this._valueNoise(x * 0.003, y * 0.003, seed + 888);
+          const macroMask = this._valueNoise(x * 0.005, y * 0.005, seed + 888);
           let fade = (macroMask - maskThreshold) * 3.0;
           fade = Math.max(0.0, Math.min(1.0, fade));
 
           const actualHalfWidth = maxRiverHalfWidth * fade;
 
-          if (baseDist < actualHalfWidth && actualHalfWidth >= 0.5) {
+          if (baseDist < actualHalfWidth) {
             terrain[idx] = TERRAIN.RIVER;
             continue;
           }
