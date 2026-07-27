@@ -7,26 +7,26 @@ const MenuDecor = {
   pulseT: 0,
 
   stations: [
-    { x: 50,  y: 120, color: '#E84A4A' },
-    { x: 240, y: 40,  color: '#4A90D9' },
-    { x: 240, y: 170, color: '#50B86C' },
+    { x: 70,  y: 260, color: '#E84A4A' },
+    { x: 360, y: 60,  color: '#4A90D9' },
+    { x: 360, y: 200, color: '#50B86C' },
   ],
-  depot: { x: 290, y: 220 },
+  depot: { x: 430, y: 320 },
   path: [
-    { x: 50,  y: 120 },
-    { x: 145, y: 120 },
-    { x: 170, y: 90 },
-    { x: 240, y: 40  },
-    { x: 170, y: 90 },
-    { x: 240, y: 170 },
-    { x: 290, y: 220 },
+    { x: 70,  y: 260 },
+    { x: 215, y: 260 },
+    { x: 265, y: 200 },
+    { x: 360, y: 60  },
+    { x: 265, y: 200 },
+    { x: 360, y: 200 },
+    { x: 430, y: 320 },
   ],
 
   init() {
     this.canvas = document.getElementById('menu-canvas');
     this.ctx = this.canvas.getContext('2d');
-    this.canvas.width = 340;
-    this.canvas.height = 260;
+    this.canvas.width = 500;
+    this.canvas.height = 380;
     this.loop();
   },
 
@@ -36,10 +36,10 @@ const MenuDecor = {
   },
 
   loop() {
-    this.trainT += 0.0012 * this.trainDir;
+    this.trainT += 0.0005 * this.trainDir;
     if (this.trainT >= 1) { this.trainT = 1; this.trainDir = -1; }
     if (this.trainT <= 0) { this.trainT = 0; this.trainDir = +1; }
-    this.pulseT += 0.03;
+    this.pulseT += 0.025;
     this.draw();
     this.animId = requestAnimationFrame(() => this.loop());
   },
@@ -61,7 +61,7 @@ const MenuDecor = {
     ctx.clearRect(0, 0, W, H);
 
     ctx.strokeStyle = '#DDD8CE';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(this.path[0].x, this.path[0].y);
@@ -70,33 +70,33 @@ const MenuDecor = {
     }
     ctx.stroke();
 
-    const s = 1 + Math.sin(this.pulseT) * 0.05;
+    const s = 1 + Math.sin(this.pulseT) * 0.06;
     for (const st of this.stations) {
       ctx.fillStyle = st.color;
       ctx.beginPath();
-      ctx.arc(st.x, st.y, 5 * s, 0, Math.PI * 2);
+      ctx.arc(st.x, st.y, 7 * s, 0, Math.PI * 2);
       ctx.fill();
     }
 
     ctx.fillStyle = '#8B5CF6';
-    ctx.fillRect(this.depot.x - 5, this.depot.y - 5, 10, 10);
+    ctx.fillRect(this.depot.x - 7, this.depot.y - 7, 14, 14);
 
     const p = this.pointOnPath(this.trainT);
     ctx.fillStyle = '#E8734A';
     ctx.beginPath();
-    this.roundRect(ctx, p.x - 10, p.y - 4, 20, 8, 3);
+    this.roundRect(ctx, p.x - 14, p.y - 6, 28, 12, 4);
     ctx.fill();
 
     const passengers = [
-      { sx: 50, sy: 105, c: '#E84A4A', phase: 0 },
-      { sx: 240, sy: 155, c: '#50B86C', phase: 1.5 },
+      { sx: 70, sy: 240, c: '#E84A4A', phase: 0 },
+      { sx: 360, sy: 180, c: '#50B86C', phase: 1.5 },
     ];
     for (const px of passengers) {
       const alpha = 0.3 + Math.abs(Math.sin(this.pulseT + px.phase)) * 0.5;
       ctx.fillStyle = px.c;
       ctx.globalAlpha = alpha;
       ctx.beginPath();
-      ctx.arc(px.sx, px.sy, 2, 0, Math.PI * 2);
+      ctx.arc(px.sx, px.sy, 3, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
