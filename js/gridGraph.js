@@ -60,13 +60,36 @@ const Graph = {
     }
   },
 
+  isValidSwitchTurn(dx, dy, ndx, ndy) {
+    if (dx === ndx && dy === ndy) return true;
+    if (dx === 0 && dy === 0) return true;
+    const rdx = Math.sign(ndx), rdy = Math.sign(ndy);
+    if (Math.sign(dx) === -rdx && Math.sign(dy) === -rdy) return false;
+    if ((dx !== 0 && ndx !== 0 && Math.sign(dx) === Math.sign(ndx)) ||
+        (dy !== 0 && ndy !== 0 && Math.sign(dy) === Math.sign(ndy))) return true;
+    return false;
+  },
+
   getSwitchExit(key, entryKey) {
     const neighbors = this.getNeighbors(key);
     if (neighbors.length === 0) return null;
+    const [cx, cy] = key.split(',').map(Number);
+    const [fx, fy] = entryKey ? entryKey.split(',').map(Number) : [cx, cy];
+    const edx = cx - fx, edy = cy - fy;
+
     let idx = G.activeSwitches[key] || 0;
     for (let i = 0; i < neighbors.length; i++) {
       const nk = neighbors[(idx + i) % neighbors.length];
-      if (nk !== entryKey) return nk;
+      if (nk === entryKey) continue;
+      const [tx, ty] = nk.split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (this.isValidSwitchTurn(edx, edy, ndx, ndy)) return nk;
+    }
+    for (const nk of neighbors) {
+      if (nk === entryKey) continue;
+      const [tx, ty] = nk.split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (this.isValidSwitchTurn(edx, edy, ndx, ndy) || (ndx === edx && ndy === edy)) return nk;
     }
     return neighbors[0];
   },
@@ -76,10 +99,16 @@ const Graph = {
     if (deg < 3) return null;
     const idx = G.activeSwitches[key] || 0;
     const neighbors = this.getNeighbors(key);
-    const nkey = neighbors[idx % deg];
-    const [sx, sy] = key.split(',').map(Number);
-    const [tx, ty] = nkey.split(',').map(Number);
-    return { x: tx - sx, y: ty - sy };
+    const [cx, cy] = key.split(',').map(Number);
+    for (let i = 0; i < neighbors.length; i++) {
+      const nk = neighbors[(idx + i) % neighbors.length];
+      const [tx, ty] = nk.split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (this.isValidSwitchTurn(0, 0, ndx, ndy)) {
+        return { x: ndx, y: ndy };
+      }
+    }
+    return null;
   },
 
   cycleSwitch(key) {
