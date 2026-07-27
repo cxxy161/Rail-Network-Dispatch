@@ -160,9 +160,10 @@ function saveGame() {
     platforms: G.platforms, stationQueues: G.stationQueues,
     stations: G.stations, depotX: G.depotX, depotY: G.depotY, mapSeed: G.mapSeed,
     terrain: G.terrain ? Array.from(G.terrain) : null,
+    GRID_W: G.GRID_W, GRID_H: G.GRID_H, zoom: G.zoom,
     depotTrains: G.depotTrains, activeTrains: G.activeTrains, nextTrainId: G.nextTrainId,
     passengersDeliveredToday: G.passengersDeliveredToday, totalPassengersDelivered: G.totalPassengersDelivered,
-    zoom: G.zoom, offsetX: G.offsetX, offsetY: G.offsetY,
+    offsetX: G.offsetX, offsetY: G.offsetY,
     undoStack: G.undoStack.map(a => a.type === 'add_edges' || a.type === 'remove_edges' ? { ...a } :
       a.type === 'batch' ? { ...a, items: a.items.map(i => ({ ...i })) } : { ...a }),
   };
@@ -187,6 +188,9 @@ function loadGame() {
     G.stationQueues = data.stationQueues || {};
     G.mapSeed = data.mapSeed || 0;
 
+    if (data.GRID_W) { G.GRID_W = data.GRID_W; G.GRID_H = data.GRID_H; }
+    if (data.zoom !== undefined) { G.zoom = data.zoom; G.offsetX = data.offsetX || 0; G.offsetY = data.offsetY || 0; }
+
     if (data.terrain) {
       G.terrain = new Uint8Array(data.terrain);
     } else {
@@ -210,7 +214,6 @@ function loadGame() {
     G.nextTrainId = data.nextTrainId || 2;
     G.passengersDeliveredToday = data.passengersDeliveredToday || 0;
     G.totalPassengersDelivered = data.totalPassengersDelivered || 0;
-    if (data.zoom !== undefined) { G.zoom = data.zoom; G.offsetX = data.offsetX; G.offsetY = data.offsetY; }
     G.undoStack = data.undoStack || [];
     G._passengerAccum = {};
     G._dirty = false;

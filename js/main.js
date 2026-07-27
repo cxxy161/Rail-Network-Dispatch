@@ -3,6 +3,18 @@ let accumulator = 0;
 let resizePending = true;
 const TICK = 1 / 60;
 
+function cfgStationsVal() {
+  document.getElementById('cfg-stations-val').textContent =
+    document.getElementById('cfg-stations').value + ' 个';
+}
+
+function cfgMapscaleVal() {
+  const scale = parseInt(document.getElementById('cfg-mapscale').value) / 10;
+  const w = Math.floor(192 * scale);
+  const h = Math.floor(144 * scale);
+  document.getElementById('cfg-mapscale-val').textContent = w + '×' + h;
+}
+
 function init() {
   const canvas = document.getElementById('game-canvas');
   Renderer.init(canvas);
@@ -58,22 +70,6 @@ function init() {
     const mv = parseInt(document.getElementById('cfg-mountain').value);
     document.getElementById('cfg-plain-val').textContent = (100 - mv - rv) + '%';
   });
-
-  document.getElementById('cfg-stations').addEventListener('input', () => {
-    document.getElementById('cfg-stations-val').textContent =
-      document.getElementById('cfg-stations').value + ' 个';
-  });
-
-  document.getElementById('cfg-mapscale').addEventListener('input', () => {
-    const scale = parseInt(document.getElementById('cfg-mapscale').value) / 10;
-    const w = Math.floor(192 * scale);
-    const h = Math.floor(144 * scale);
-    document.getElementById('cfg-mapscale-val').textContent = w + '×' + h;
-  });
-
-  // trigger initial display
-  document.getElementById('cfg-stations').dispatchEvent(new Event('input'));
-  document.getElementById('cfg-mapscale').dispatchEvent(new Event('input'));
 
   document.getElementById('menu-continue').addEventListener('click', () => {
     Ui.startBuild();

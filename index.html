@@ -43,12 +43,14 @@
       </div>
       <div class="config-row">
         <span>车站</span>
-        <input type="range" id="cfg-stations" min="3" max="8" value="4" step="1">
+        <input type="range" id="cfg-stations" min="3" max="8" value="4" step="1"
+          oninput="cfgStationsVal()">
         <span id="cfg-stations-val">4 个</span>
       </div>
       <div class="config-row">
         <span>地图</span>
-        <input type="range" id="cfg-mapscale" min="2" max="10" value="3" step="1">
+        <input type="range" id="cfg-mapscale" min="2" max="10" value="3" step="1"
+          oninput="cfgMapscaleVal()">
         <span id="cfg-mapscale-val">57×43</span>
       </div>
       <div class="config-btns">
