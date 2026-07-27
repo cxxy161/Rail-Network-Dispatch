@@ -70,174 +70,28 @@ const Terrain = {
     for (let i = 0; i < octaves; i++) {
       value += this._valueNoise(x * frequency, y * frequency, seed + i * 7919) * amplitude;
       maxValue += amplitude;
-      amplitude *= 0.4;
-      frequency *= 2.1;
+      amplitude *= 0.5;
+      frequency *= 2;
     }
 
     return value / maxValue;
   },
 
-  _diagLine(x1, y1, x2, y2) {
-    const cells = [];
-    let cx = x1;
-    let cy = y1;
-    cells.push({ x: cx, y: cy });
-
-    while (cx !== x2 || cy !== y2) {
-      const dx = x2 - cx;
-      const dy = y2 - cy;
-      const adx = Math.abs(dx);
-      const ady = Math.abs(dy);
-
-      if (adx > 0 && ady > 0) {
-        cx += Math.sign(dx);
-        cy += Math.sign(dy);
-      } else if (adx > 0) {
-        cx += Math.sign(dx);
-      } else if (ady > 0) {
-        cy += Math.sign(dy);
-      }
-      cells.push({ x: cx, y: cy });
-    }
-    return cells;
-  },
-
-  _generateTerrain(terrain, riverRatio, mountainRatio, seed) {
-    const total = G.GRID_W * G.GRID_H;
-    const riverTarget = riverRatio > 0 ? Math.floor(total * riverRatio) : 0;
-    const mountainTarget = mountainRatio > 0 ? Math.floor(total * mountainRatio) : 0;
-    const scale = 14;
-    const octaves = 4;
-
-    const cells = [];
-
-    for (let y = 0; y < G.GRID_H; y++) {
-      for (let x = 0; x < G.GRID_W; x++) {
-        const n = this._fbm(x / scale, y / scale, seed, octaves);
-        cells.push({ n, x, y });
-      }
-    }
-
-    cells.sort((a, b) => a.n - b.n);
-
-    let riverThreshold = -1;
-    let mountainThreshold = 2;
-
-    if (riverTarget > 0 && riverTarget < total) {
-      riverThreshold = cells[riverTarget].n;
-    }
-    if (mountainTarget > 0 && mountainTarget < total) {
-      const idx = Math.max(0, total - mountainTarget - 1);
-      mountainThreshold = cells[idx].n;
-    }
-
-    for (let i = 0; i < total; i++) {
-      const { n, x, y } = cells[i];
-      if (riverTarget > 0 && n <= riverThreshold) {
-        this._set(terrain, x, y, TERRAIN.RIVER);
-      } else if (mountainTarget > 0 && n >= mountainThreshold) {
-        this._set(terrain, x, y, TERRAIN.MOUNTAIN);
-      }
-    }
-
-    if (riverTarget > 0) {
-      this._thinRivers(terrain);
-      this._connectRivers(terrain, seed);
-    }
-    if (mountainTarget > 0) {
-      this._smoothMountains(terrain);
-    }
-  },
-
-  _thinRivers(terrain) {
+  _dilateRivers(terrain) {
     const copy = new Uint8Array(terrain);
     for (let y = 0; y < G.GRID_H; y++) {
       for (let x = 0; x < G.GRID_W; x++) {
-        if (this._get(copy, x, y) !== TERRAIN.RIVER) continue;
-        let nbr = 0;
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nx = x + dx;
-            const ny = y + dy;
-            if (this._inBounds(nx, ny) && this._get(copy, nx, ny) === TERRAIN.RIVER) {
-              nbr++;
-            }
+        if (this._get(copy, x, y) !== TERRAIN.PLAIN) continue;
+        let riverNbr = 0;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (this._inBounds(nx, ny) && this._get(copy, nx, ny) === TERRAIN.RIVER) {
+            riverNbr++;
           }
         }
-        if (nbr >= 7) {
-          this._set(terrain, x, y, TERRAIN.PLAIN);
+        if (riverNbr === 1) {
+          this._set(terrain, x, y, TERRAIN.RIVER);
         }
-      }
-    }
-  },
-
-  _connectRivers(terrain, seed) {
-    const W = G.GRID_W;
-    const H = G.GRID_H;
-    const visited = new Uint8Array(W * H);
-    const components = [];
-
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        if (this._get(terrain, x, y) !== TERRAIN.RIVER) continue;
-        const idx = y * W + x;
-        if (visited[idx]) continue;
-
-        const comp = [];
-        const queue = [[x, y]];
-        visited[idx] = 1;
-
-        while (queue.length > 0) {
-          const [cx, cy] = queue.shift();
-          comp.push({ x: cx, y: cy });
-
-          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-            const nx = cx + dx;
-            const ny = cy + dy;
-            if (!this._inBounds(nx, ny)) continue;
-            const nidx = ny * W + nx;
-            if (visited[nidx]) continue;
-            if (this._get(terrain, nx, ny) !== TERRAIN.RIVER) continue;
-            visited[nidx] = 1;
-            queue.push([nx, ny]);
-          }
-        }
-        components.push(comp);
-      }
-    }
-
-    components.sort((a, b) => b.length - a.length);
-    if (components.length <= 1) return;
-
-    const kept = components[0];
-    for (let i = 1; i < components.length; i++) {
-      const comp = components[i];
-      if (comp.length < 8) continue;
-
-      let bestDist = Infinity;
-      let bestA = null;
-      let bestB = null;
-
-      for (let ai = 0; ai < comp.length; ai += 3) {
-        for (let bi = 0; bi < kept.length; bi += 3) {
-          const dist = Math.abs(comp[ai].x - kept[bi].x) + Math.abs(comp[ai].y - kept[bi].y);
-          if (dist < bestDist) {
-            bestDist = dist;
-            bestA = comp[ai];
-            bestB = kept[bi];
-          }
-        }
-      }
-
-      if (bestA && bestDist < 30) {
-        const line = this._diagLine(bestA.x, bestA.y, bestB.x, bestB.y);
-        for (const { x, y } of line) {
-          if (this._get(terrain, x, y) === TERRAIN.PLAIN) {
-            this._set(terrain, x, y, TERRAIN.RIVER);
-          }
-        }
-        kept.push(...comp);
       }
     }
   },
@@ -251,8 +105,7 @@ const Terrain = {
           for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
               if (dx === 0 && dy === 0) continue;
-              const nx = x + dx;
-              const ny = y + dy;
+              const nx = x + dx, ny = y + dy;
               if (this._inBounds(nx, ny) && this._get(copy, nx, ny) === TERRAIN.MOUNTAIN) {
                 nbr++;
               }
@@ -266,6 +119,88 @@ const Terrain = {
           }
         }
       }
+    }
+  },
+
+  _generateTerrain(terrain, riverRatio, mountainRatio, seed) {
+    const W = G.GRID_W;
+    const H = G.GRID_H;
+    const total = W * H;
+    const riverTarget = riverRatio > 0 ? Math.floor(total * riverRatio) : 0;
+    const mountainTarget = mountainRatio > 0 ? Math.floor(total * mountainRatio) : 0;
+    const scale = 14;
+    const octaves = 4;
+
+    const elev = new Float32Array(total);
+    for (let i = 0; i < total; i++) {
+      elev[i] = this._fbm((i % W) / scale, Math.floor(i / W) / scale, seed, octaves);
+    }
+
+    const cells = new Uint32Array(total);
+    for (let i = 0; i < total; i++) cells[i] = i;
+
+    if (mountainTarget > 0) {
+      cells.sort((a, b) => elev[b] - elev[a]);
+      for (let i = 0; i < Math.min(mountainTarget, total); i++) {
+        terrain[cells[i]] = TERRAIN.MOUNTAIN;
+      }
+      this._smoothMountains(terrain);
+    }
+
+    if (riverTarget > 0) {
+      for (let i = 0; i < total; i++) cells[i] = i;
+
+      const flow = new Float32Array(total);
+      for (let i = 0; i < total; i++) flow[i] = 1;
+
+      const sorted = new Uint32Array(total);
+      for (let i = 0; i < total; i++) sorted[i] = i;
+      sorted.sort((a, b) => elev[b] - elev[a]);
+
+      for (let si = 0; si < total; si++) {
+        const idx = sorted[si];
+        const x = idx % W;
+        const y = Math.floor(idx / W);
+        const h = elev[idx];
+        let bestDrop = -Infinity;
+        let bestNx = -1;
+        let bestNy = -1;
+
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = x + dx, ny = y + dy;
+            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+            const nh = elev[ny * W + nx];
+            if (nh >= h) continue;
+            const drop = (h - nh) / (dx !== 0 && dy !== 0 ? 1.414 : 1);
+            if (drop > bestDrop) {
+              bestDrop = drop;
+              bestNx = nx;
+              bestNy = ny;
+            }
+          }
+        }
+
+        if (bestNx >= 0) {
+          flow[bestNy * W + bestNx] += flow[idx];
+        }
+      }
+
+      const flowList = [];
+      for (let i = 0; i < total; i++) {
+        if (terrain[i] === TERRAIN.PLAIN) {
+          flowList.push({ idx: i, f: flow[i] });
+        }
+      }
+      flowList.sort((a, b) => b.f - a.f);
+
+      const preTarget = Math.max(1, Math.floor(riverTarget / 2.2));
+      for (let i = 0; i < Math.min(preTarget, flowList.length); i++) {
+        terrain[flowList[i].idx] = TERRAIN.RIVER;
+      }
+
+      this._dilateRivers(terrain);
     }
   },
 
