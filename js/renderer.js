@@ -532,17 +532,21 @@ const Renderer = {
 
   trailPosAt(trail, targetDist) {
     if (trail.length < 2) return trail[0] || null;
+    const biasedDist = targetDist + 3;
     let accum = 0;
     for (let i = 1; i < trail.length; i++) {
       const seg = Math.hypot(trail[i - 1].x - trail[i].x, trail[i - 1].y - trail[i].y);
       accum += seg;
-      if (accum >= targetDist) {
-        const overshoot = accum - targetDist;
-        const t = seg > 0 ? 1 - overshoot / seg : 0;
+      if (accum >= biasedDist) {
+        const overshoot = accum - biasedDist;
+        const t = Math.max(0, Math.min(1, seg > 0 ? 1 - overshoot / seg : 0));
+        let da = trail[i].angle - trail[i - 1].angle;
+        while (da > Math.PI) da -= 2 * Math.PI;
+        while (da < -Math.PI) da += 2 * Math.PI;
         return {
           x: trail[i - 1].x + (trail[i].x - trail[i - 1].x) * t,
           y: trail[i - 1].y + (trail[i].y - trail[i - 1].y) * t,
-          angle: trail[i - 1].angle,
+          angle: trail[i - 1].angle + da * t,
         };
       }
     }
