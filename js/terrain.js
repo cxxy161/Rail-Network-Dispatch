@@ -129,30 +129,66 @@ const Terrain = {
     const noiseScale = 0.007;
     const warpScale = 0.005;
     const warpStrength = 22.0;
-    const riverHalfWidth = 0.8 + riverRatio * 1.5;
+
+    const mountainCost = new Float32Array(total);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const idx = y * W + x;
+        if (terrain[idx] === TERRAIN.MOUNTAIN) {
+          mountainCost[idx] = 10.0;
+        } else {
+          let near = 0;
+          for (let dy = -3; dy <= 3; dy++) {
+            for (let dx = -3; dx <= 3; dx++) {
+              const nx = x + dx, ny = y + dy;
+              if (this._inBounds(nx, ny) && terrain[ny * W + nx] === TERRAIN.MOUNTAIN) {
+                near += 1.0 / (Math.hypot(dx, dy) + 0.1);
+              }
+            }
+          }
+          mountainCost[idx] = near * 0.5;
+        }
+      }
+    }
 
     const ng = new Float32Array(total);
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
-        const qx = x + this._valueNoise(x * warpScale, y * warpScale, seed + 100) * warpStrength;
-        const qy = y + this._valueNoise(x * warpScale, y * warpScale, seed + 200) * warpStrength;
-        ng[y * W + x] = this._valueNoise(qx * noiseScale, qy * noiseScale, seed);
+        const idx = y * W + x;
+        const mOff = mountainCost[idx] * 4.0;
+        const qx = x + mOff + this._valueNoise(x * warpScale, y * warpScale, seed + 100) * warpStrength;
+        const qy = y + mOff + this._valueNoise(x * warpScale, y * warpScale, seed + 200) * warpStrength;
+        ng[idx] = this._valueNoise(qx * noiseScale, qy * noiseScale, seed);
       }
     }
+
+    const distMap = new Float32Array(total);
+    const candidates = [];
 
     for (let y = 1; y < H - 1; y++) {
       for (let x = 1; x < W - 1; x++) {
         const idx = y * W + x;
-        const n = ng[idx];
+        if (terrain[idx] === TERRAIN.MOUNTAIN) {
+          distMap[idx] = 9999;
+          continue;
+        }
+
         const gx = (ng[idx + 1] - ng[idx - 1] + 0.5 * (ng[idx + W + 1] - ng[idx + W - 1] + ng[idx - W + 1] - ng[idx - W - 1])) / 4;
         const gy = (ng[idx + W] - ng[idx - W] + 0.5 * (ng[idx + W + 1] - ng[idx - W + 1] + ng[idx + W - 1] - ng[idx - W - 1])) / 4;
         const gradLen = Math.sqrt(gx * gx + gy * gy) + 0.0001;
-        const dist = Math.abs(n - 0.5) / gradLen;
 
-        if (dist < riverHalfWidth) {
-          terrain[idx] = TERRAIN.RIVER;
-        }
+        const dist = (Math.abs(ng[idx] - 0.5) / gradLen) + mountainCost[idx] * 1.5;
+        distMap[idx] = dist;
+        candidates.push({ idx, dist });
       }
+    }
+
+    const targetRiverTiles = Math.floor(total * riverRatio);
+    candidates.sort((a, b) => a.dist - b.dist);
+
+    const fillCount = Math.min(targetRiverTiles, candidates.length);
+    for (let i = 0; i < fillCount; i++) {
+      terrain[candidates[i].idx] = TERRAIN.RIVER;
     }
 
     this._pruneIsolated(terrain, TERRAIN.RIVER);
@@ -179,10 +215,6 @@ const Terrain = {
   _generateTerrain(terrain, riverRatio, mountainRatio, seed) {
     const total = G.GRID_W * G.GRID_H;
 
-    if (riverRatio > 0) {
-      this._generateRiversValley(terrain, riverRatio, seed);
-    }
-
     if (mountainRatio > 0) {
       const elev = new Float32Array(total);
       const scale = 14;
@@ -193,15 +225,17 @@ const Terrain = {
       const mountainTarget = Math.floor(total * mountainRatio);
       const candidates = [];
       for (let i = 0; i < total; i++) {
-        if (terrain[i] === TERRAIN.PLAIN) {
-          candidates.push({ idx: i, v: elev[i] });
-        }
+        candidates.push({ idx: i, v: elev[i] });
       }
       candidates.sort((a, b) => b.v - a.v);
       for (let i = 0; i < Math.min(mountainTarget, candidates.length); i++) {
         terrain[candidates[i].idx] = TERRAIN.MOUNTAIN;
       }
       this._smoothMountains(terrain);
+    }
+
+    if (riverRatio > 0) {
+      this._generateRiversValley(terrain, riverRatio, seed);
     }
   },
 
