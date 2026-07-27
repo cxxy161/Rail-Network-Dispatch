@@ -138,11 +138,12 @@ const Graph = {
     const skipSet = new Set();
     for (const [a, b] of pairs) { skipSet.add(a); skipSet.add(b); }
     const candidates = ns.filter((nk, i) => !skipSet.has(nk));
-    if (candidates.length <= 1) return;
+    if (candidates.length === 0) return;
 
     const currentCandidate = ns[old % deg];
-    const curIdx = candidates.indexOf(currentCandidate);
-    const nextIdx = curIdx >= 0 ? (curIdx + 1) % candidates.length : 0;
+    let curIdx = candidates.indexOf(currentCandidate);
+    if (curIdx < 0) curIdx = 0;
+    const nextIdx = (curIdx + 1) % candidates.length;
     const nextNeighbor = candidates[nextIdx];
     G.activeSwitches[key] = ns.indexOf(nextNeighbor);
   },
