@@ -134,17 +134,18 @@ const Graph = {
     if (deg < 3) return;
     const old = G.activeSwitches[key] || 0;
     const ns = this.getNeighbors(key);
-    const pairs = this.getThroughPairs(key);
-    const skipSet = new Set();
-    for (const [a, b] of pairs) { skipSet.add(a); skipSet.add(b); }
-    const candidates = ns.filter((nk, i) => !skipSet.has(nk));
-    if (candidates.length === 0) return;
+    const [sx, sy] = key.split(',').map(Number);
+    const [ox, oy] = ns[old % deg].split(',').map(Number);
+    const odx = ox - sx, ody = oy - sy;
 
-    const currentCandidate = ns[old % deg];
-    let curIdx = candidates.indexOf(currentCandidate);
-    if (curIdx < 0) curIdx = 0;
-    const nextIdx = (curIdx + 1) % candidates.length;
-    const nextNeighbor = candidates[nextIdx];
-    G.activeSwitches[key] = ns.indexOf(nextNeighbor);
+    for (let i = 1; i <= deg; i++) {
+      const attempt = (old + i) % deg;
+      const [tx, ty] = ns[attempt].split(',').map(Number);
+      const ndx = tx - sx, ndy = ty - sy;
+      if (ndx !== -odx || ndy !== -ody) {
+        G.activeSwitches[key] = attempt;
+        return;
+      }
+    }
   },
 };
