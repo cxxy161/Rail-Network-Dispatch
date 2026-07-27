@@ -6,13 +6,13 @@ const TUTORIAL_DATA = {
   mapPreset: {
     gridW: 32,
     gridH: 24,
-    startingResources: { gold: 100, trackFragments: 10, platformComponents: 5, wagons: 4 },
+    startingResources: { gold: 100, trackFragments: 12, platformComponents: 5, wagons: 4 },
     stations: [
       { id: 'A', x: 8,  y: 12, color: '#E84A4A', flowLevel: 30 },
       { id: 'B', x: 18, y: 10, color: '#4A90D9', flowLevel: 20, appearsOnDay: 2 },
       { id: 'C', x: 20, y: 12, color: '#50B86C', flowLevel: 40 },
     ],
-    depot: { x: 14, y: 16 },
+    depot: { x: 24, y: 12 },
     prebuiltEdges: (() => {
       const pairs = [];
       const k = (x, y) => x + ',' + y;
@@ -68,16 +68,16 @@ const TUTORIAL_DATA = {
     },
     {
       id: 's5',
-      text: '继续画，从<span class="tut-hl">黑点</span>（交叉路口）往<span class="tut-hl">下</span>拖拽到车辆段。必须从黑点直接连——不能从旁边绕。',
-      highlight: { type: 'zone', x: 13, y: 13, w: 3, h: 5, desc: '路口→车辆段' },
+      text: '继续往右画，从<span class="tut-hl">C站</span>延伸轨道到<span class="tut-hl">车辆段</span>——这样列车才能从段里开上正线。',
+      highlight: { type: 'zone', x: 19, y: 10, w: 7, h: 5, desc: 'C→车辆段' },
       allowActions: ['drag_track'],
-      bubblePin: 'top-right',
-      check: () => (G.connectionMap['14,12'] || []).length >= 3 && Tutorial.helpers.depotConnected(),
+      bubblePin: 'bottom-center',
+      check: () => Tutorial.helpers.depotConnected(),
     },
     {
       id: 's6a',
       text: '来，造一列车。点地图上的<span class="tut-hl">紫色车辆段</span>，打开编组菜单。',
-      highlight: { type: 'zone', x: 12, y: 15, w: 5, h: 3, desc: '车辆段' },
+      highlight: { type: 'zone', x: 22, y: 10, w: 5, h: 5, desc: '车辆段' },
       allowActions: ['click_depot'],
       check: () => {
         const rp = document.getElementById('right-panel');
@@ -103,7 +103,7 @@ const TUTORIAL_DATA = {
     {
       id: 's8',
       text: '列车还在段里。点<span class="tut-hl">车辆段</span>，选一列车<span class="tut-hl">发车</span>，它就会冲上正线。',
-      highlight: { type: 'zone', x: 12, y: 15, w: 5, h: 3, desc: '车辆段' },
+      highlight: { type: 'zone', x: 22, y: 10, w: 5, h: 5, desc: '车辆段' },
       allowActions: ['click_depot'],
       check: () => G.activeTrains.length >= 1,
     },
