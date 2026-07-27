@@ -274,8 +274,10 @@ const Renderer = {
         const [bx, by] = b.split(',').map(Number);
         const adx = ax - sx, ady = ay - sy;
         const bdx = bx - sx, bdy = by - sy;
-        if (adx > 0 || (adx === 0 && ady < 0)) { fixedSet.add(a); }
-        else { fixedSet.add(b); }
+        const cntA = Graph.countBranchesNear(key, adx, ady, b);
+        const cntB = Graph.countBranchesNear(key, bdx, bdy, a);
+        const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
+        if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
       }
 
       for (const nk of neighbors) {

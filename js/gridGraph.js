@@ -129,6 +129,20 @@ const Graph = {
     return pairs;
   },
 
+  countBranchesNear(key, refDx, refDy, excludeKey) {
+    const ns = this.getNeighbors(key);
+    const [sx, sy] = key.split(',').map(Number);
+    let count = 0;
+    for (const nk of ns) {
+      if (nk === excludeKey) continue;
+      const [nx, ny] = nk.split(',').map(Number);
+      const ndx = nx - sx, ndy = ny - sy;
+      if ((refDx !== 0 && Math.sign(refDx) === Math.sign(ndx)) ||
+          (refDy !== 0 && Math.sign(refDy) === Math.sign(ndy))) count++;
+    }
+    return count;
+  },
+
   cycleSwitch(key) {
     const deg = this.getDegree(key);
     if (deg < 3) return;
@@ -142,8 +156,10 @@ const Graph = {
       const [bx, by] = b.split(',').map(Number);
       const adx = ax - sx, ady = ay - sy;
       const bdx = bx - sx, bdy = by - sy;
-      if (adx > 0 || (adx === 0 && ady < 0)) { fixedSet.add(a); }
-      else { fixedSet.add(b); }
+      const cntA = this.countBranchesNear(key, adx, ady, b);
+      const cntB = this.countBranchesNear(key, bdx, bdy, a);
+      const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
+      if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
     }
     const candidates = ns.filter((nk, i) => !fixedSet.has(nk));
     if (candidates.length === 0) return;
