@@ -34,16 +34,16 @@ const MenuDecor = {
 
   _loadDepotImg() {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 76" width="100" height="76">' +
-      '<rect x="2" y="2" width="96" height="72" rx="4" fill="#D4CCC0" opacity="0.6"/>' +
-      '<rect x="0" y="0" width="96" height="72" rx="4" fill="#F0ECE4" stroke="#8B5CF6" stroke-width="2.5"/>' +
-      '<line x1="6" y1="18" x2="90" y2="18" stroke="#8B5CF6" stroke-width="1.2" opacity="0.35"/>' +
-      '<polygon points="0,0 96,0 96,18 0,18" fill="#8B5CF6" opacity="0.06"/>' +
-      '<polygon points="0,0 96,0 90,18 6,18" fill="#8B5CF6" opacity="0.10"/>' +
-      '<rect x="6" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
-      '<rect x="23" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
-      '<rect x="40" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
-      '<rect x="57" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
-      '<rect x="74" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="2" y="3" width="96" height="72" rx="4" fill="#C8C0B4" opacity="0.7"/>' +
+      '<rect x="0" y="0" width="96" height="72" rx="4" fill="#4A4A45"/>' +
+      '<polygon points="0,0 96,0 96,18 0,18" fill="#555550"/>' +
+      '<polygon points="0,0 96,0 90,18 6,18" fill="#40403C"/>' +
+      '<line x1="6" y1="18" x2="90" y2="18" stroke="#333330" stroke-width="1.5"/>' +
+      '<rect x="6" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="23" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="40" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="57" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="74" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
       '</svg>';
     this.depotImg = new Image();
     this.depotImg.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
