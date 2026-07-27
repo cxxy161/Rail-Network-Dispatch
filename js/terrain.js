@@ -122,12 +122,15 @@ const Terrain = {
   },
 
   _getWarpedNoise(x, y, seed) {
-    const noiseScale = 0.007;
-    const warpScale = 0.005;
-    const warpStrength = 22.0;
+    const noiseScale = 0.012;
+    const warpScale = 0.02;
+    const warpStrength = 25.0;
 
-    const qx = x + this._valueNoise(x * warpScale, y * warpScale, seed + 100) * warpStrength;
-    const qy = y + this._valueNoise(x * warpScale, y * warpScale, seed + 200) * warpStrength;
+    const dx = this._fbm(x * warpScale, y * warpScale, seed + 100, 2);
+    const dy = this._fbm(x * warpScale, y * warpScale, seed + 200, 2);
+
+    const qx = x + (dx - 0.5) * warpStrength * 2.0;
+    const qy = y + (dy - 0.5) * warpStrength * 2.0;
 
     return this._valueNoise(qx * noiseScale, qy * noiseScale, seed);
   },
