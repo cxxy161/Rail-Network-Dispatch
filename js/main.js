@@ -14,11 +14,21 @@ function init() {
   document.getElementById('menu-continue').classList.toggle('hidden', !saveExists());
 
   document.getElementById('menu-new-game').addEventListener('click', () => {
-    resetGame();
-    Ui.startBuild();
-    Renderer.centerCamera();
-    MenuDecor.stop();
-    Ui.hideMenu();
+    if (saveExists()) {
+      Ui.showNewGameConfirm();
+    } else {
+      startNewGame();
+    }
+  });
+
+  document.getElementById('confirm-yes').addEventListener('click', () => {
+    deleteSave();
+    Ui.hideNewGameConfirm();
+    startNewGame();
+  });
+
+  document.getElementById('confirm-no').addEventListener('click', () => {
+    Ui.hideNewGameConfirm();
   });
 
   document.getElementById('menu-continue').addEventListener('click', () => {
@@ -49,6 +59,14 @@ function init() {
 
   lastTimestamp = performance.now();
   requestAnimationFrame(gameLoop);
+}
+
+function startNewGame() {
+  resetGame();
+  Ui.startBuild();
+  Renderer.centerCamera();
+  MenuDecor.stop();
+  Ui.hideMenu();
 }
 
 function gameLoop(ts) {

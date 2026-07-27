@@ -400,3 +400,32 @@ body {
   color: #D0CCC0;
   letter-spacing: 0.1em;
 }
+
+/* ── 新游戏确认弹窗 ── */
+.confirm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.08);
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-panel {
+  background: #FFF;
+  border-radius: 4px;
+  padding: 28px 36px 20px;
+  max-width: 320px;
+  text-align: center;
+}
+.confirm-panel p {
+  font-size: 14px;
+  font-weight: 300;
+  color: #555;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.confirm-btns {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+}

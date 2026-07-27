@@ -152,6 +152,14 @@ const Ui = {
     setTimeout(() => menu.classList.add('hidden'), 400);
   },
 
+  showNewGameConfirm() {
+    document.getElementById('confirm-newgame').classList.remove('hidden');
+  },
+
+  hideNewGameConfirm() {
+    document.getElementById('confirm-newgame').classList.add('hidden');
+  },
+
   startBuild() {
     G.phase = 'build';
     G.passengersDeliveredToday = 0;
