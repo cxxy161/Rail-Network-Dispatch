@@ -126,10 +126,10 @@ const Terrain = {
     const W = G.GRID_W;
     const H = G.GRID_H;
     const total = W * H;
-    const noiseScale = 0.0125;
-    const warpScale = 0.008;
-    const warpStrength = 12.0;
-    const riverHalfWidth = 0.5 + riverRatio * 5;
+    const noiseScale = 0.007;
+    const warpScale = 0.005;
+    const warpStrength = 22.0;
+    const riverHalfWidth = 0.8 + riverRatio * 1.5;
 
     const ng = new Float32Array(total);
     for (let y = 0; y < H; y++) {
@@ -142,19 +142,20 @@ const Terrain = {
 
     for (let y = 1; y < H - 1; y++) {
       for (let x = 1; x < W - 1; x++) {
-        const n = ng[y * W + x];
-        const gx = (ng[y * W + x + 1] - ng[y * W + x - 1]) / 2;
-        const gy = (ng[(y + 1) * W + x] - ng[(y - 1) * W + x]) / 2;
+        const idx = y * W + x;
+        const n = ng[idx];
+        const gx = (ng[idx + 1] - ng[idx - 1] + 0.5 * (ng[idx + W + 1] - ng[idx + W - 1] + ng[idx - W + 1] - ng[idx - W - 1])) / 4;
+        const gy = (ng[idx + W] - ng[idx - W] + 0.5 * (ng[idx + W + 1] - ng[idx - W + 1] + ng[idx + W - 1] - ng[idx - W - 1])) / 4;
         const gradLen = Math.sqrt(gx * gx + gy * gy) + 0.0001;
         const dist = Math.abs(n - 0.5) / gradLen;
+
         if (dist < riverHalfWidth) {
-          terrain[y * W + x] = TERRAIN.RIVER;
+          terrain[idx] = TERRAIN.RIVER;
         }
       }
     }
 
     this._pruneIsolated(terrain, TERRAIN.RIVER);
-    this._dilateRivers(terrain);
   },
 
   _pruneIsolated(terrain, type) {
