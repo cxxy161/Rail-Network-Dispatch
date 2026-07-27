@@ -227,7 +227,11 @@ function loadGame() {
     G.phase = 'build';
     G.paused = false;
     G.speedMultiplier = 1;
-    G.infoTarget = null;
+  G.infoTarget = null;
+  G.satisfaction = 100;
+  G.lowSatisfactionDays = 0;
+  G.totalGeneratedToday = 0;
+  G.lastDeductHour = 6;
     G.trackDrag = { active: false, startX: -1, startY: -1 };
     G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
     G.selectedTool = 'track';
