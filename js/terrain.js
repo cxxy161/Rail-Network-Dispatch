@@ -77,25 +77,6 @@ const Terrain = {
     return value / maxValue;
   },
 
-  _dilateRivers(terrain) {
-    const copy = new Uint8Array(terrain);
-    for (let y = 0; y < G.GRID_H; y++) {
-      for (let x = 0; x < G.GRID_W; x++) {
-        if (this._get(copy, x, y) !== TERRAIN.PLAIN) continue;
-        let riverNbr = 0;
-        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-          const nx = x + dx, ny = y + dy;
-          if (this._inBounds(nx, ny) && this._get(copy, nx, ny) === TERRAIN.RIVER) {
-            riverNbr++;
-          }
-        }
-        if (riverNbr === 1) {
-          this._set(terrain, x, y, TERRAIN.RIVER);
-        }
-      }
-    }
-  },
-
   _smoothMountains(terrain) {
     for (let iter = 0; iter < 2; iter++) {
       const copy = new Uint8Array(terrain);
@@ -122,121 +103,68 @@ const Terrain = {
     }
   },
 
-  _generateRiversValley(terrain, riverRatio, seed) {
-    const W = G.GRID_W;
-    const H = G.GRID_H;
-    const total = W * H;
+  _getWarpedNoise(x, y, seed) {
     const noiseScale = 0.007;
     const warpScale = 0.005;
     const warpStrength = 22.0;
 
-    const mountainCost = new Float32Array(total);
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const idx = y * W + x;
-        if (terrain[idx] === TERRAIN.MOUNTAIN) {
-          mountainCost[idx] = 10.0;
-        } else {
-          let near = 0;
-          for (let dy = -3; dy <= 3; dy++) {
-            for (let dx = -3; dx <= 3; dx++) {
-              const nx = x + dx, ny = y + dy;
-              if (this._inBounds(nx, ny) && terrain[ny * W + nx] === TERRAIN.MOUNTAIN) {
-                near += 1.0 / (Math.hypot(dx, dy) + 0.1);
-              }
-            }
-          }
-          mountainCost[idx] = near * 0.5;
-        }
-      }
-    }
+    const qx = x + this._valueNoise(x * warpScale, y * warpScale, seed + 100) * warpStrength;
+    const qy = y + this._valueNoise(x * warpScale, y * warpScale, seed + 200) * warpStrength;
 
-    const ng = new Float32Array(total);
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const idx = y * W + x;
-        const mOff = mountainCost[idx] * 4.0;
-        const qx = x + mOff + this._valueNoise(x * warpScale, y * warpScale, seed + 100) * warpStrength;
-        const qy = y + mOff + this._valueNoise(x * warpScale, y * warpScale, seed + 200) * warpStrength;
-        ng[idx] = this._valueNoise(qx * noiseScale, qy * noiseScale, seed);
-      }
-    }
-
-    const distMap = new Float32Array(total);
-    const candidates = [];
-
-    for (let y = 1; y < H - 1; y++) {
-      for (let x = 1; x < W - 1; x++) {
-        const idx = y * W + x;
-        if (terrain[idx] === TERRAIN.MOUNTAIN) {
-          distMap[idx] = 9999;
-          continue;
-        }
-
-        const gx = (ng[idx + 1] - ng[idx - 1] + 0.5 * (ng[idx + W + 1] - ng[idx + W - 1] + ng[idx - W + 1] - ng[idx - W - 1])) / 4;
-        const gy = (ng[idx + W] - ng[idx - W] + 0.5 * (ng[idx + W + 1] - ng[idx - W + 1] + ng[idx + W - 1] - ng[idx - W - 1])) / 4;
-        const gradLen = Math.sqrt(gx * gx + gy * gy) + 0.0001;
-
-        const dist = (Math.abs(ng[idx] - 0.5) / gradLen) + mountainCost[idx] * 1.5;
-        distMap[idx] = dist;
-        candidates.push({ idx, dist });
-      }
-    }
-
-    const targetRiverTiles = Math.floor(total * riverRatio);
-    candidates.sort((a, b) => a.dist - b.dist);
-
-    const fillCount = Math.min(targetRiverTiles, candidates.length);
-    for (let i = 0; i < fillCount; i++) {
-      terrain[candidates[i].idx] = TERRAIN.RIVER;
-    }
-
-    this._pruneIsolated(terrain, TERRAIN.RIVER);
-  },
-
-  _pruneIsolated(terrain, type) {
-    const copy = new Uint8Array(terrain);
-    const W = G.GRID_W;
-    const H = G.GRID_H;
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const i = y * W + x;
-        if (copy[i] !== type) continue;
-        let n = 0;
-        if (y > 0 && copy[i - W] === type) n++;
-        if (y < H - 1 && copy[i + W] === type) n++;
-        if (x > 0 && copy[i - 1] === type) n++;
-        if (x < W - 1 && copy[i + 1] === type) n++;
-        if (n === 0) terrain[i] = TERRAIN.PLAIN;
-      }
-    }
+    return this._valueNoise(qx * noiseScale, qy * noiseScale, seed);
   },
 
   _generateTerrain(terrain, riverRatio, mountainRatio, seed) {
-    const total = G.GRID_W * G.GRID_H;
+    const W = G.GRID_W;
+    const H = G.GRID_H;
+    const maxRiverHalfWidth = 0.5 + riverRatio * 4.0;
+    const maskThreshold = 1.0 - riverRatio * 1.5;
+    const mountainScale = 14;
 
-    if (mountainRatio > 0) {
-      const elev = new Float32Array(total);
-      const scale = 14;
-      for (let i = 0; i < total; i++) {
-        elev[i] = this._fbm((i % G.GRID_W) / scale, Math.floor(i / G.GRID_W) / scale, seed + 5000, 4);
-      }
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const idx = y * W + x;
 
-      const mountainTarget = Math.floor(total * mountainRatio);
-      const candidates = [];
-      for (let i = 0; i < total; i++) {
-        candidates.push({ idx: i, v: elev[i] });
+        if (riverRatio > 0) {
+          const n = this._getWarpedNoise(x, y, seed);
+          const nx = this._getWarpedNoise(x + 1, y, seed);
+          const nx_m1 = this._getWarpedNoise(x - 1, y, seed);
+          const ny = this._getWarpedNoise(x, y + 1, seed);
+          const ny_m1 = this._getWarpedNoise(x, y - 1, seed);
+
+          const gx = (nx - nx_m1) / 2;
+          const gy = (ny - ny_m1) / 2;
+          const gradLen = Math.sqrt(gx * gx + gy * gy) + 0.0001;
+          const baseDist = Math.abs(n - 0.5) / gradLen;
+
+          const macroMask = this._valueNoise(x * 0.003, y * 0.003, seed + 888);
+          let fade = (macroMask - maskThreshold) * 5.0;
+          fade = Math.max(0.0, Math.min(1.0, fade));
+
+          const actualHalfWidth = maxRiverHalfWidth * fade;
+
+          if (baseDist < actualHalfWidth && actualHalfWidth >= 0.5) {
+            terrain[idx] = TERRAIN.RIVER;
+            continue;
+          }
+        }
+
+        if (mountainRatio > 0) {
+          const mNoise = this._fbm(x / mountainScale, y / mountainScale, seed + 5000, 4);
+          const mountainThreshold = 1.0 - mountainRatio;
+
+          if (mNoise > mountainThreshold) {
+            terrain[idx] = TERRAIN.MOUNTAIN;
+            continue;
+          }
+        }
+
+        terrain[idx] = TERRAIN.PLAIN;
       }
-      candidates.sort((a, b) => b.v - a.v);
-      for (let i = 0; i < Math.min(mountainTarget, candidates.length); i++) {
-        terrain[candidates[i].idx] = TERRAIN.MOUNTAIN;
-      }
-      this._smoothMountains(terrain);
     }
 
-    if (riverRatio > 0) {
-      this._generateRiversValley(terrain, riverRatio, seed);
-    }
+    this._pruneIsolated(terrain, TERRAIN.RIVER);
+    this._smoothMountains(terrain);
   },
 
   _placeStations(terrain, seed) {
