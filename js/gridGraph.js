@@ -114,6 +114,20 @@ const Graph = {
   cycleSwitch(key) {
     const deg = this.getDegree(key);
     if (deg < 3) return;
-    G.activeSwitches[key] = ((G.activeSwitches[key] || 0) + 1) % deg;
+    const old = G.activeSwitches[key] || 0;
+    const ns = this.getNeighbors(key);
+    const [cx, cy] = key.split(',').map(Number);
+    const [ox, oy] = ns[old % deg].split(',').map(Number);
+    const odx = ox - cx, ody = oy - cy;
+
+    for (let i = 1; i <= deg; i++) {
+      const attempt = (old + i) % deg;
+      const [tx, ty] = ns[attempt].split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (ndx !== -odx || ndy !== -ody) {
+        G.activeSwitches[key] = attempt;
+        return;
+      }
+    }
   },
 };
