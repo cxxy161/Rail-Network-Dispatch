@@ -125,14 +125,29 @@ const Terrain = {
   _generateRiversValley(terrain, riverRatio, seed) {
     const W = G.GRID_W;
     const H = G.GRID_H;
-    const scale = 0.0125;
-    const threshold = 0.94 - riverRatio * 0.2;
+    const total = W * H;
+    const noiseScale = 0.0125;
+    const warpScale = 0.008;
+    const warpStrength = 12.0;
+    const riverHalfWidth = 0.5 + riverRatio * 5;
 
+    const ng = new Float32Array(total);
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
-        const n = this._fbm(x * scale, y * scale, seed, 2);
-        const r = 1 - Math.abs(n - 0.5) * 2;
-        if (r > threshold) {
+        const qx = x + this._valueNoise(x * warpScale, y * warpScale, seed + 100) * warpStrength;
+        const qy = y + this._valueNoise(x * warpScale, y * warpScale, seed + 200) * warpStrength;
+        ng[y * W + x] = this._valueNoise(qx * noiseScale, qy * noiseScale, seed);
+      }
+    }
+
+    for (let y = 1; y < H - 1; y++) {
+      for (let x = 1; x < W - 1; x++) {
+        const n = ng[y * W + x];
+        const gx = (ng[y * W + x + 1] - ng[y * W + x - 1]) / 2;
+        const gy = (ng[(y + 1) * W + x] - ng[(y - 1) * W + x]) / 2;
+        const gradLen = Math.sqrt(gx * gx + gy * gy) + 0.0001;
+        const dist = Math.abs(n - 0.5) / gradLen;
+        if (dist < riverHalfWidth) {
           terrain[y * W + x] = TERRAIN.RIVER;
         }
       }
