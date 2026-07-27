@@ -71,6 +71,10 @@ function init() {
     document.getElementById('cfg-mapscale-val').textContent = w + '×' + h;
   });
 
+  // trigger initial display
+  document.getElementById('cfg-stations').dispatchEvent(new Event('input'));
+  document.getElementById('cfg-mapscale').dispatchEvent(new Event('input'));
+
   document.getElementById('menu-continue').addEventListener('click', () => {
     Ui.startBuild();
     Renderer.centerCamera();
