@@ -26,7 +26,7 @@ const TUTORIAL_DATA = {
   steps: [
     {
       id: 's1',
-      text: '先给车站装站台。点底部<span class="tut-hl">「站台」</span>，在<span class="tut-hl">A站</span>（红色虚线框）内拖拽，拉出一段站台。',
+      text: '先给车站装站台。点底部<span class="tut-hl">「站台」</span>，在<span class="tut-hl">A站</span>（红色虚线框）内<span class="tut-hl">横向拖拽</span>——方向决定朝向，拉 2 格即可。',
       highlight: [
         { type: 'dom', selector: '#tool-platform', desc: '站台按钮' },
         { type: 'zone', x: 6, y: 10, w: 8, h: 5, desc: 'A站' },
@@ -40,7 +40,7 @@ const TUTORIAL_DATA = {
     },
     {
       id: 's2',
-      text: '好，<span class="tut-hl">C站</span>（绿色框）也来一段。拖拽方向会决定站台朝向。',
+      text: '好，<span class="tut-hl">C站</span>（绿色框）也来一段——同样<span class="tut-hl">横向拖拽</span>，拉 2 格。',
       highlight: { type: 'zone', x: 18, y: 10, w: 7, h: 5, desc: 'C站' },
       allowActions: ['drag_platform'],
       check: () => G.platforms.some(p => p.stationId === 'C'),

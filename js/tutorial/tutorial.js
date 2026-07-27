@@ -591,6 +591,15 @@ const Tutorial = {
     return false;
   },
 
+  isActionAllowed(type) {
+    if (!this.active) return true;
+    const step = this.currentStepRaw();
+    if (!step) return true;
+    const allowed = step.allowActions || [];
+    if (allowed.length === 0) return false;
+    return allowed.includes(type);
+  },
+
   _renderSpotlight() {
     const canvas = document.getElementById('tutorial-spotlight');
     if (!canvas) return;

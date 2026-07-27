@@ -116,7 +116,7 @@ const Input = {
 
       if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
           G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
-        if (G.selectedTool === 'track') {
+        if (G.selectedTool === 'track' && Tutorial.isActionAllowed('drag_track')) {
           this._depotTrackClick = true;
         } else {
           if (Tutorial.gateAction('click_depot')) {
