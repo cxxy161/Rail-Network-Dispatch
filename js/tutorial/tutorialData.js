@@ -141,6 +141,7 @@ const TUTORIAL_DATA = {
         () => Tutorial.flags.usedReverse,
       ],
       allowActions: ['click_train'],
+      bubblePin: 'bottom-center',
       check: () => Tutorial.flags.usedReverse,
     },
     {
@@ -156,6 +157,7 @@ const TUTORIAL_DATA = {
       text: '天快黑了。结算时会自动弹出<span class="tut-hl">结算面板</span>——看看今天运了多少人、挣了多少。',
       highlight: null,
       allowActions: [],
+      bubblePin: 'bottom-center',
       check: () => G.dayNumber === 2,
     },
 
