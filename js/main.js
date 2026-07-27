@@ -43,7 +43,7 @@ function init() {
   });
 
   document.getElementById('menu-settings').addEventListener('click', () => {
-    Ui.openSettings();
+    window.open('https://github.com/cxxy161/Rail-Network-Dispatch', '_blank');
   });
 
   MenuDecor.init();
