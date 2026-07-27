@@ -581,23 +581,21 @@ const Tutorial = {
     if (!this.active) return true;
     const step = this.currentStepRaw();
     if (!step) return true;
-    const allowed = step.allowActions || [];
-    if (allowed.length === 0) {
-      Ui.flashMessage('请先完成当前步骤的指引操作');
+    if (!step.allowActions) return true;
+    const allowed = step.allowActions;
+    if (!allowed.includes(type)) {
+      Ui.flashMessage('当前步骤不支持此操作');
       return false;
     }
-    if (allowed.includes(type)) return true;
-    Ui.flashMessage('当前步骤不支持此操作');
-    return false;
+    return true;
   },
 
   isActionAllowed(type) {
     if (!this.active) return true;
     const step = this.currentStepRaw();
     if (!step) return true;
-    const allowed = step.allowActions || [];
-    if (allowed.length === 0) return false;
-    return allowed.includes(type);
+    if (!step.allowActions) return true;
+    return step.allowActions.includes(type);
   },
 
   _renderSpotlight() {

@@ -6,13 +6,13 @@ const TUTORIAL_DATA = {
   mapPreset: {
     gridW: 32,
     gridH: 24,
-    startingResources: { gold: 100, trackFragments: 12, platformComponents: 5, wagons: 4 },
+    startingResources: { gold: 100, trackFragments: 15, platformComponents: 5, wagons: 4 },
     stations: [
       { id: 'A', x: 8,  y: 12, color: '#E84A4A', flowLevel: 30 },
       { id: 'B', x: 18, y: 10, color: '#4A90D9', flowLevel: 20, appearsOnDay: 2 },
       { id: 'C', x: 20, y: 12, color: '#50B86C', flowLevel: 40 },
     ],
-    depot: { x: 24, y: 12 },
+    depot: { x: 25, y: 13 },
     prebuiltEdges: (() => {
       const pairs = [];
       const k = (x, y) => x + ',' + y;
@@ -64,12 +64,12 @@ const TUTORIAL_DATA = {
       text: '轨道碎片快用完了。去<span class="tut-hl">左侧商店</span>买一些——点轨道碎片的<span class="tut-hl">「5」</span>或<span class="tut-hl">「10」</span>。',
       highlight: { type: 'dom', selector: '#shop-panel', desc: '商店面板' },
       allowActions: [],
-      check: () => G.trackFragments >= 8,
+      check: () => G.trackFragments >= 11,
     },
     {
       id: 's5',
       text: '继续往右画，从<span class="tut-hl">C站</span>延伸轨道到<span class="tut-hl">车辆段</span>——这样列车才能从段里开上正线。',
-      highlight: { type: 'zone', x: 19, y: 10, w: 7, h: 5, desc: 'C→车辆段' },
+      highlight: { type: 'zone', x: 20, y: 10, w: 7, h: 5, desc: 'C→车辆段' },
       allowActions: ['drag_track'],
       bubblePin: 'bottom-center',
       check: () => Tutorial.helpers.depotConnected(),
@@ -77,7 +77,7 @@ const TUTORIAL_DATA = {
     {
       id: 's6a',
       text: '来，造一列车。点地图上的<span class="tut-hl">紫色车辆段</span>，打开编组菜单。',
-      highlight: { type: 'zone', x: 22, y: 10, w: 5, h: 5, desc: '车辆段' },
+      highlight: { type: 'zone', x: 23, y: 11, w: 5, h: 5, desc: '车辆段' },
       allowActions: ['click_depot'],
       check: () => {
         const rp = document.getElementById('right-panel');
@@ -103,7 +103,7 @@ const TUTORIAL_DATA = {
     {
       id: 's8',
       text: '列车还在段里。点<span class="tut-hl">车辆段</span>，选一列车<span class="tut-hl">发车</span>，它就会冲上正线。',
-      highlight: { type: 'zone', x: 22, y: 10, w: 5, h: 5, desc: '车辆段' },
+      highlight: { type: 'zone', x: 23, y: 11, w: 5, h: 5, desc: '车辆段' },
       allowActions: ['click_depot'],
       check: () => G.activeTrains.length >= 1,
     },
@@ -111,7 +111,6 @@ const TUTORIAL_DATA = {
       id: 's9',
       text: '列车自动跑起来了！到站停车、乘客上下，全程自动驾驶。<br>试试右上角<span class="tut-hl">倍速按钮</span>——调成 3x 或 5x 看看加速效果。',
       highlight: { type: 'dom', selector: '#time-control', desc: '倍速控制' },
-      allowActions: [],
       bubblePin: 'bottom-center',
       check: () => Tutorial.checkTimer(10),
     },
@@ -148,7 +147,6 @@ const TUTORIAL_DATA = {
       id: 's12',
       text: '注意顶部<span class="tut-hl">满意度</span> 🙂。运人效率高，满意度涨、客流多；积压严重，满意度掉、客流少。<br>这是循环反馈——客流越多调度压力越大。',
       highlight: { type: 'dom', selector: '#satisfaction-label', desc: '满意度' },
-      allowActions: [],
       bubblePin: 'top-right',
       check: () => Tutorial.checkTimer(8),
     },
@@ -156,7 +154,6 @@ const TUTORIAL_DATA = {
       id: 's13',
       text: '天快黑了。结算时会自动弹出<span class="tut-hl">结算面板</span>——看看今天运了多少人、挣了多少。',
       highlight: null,
-      allowActions: [],
       bubblePin: 'bottom-center',
       check: () => G.dayNumber === 2,
     },

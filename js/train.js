@@ -142,7 +142,14 @@ const Train = {
 
   arriveNode(train, nodeKey, fromKey) {
     if (nodeKey === Graph.key(G.depotX, G.depotY)) {
-      this.recall(train);
+      train.state = 'docked';
+      train.dockedTimer = 3;
+      train.fromKey = nodeKey;
+      train.toKey = fromKey;
+      train.t = 0;
+      train.speed = 0;
+      train.lastDockedStationId = null;
+      train.trail = [];
       return;
     }
 
