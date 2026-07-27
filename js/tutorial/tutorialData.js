@@ -1,22 +1,22 @@
 const TUTORIAL_DATA = {
   id: 'full_tutorial',
   title: '铁路调度入门',
-  version: 1,
+  version: 2,
 
   mapPreset: {
     gridW: 32,
     gridH: 24,
-    startingResources: { gold: 100, trackFragments: 14, platformComponents: 5, wagons: 4 },
+    startingResources: { gold: 100, trackFragments: 10, platformComponents: 5, wagons: 4 },
     stations: [
       { id: 'A', x: 8,  y: 12, color: '#E84A4A', flowLevel: 30 },
-      { id: 'B', x: 16, y: 6,  color: '#4A90D9', flowLevel: 20, appearsOnDay: 2 },
-      { id: 'C', x: 22, y: 12, color: '#50B86C', flowLevel: 40 },
+      { id: 'B', x: 18, y: 10, color: '#4A90D9', flowLevel: 20, appearsOnDay: 2 },
+      { id: 'C', x: 20, y: 12, color: '#50B86C', flowLevel: 40 },
     ],
-    depot: { x: 16, y: 18 },
+    depot: { x: 14, y: 16 },
     prebuiltEdges: (() => {
       const pairs = [];
       const k = (x, y) => x + ',' + y;
-      for (let x = 22; x >= 17; x--) {
+      for (let x = 20; x >= 15; x--) {
         pairs.push([k(x, 12), k(x - 1, 12)]);
       }
       return pairs;
@@ -41,16 +41,16 @@ const TUTORIAL_DATA = {
     {
       id: 's2',
       text: '好，<span class="tut-hl">C站</span>（绿色框）也来一段。拖拽方向会决定站台朝向。',
-      highlight: { type: 'zone', x: 20, y: 10, w: 7, h: 5, desc: 'C站' },
+      highlight: { type: 'zone', x: 18, y: 10, w: 7, h: 5, desc: 'C站' },
       allowActions: ['drag_platform'],
       check: () => G.platforms.some(p => p.stationId === 'C'),
     },
     {
       id: 's3',
-      text: '站台就位，开始铺铁路。切到<span class="tut-hl">「铺轨」</span>，从A站向C站拖拽画线。',
+      text: '站台就位，开始铺铁路。切到<span class="tut-hl">「铺轨」</span>，从A站向交叉路口方向拖拽画线。',
       highlight: [
         { type: 'dom', selector: '#tool-track', desc: '铺轨按钮' },
-        { type: 'zone', x: 7, y: 10, w: 16, h: 5, desc: 'A→C铁路线' },
+        { type: 'zone', x: 7, y: 10, w: 8, h: 5, desc: 'A→路口铁路' },
       ],
       phaseCheck: [
         () => G.selectedTool === 'track',
@@ -68,15 +68,26 @@ const TUTORIAL_DATA = {
     },
     {
       id: 's5',
-      text: '继续画，把<span class="tut-hl">车辆段</span>也接到主线上——往交叉路口连。这样列车才能从段里开出来。',
-      highlight: { type: 'zone', x: 14, y: 14, w: 5, h: 7, desc: '车辆段接入点' },
+      text: '继续画，把<span class="tut-hl">车辆段</span>也接到交叉路口——往下连。这样列车才能从段里开出来。',
+      highlight: { type: 'zone', x: 13, y: 13, w: 3, h: 5, desc: '车辆段接入点' },
       allowActions: ['drag_track'],
       check: () => Tutorial.helpers.depotConnected(),
     },
     {
-      id: 's6',
-      text: '来，造一列车。点地图上的<span class="tut-hl">紫色车辆段</span>，调好车厢数，等一下我们要发车。',
-      highlight: { type: 'zone', x: 14, y: 16, w: 5, h: 4, desc: '车辆段' },
+      id: 's6a',
+      text: '来，造一列车。点地图上的<span class="tut-hl">紫色车辆段</span>，打开编组菜单。',
+      highlight: { type: 'zone', x: 12, y: 15, w: 5, h: 3, desc: '车辆段' },
+      allowActions: ['click_depot'],
+      check: () => {
+        const rp = document.getElementById('right-panel');
+        if (rp && rp.classList.contains('hidden')) return false;
+        return rp && rp.innerHTML.includes('车辆段');
+      },
+    },
+    {
+      id: 's6b',
+      text: '用 <span class="tut-hl">+/−</span> 调车厢数，然后点<span class="tut-hl">「创建」</span>——造一列列车，等一下发车用。',
+      highlight: { type: 'dom', selector: '#right-panel', desc: '车辆段面板' },
       allowActions: ['click_depot'],
       check: () => G.depotTrains.length >= 1,
     },
@@ -91,15 +102,16 @@ const TUTORIAL_DATA = {
     {
       id: 's8',
       text: '列车还在段里。点<span class="tut-hl">车辆段</span>，选一列车<span class="tut-hl">发车</span>，它就会冲上正线。',
-      highlight: { type: 'zone', x: 14, y: 16, w: 5, h: 4, desc: '车辆段' },
+      highlight: { type: 'zone', x: 12, y: 15, w: 5, h: 3, desc: '车辆段' },
       allowActions: ['click_depot'],
       check: () => G.activeTrains.length >= 1,
     },
     {
       id: 's9',
-      text: '列车自动跑起来了！到站停车、乘客上下，全程自动驾驶。右上角可以调<span class="tut-hl">倍速</span>试试。',
-      highlight: null,
+      text: '列车自动跑起来了！到站停车、乘客上下，全程自动驾驶。<br>试试右上角<span class="tut-hl">倍速按钮</span>——调成 3x 或 5x 看看加速效果。',
+      highlight: { type: 'dom', selector: '#time-control', desc: '倍速控制' },
       allowActions: [],
+      bubblePin: 'top-right',
       check: () => Tutorial.checkTimer(10),
     },
     {
@@ -135,6 +147,7 @@ const TUTORIAL_DATA = {
       text: '注意顶部<span class="tut-hl">满意度</span> 🙂。运人效率高，满意度涨、客流多；积压严重，满意度掉、客流少。<br>这是循环反馈——客流越多调度压力越大。',
       highlight: { type: 'dom', selector: '#satisfaction-label', desc: '满意度' },
       allowActions: [],
+      bubblePin: 'top-right',
       check: () => Tutorial.checkTimer(8),
     },
     {
@@ -148,7 +161,7 @@ const TUTORIAL_DATA = {
     {
       id: 's14',
       text: '新的一天。地图上多了个<span class="tut-hl">B站</span>（蓝色虚线框）——先给它建一段站台。',
-      highlight: { type: 'zone', x: 14, y: 4, w: 5, h: 5, desc: 'B站' },
+      highlight: { type: 'zone', x: 16, y: 8, w: 5, h: 5, desc: 'B站' },
       allowActions: ['drag_platform'],
       setup() {
         const b = TUTORIAL_DATA.mapPreset.stations.find(s => s.id === 'B');
@@ -159,8 +172,8 @@ const TUTORIAL_DATA = {
     },
     {
       id: 's15',
-      text: '从<span class="tut-hl">交叉路口</span>向B站拖拽铺轨。这样主线就分叉了——三向道岔。',
-      highlight: { type: 'zone', x: 15, y: 6, w: 2, h: 7, desc: '交叉口→B站' },
+      text: '从<span class="tut-hl">交叉路口</span>向B站斜向拖拽铺轨。这样主线就分叉了——三向道岔。',
+      highlight: { type: 'zone', x: 14, y: 9, w: 5, h: 4, desc: '路口→B站' },
       allowActions: ['drag_track'],
       check: () => Tutorial.helpers.stationInNetworkWithDepot('B'),
     },
@@ -175,7 +188,7 @@ const TUTORIAL_DATA = {
     {
       id: 's17',
       text: '交叉路口那个<span class="tut-hl">小黑点</span>看到没？那就是<span class="tut-hl">道岔</span>。点一下试试——列车路径方向变了！',
-      highlight: { type: 'zone', x: 15, y: 11, w: 3, h: 3, desc: '三向道岔' },
+      highlight: { type: 'zone', x: 13, y: 11, w: 3, h: 3, desc: '三向道岔' },
       allowActions: ['click_switch'],
       check: () => Tutorial.flags.switchToggled,
     },
@@ -184,6 +197,7 @@ const TUTORIAL_DATA = {
       text: '每次点道岔都会循环切换方向。试着多切几次，看列车跟着怎么走——<span class="tut-hl">进路控制</span>的核心就是这个。',
       highlight: null,
       allowActions: ['click_switch'],
+      bubblePin: 'top-right',
       check: () => Tutorial.checkTimer(10),
     },
     {

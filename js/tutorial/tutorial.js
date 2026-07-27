@@ -349,10 +349,40 @@ const Tutorial = {
   },
 
   _positionBubble() {
-    const rect = this._getTargetRect();
+    const step = this.currentStepRaw();
     const bubble = document.getElementById('tutorial-bubble');
     if (!bubble) return;
 
+    if (step && step.bubblePin) {
+      const margin = 16;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const bw = 320;
+      const bh = 100;
+      let top, left;
+
+      if (step.bubblePin === 'top-right') {
+        top = margin + 50;
+        left = vw - bw - margin;
+      } else if (step.bubblePin === 'top-center') {
+        top = margin + 50;
+        left = (vw - bw) / 2;
+      } else if (step.bubblePin === 'bottom-center') {
+        top = vh - bh - margin;
+        left = (vw - bw) / 2;
+      } else {
+        top = margin + 50;
+        left = (vw - bw) / 2;
+      }
+
+      bubble.style.top = top + 'px';
+      bubble.style.left = left + 'px';
+      bubble.style.transform = 'none';
+      bubble.classList.remove('arrow-top', 'arrow-bottom', 'arrow-left', 'arrow-right');
+      return;
+    }
+
+    const rect = this._getTargetRect();
     if (!rect) {
       bubble.style.top = '50%';
       bubble.style.left = '50%';
