@@ -79,20 +79,20 @@ const Renderer = {
       for (let gx = startX; gx <= endX; gx++) {
         const t = G.terrain[gy * G.GRID_W + gx];
         if (t === TERRAIN.RIVER) {
-          ctx.fillStyle = '#B8D8E8';
-          ctx.globalAlpha = 0.35;
+          ctx.fillStyle = '#8CB8D8';
+          ctx.globalAlpha = 0.60;
           ctx.fillRect(gx * cs, gy * cs, cs, cs);
           ctx.globalAlpha = 1;
         } else if (t === TERRAIN.MOUNTAIN) {
-          ctx.fillStyle = '#C8B898';
-          ctx.globalAlpha = 0.4;
+          ctx.fillStyle = '#7DA050';
+          ctx.globalAlpha = 0.65;
           ctx.fillRect(gx * cs, gy * cs, cs, cs);
 
           const cx = gx * cs + cs / 2;
           const cy = gy * cs + cs / 2;
-          const hs = cs * 0.22;
-          ctx.fillStyle = '#A09070';
-          ctx.globalAlpha = 0.55;
+          const hs = cs * 0.28;
+          ctx.fillStyle = '#5C7838';
+          ctx.globalAlpha = 0.75;
           ctx.beginPath();
           ctx.moveTo(cx, cy - hs);
           ctx.lineTo(cx + hs * 0.9, cy + hs * 0.55);
@@ -353,19 +353,18 @@ const Renderer = {
 
   drawStationAreas(ctx) {
     for (const st of G.stations) {
-      const cx = st.x * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const cy = st.y * G.CELL_SIZE + G.CELL_SIZE / 2;
-      ctx.fillStyle = st.color + '15';
-      ctx.beginPath();
-      ctx.arc(cx, cy, G.CELL_SIZE * 1.5, 0, Math.PI * 2);
-      ctx.fill();
+      const cs = G.CELL_SIZE;
+      const x0 = (st.x - 3) * cs;
+      const y0 = (st.y - 3) * cs;
+      const size = 6 * cs;
 
-      ctx.strokeStyle = st.color + '60';
+      ctx.fillStyle = st.color + '18';
+      ctx.fillRect(x0, y0, size, size);
+
+      ctx.strokeStyle = st.color + '50';
       ctx.lineWidth = 2;
-      ctx.setLineDash([4, 2]);
-      ctx.beginPath();
-      ctx.arc(cx, cy, G.CELL_SIZE * 1.5, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(x0 + 1, y0 + 1, size - 2, size - 2);
       ctx.setLineDash([]);
     }
   },

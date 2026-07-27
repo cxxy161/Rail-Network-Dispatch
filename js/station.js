@@ -4,7 +4,7 @@ const Station = {
   },
 
   isInStationArea(gx, gy, station) {
-    return Math.abs(gx - station.x) <= 1 && Math.abs(gy - station.y) <= 1;
+    return Math.abs(gx - station.x) <= 3 && Math.abs(gy - station.y) <= 3;
   },
 
   findStationForGrid(gx, gy) {

@@ -90,7 +90,7 @@ const Terrain = {
 
       if (rng(++s) < 0.08 && remaining > 4) {
         remaining = this._walkBranch(terrain, cx, cy, remaining,
-          this._randBetween(3, 7, rng(++s)), rng(++s));
+          this._randBetween(6, 15, rng(++s)), rng(++s));
       }
 
       const choice = rng(++s);
@@ -146,12 +146,16 @@ const Terrain = {
     const copy = new Uint8Array(terrain);
     for (let y = 0; y < G.GRID_H; y++) {
       for (let x = 0; x < G.GRID_W; x++) {
-        if (this._get(copy, x, y) !== TERRAIN.RIVER) continue;
+        if (this._get(copy, x, y) !== TERRAIN.PLAIN) continue;
+        let riverNbr = 0;
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
           const nx = x + dx, ny = y + dy;
-          if (this._inBounds(nx, ny) && this._get(copy, nx, ny) === TERRAIN.PLAIN) {
-            this._set(terrain, nx, ny, TERRAIN.RIVER);
+          if (this._inBounds(nx, ny) && this._get(copy, nx, ny) === TERRAIN.RIVER) {
+            riverNbr++;
           }
+        }
+        if (riverNbr === 1) {
+          this._set(terrain, x, y, TERRAIN.RIVER);
         }
       }
     }
@@ -168,7 +172,7 @@ const Terrain = {
       const sx = this._randBetween(3, G.GRID_W - 3, rng(++s));
       const sy = this._randBetween(3, G.GRID_H - 3, rng(++s));
       if (this._get(terrain, sx, sy) !== TERRAIN.PLAIN) continue;
-      if (seeds.some(p => Math.abs(p.x - sx) + Math.abs(p.y - sy) < 6)) continue;
+      if (seeds.some(p => Math.abs(p.x - sx) + Math.abs(p.y - sy) < 16)) continue;
       seeds.push({ x: sx, y: sy });
     }
 
@@ -209,7 +213,7 @@ const Terrain = {
         for (const sp of seeds) {
           minDistSq = Math.min(minDistSq, distSq(nb.x, nb.y, sp.x, sp.y));
         }
-        const prob = Math.max(0.05, 1 - Math.sqrt(minDistSq) / 7);
+        const prob = Math.max(0.05, 1 - Math.sqrt(minDistSq) / 20);
         if (rng(++s) < prob) {
           queue.push(nb);
         }
@@ -254,7 +258,7 @@ const Terrain = {
       while (attempts < 50) {
         attempts++;
         const pt = candidates[Math.floor(rng(++s) * candidates.length)];
-        if (placed.every(p => Math.abs(p.x - pt.x) + Math.abs(p.y - pt.y) >= 8)) {
+        if (placed.every(p => Math.abs(p.x - pt.x) + Math.abs(p.y - pt.y) >= 16)) {
           best = pt;
           break;
         }
@@ -294,7 +298,7 @@ const Terrain = {
     const rng = (n) => this._rand(seed + 600 + n * 8387);
 
     for (let attempts = 0; attempts < 30; attempts++) {
-      const x = this._randBetween(G.GRID_W - 5, G.GRID_W - 1, rng(attempts));
+      const x = this._randBetween(G.GRID_W - 10, G.GRID_W - 1, rng(attempts));
       const y = this._randBetween(2, G.GRID_H - 3, rng(attempts + 100));
 
       let allPlain = true;
@@ -310,7 +314,7 @@ const Terrain = {
       if (allPlain) return { x, y };
     }
 
-    for (let x = G.GRID_W - 2; x >= G.GRID_W - 5; x--) {
+    for (let x = G.GRID_W - 2; x >= G.GRID_W - 10; x--) {
       for (let y = 2; y < G.GRID_H - 2; y++) {
         let allPlain = true;
         for (let dy = -1; dy <= 1; dy++) {
