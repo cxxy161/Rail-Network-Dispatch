@@ -68,10 +68,11 @@ const TUTORIAL_DATA = {
     },
     {
       id: 's5',
-      text: '继续画，把<span class="tut-hl">车辆段</span>也接到交叉路口——往下连。这样列车才能从段里开出来。',
-      highlight: { type: 'zone', x: 13, y: 13, w: 3, h: 5, desc: '车辆段接入点' },
+      text: '继续画，从<span class="tut-hl">黑点</span>（交叉路口）往<span class="tut-hl">下</span>拖拽到车辆段。必须从黑点直接连——不能从旁边绕。',
+      highlight: { type: 'zone', x: 13, y: 13, w: 3, h: 5, desc: '路口→车辆段' },
       allowActions: ['drag_track'],
-      check: () => Tutorial.helpers.depotConnected(),
+      bubblePin: 'top-right',
+      check: () => (G.connectionMap['14,12'] || []).length >= 3 && Tutorial.helpers.depotConnected(),
     },
     {
       id: 's6a',
