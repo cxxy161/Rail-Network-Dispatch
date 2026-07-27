@@ -112,10 +112,10 @@ const Ui = {
   },
 
   updateTopBar() {
-    document.getElementById('gold-val').textContent = G.gold;
+    document.getElementById('gold-val').textContent = '￥' + G.gold;
     document.getElementById('delivered-val').textContent = G.passengersDeliveredToday;
     document.getElementById('day-val').textContent = G.dayNumber;
-    document.getElementById('sidebar-gold').textContent = G.gold;
+    document.getElementById('sidebar-gold').textContent = '￥' + G.gold;
     document.getElementById('satisfaction-val').textContent = Math.round(G.satisfaction) + '%';
     const sl = document.getElementById('satisfaction-label');
     sl.className = G.satisfaction > 70 ? 'satisfaction-high' : G.satisfaction > 30 ? 'satisfaction-mid' : 'satisfaction-low';
@@ -216,6 +216,15 @@ const Ui = {
       }
     }
 
+    if (!depotConnected) {
+      this.flashMessage('铁路未连接到车辆段！');
+      return;
+    }
+    if (G.depotTrains.length === 0) {
+      this.flashMessage('车辆段没有可用列车！请先编组列车。');
+      return;
+    }
+
     G.phase = 'operate';
     G.dayTime = 600;
     G.paused = false;
@@ -273,9 +282,9 @@ const Ui = {
     const nextGold = G.gold + income - G.maintenanceCost;
 
     document.getElementById('settle-delivered').textContent = G.passengersDeliveredToday;
-    document.getElementById('settle-income').textContent = income;
-    document.getElementById('settle-maintenance').textContent = G.maintenanceCost;
-    document.getElementById('settle-gold').textContent = Math.max(0, nextGold);
+    document.getElementById('settle-income').textContent = '￥' + income;
+    document.getElementById('settle-maintenance').textContent = '￥' + G.maintenanceCost;
+    document.getElementById('settle-gold').textContent = '￥' + Math.max(0, nextGold);
 
     let satChange = '';
     const oldSat = G.satisfaction;
