@@ -100,11 +100,13 @@ body {
 }
 
 .shop-row > span:first-child { width: 56px; flex-shrink: 0; }
-.shop-val { min-width: 24px; text-align: right; }
+.shop-val { min-width: 20px; text-align: right; }
 .shop-val strong { color: #333; }
 
+.price-text { font-size: 10px; color: #999; width: 26px; text-align: right; margin-right: 2px; }
+
 .buy-btn {
-  padding: 2px 8px;
+  padding: 1px 5px;
   border: 1px solid #50B86C;
   border-radius: 3px;
   background: #FFF;
@@ -112,6 +114,8 @@ body {
   cursor: pointer;
   font-size: 11px;
   white-space: nowrap;
+  min-width: 20px;
+  text-align: center;
 }
 .buy-btn:hover { background: #F0FFF4; }
 .buy-btn:disabled { opacity: 0.3; cursor: default; }

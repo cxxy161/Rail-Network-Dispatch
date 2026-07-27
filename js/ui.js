@@ -61,7 +61,8 @@ const Ui = {
     for (const btn of document.querySelectorAll('.buy-btn')) {
       btn.addEventListener('click', () => {
         const resource = btn.dataset.resource;
-        this.buyItem(resource);
+        const count = parseInt(btn.dataset.count) || 1;
+        this.batchBuy(resource, count);
       });
     }
 
@@ -216,16 +217,16 @@ const Ui = {
     G.phase = 'gameover';
   },
 
-  buyItem(resource) {
-    const price = G.shopPrices[resource];
+  batchBuy(resource, count) {
+    const price = G.shopPrices[resource] * count;
     if (G.gold < price) {
       this.flashMessage('资金不足！');
       return;
     }
     G.gold -= price;
-    if (resource === 'trackFragment') G.trackFragments++;
-    else if (resource === 'platformComponent') G.platformComponents++;
-    else if (resource === 'wagon') G.wagons++;
+    if (resource === 'trackFragment') G.trackFragments += count;
+    else if (resource === 'platformComponent') G.platformComponents += count;
+    else if (resource === 'wagon') G.wagons += count;
     this.updateShopDisplay();
     this.updateTopBar();
   },
@@ -236,7 +237,8 @@ const Ui = {
     document.getElementById('res-wagon').textContent = G.wagons;
     for (const btn of document.querySelectorAll('.buy-btn')) {
       const resource = btn.dataset.resource;
-      btn.disabled = G.gold < G.shopPrices[resource];
+      const count = parseInt(btn.dataset.count) || 1;
+      btn.disabled = G.gold < G.shopPrices[resource] * count;
     }
   },
 
