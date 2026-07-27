@@ -159,6 +159,51 @@ const Tutorial = {
       }
       return false;
     },
+
+    pathThroughNodeFromDepot(sId, nodeKey) {
+      const depotCells = [
+        (G.depotX - 1) + ',' + (G.depotY - 1),
+        G.depotX + ',' + (G.depotY - 1),
+        (G.depotX - 1) + ',' + G.depotY,
+        G.depotX + ',' + G.depotY,
+      ];
+      let depotStart = null;
+      for (const cell of depotCells) {
+        if ((G.connectionMap[cell] || []).length > 0) { depotStart = cell; break; }
+      }
+      if (!depotStart) return false;
+
+      const plats = G.platforms.filter(p => p.stationId === sId);
+      if (plats.length === 0) return false;
+
+      const targets = new Set();
+      for (const p of plats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) targets.add(key);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) targets.add(adj);
+        }
+      }
+      if (targets.size === 0) return false;
+
+      const visited = new Set();
+      const queue = [depotStart];
+      visited.add(depotStart);
+
+      let reached = false;
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        if (targets.has(cur)) reached = true;
+        const neighbors = G.connectionMap[cur];
+        if (!neighbors) continue;
+        for (const n of neighbors) {
+          if (!visited.has(n)) { visited.add(n); queue.push(n); }
+        }
+      }
+
+      return reached && visited.has(nodeKey);
+    },
   },
 
   start() {

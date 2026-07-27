@@ -175,7 +175,7 @@ const TUTORIAL_DATA = {
       text: '从交叉路口向B站<span class="tut-hl">斜向45°</span>拖拽铺轨。<br>轨道必须走斜线——道岔不支持直角转弯（90°不行，必须135°斜角）。',
       highlight: { type: 'zone', x: 14, y: 9, w: 5, h: 4, desc: '路口→B站' },
       allowActions: ['drag_track'],
-      check: () => Tutorial.helpers.stationInNetworkWithDepot('B') && Tutorial.helpers.diagonalJunctionBranch('14,12', 14, 12),
+      check: () => Tutorial.helpers.pathThroughNodeFromDepot('B', '14,12'),
     },
     {
       id: 's16',

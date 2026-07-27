@@ -2,6 +2,7 @@ const Input = {
   canvas: null,
   dragBatchEdges: [],
   dragBatchPlats: [],
+  _depotTrackClick: false,
 
   init(canvas) {
     this.canvas = canvas;
@@ -115,10 +116,14 @@ const Input = {
 
       if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
           G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
-        if (Tutorial.gateAction('click_depot')) {
-          this.showDepotBuildPopup(e);
+        if (G.selectedTool === 'track') {
+          this._depotTrackClick = true;
+        } else {
+          if (Tutorial.gateAction('click_depot')) {
+            this.showDepotBuildPopup(e);
+          }
+          return;
         }
-        return;
       }
 
       this.dragBatchEdges = [];
@@ -509,7 +514,17 @@ const Input = {
     const clamped = clampGrid(grid.x, grid.y);
 
     if (G.selectedTool === 'track' && G.trackDrag.active) {
-      this.trackUp(clamped.x, clamped.y);
+      if (this._depotTrackClick &&
+          G.trackDrag.startX === clamped.x && G.trackDrag.startY === clamped.y) {
+        G.trackDrag.active = false;
+        this._depotTrackClick = false;
+        if (Tutorial.gateAction('click_depot')) {
+          this.showDepotBuildPopup(e);
+        }
+      } else {
+        this._depotTrackClick = false;
+        this.trackUp(clamped.x, clamped.y);
+      }
     } else if (G.selectedTool === 'platform' && G.platDrag.active) {
       this.platformUp(clamped.x, clamped.y);
     } else if (G.selectedTool === 'eraser') {
