@@ -71,10 +71,10 @@ body {
 }
 
 #sidebar {
-  width: 180px;
+  width: 200px;
   background: #F5F0E8;
   border-right: 1px solid #D8D0C0;
-  padding: 16px 12px;
+  padding: 16px 10px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -92,29 +92,28 @@ body {
 .shop-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  gap: 2px;
   margin: 6px 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
 }
 
-.shop-row > span:first-child { width: 56px; flex-shrink: 0; }
-.shop-val { min-width: 20px; text-align: right; }
-.shop-val strong { color: #333; }
+.shop-row > span:first-child { width: 48px; flex-shrink: 0; }
+.shop-val { min-width: 18px; text-align: right; }
+.shop-val strong { color: #333; font-size: 11px; }
 
-.price-text { font-size: 10px; color: #999; width: 26px; text-align: right; margin-right: 2px; }
+.price-text { font-size: 9px; color: #999; width: 22px; text-align: right; }
 
 .buy-btn {
-  padding: 1px 5px;
+  padding: 1px 3px;
   border: 1px solid #50B86C;
   border-radius: 3px;
   background: #FFF;
   color: #50B86C;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   white-space: nowrap;
-  min-width: 20px;
+  min-width: 14px;
   text-align: center;
 }
 .buy-btn:hover { background: #F0FFF4; }
