@@ -192,27 +192,27 @@ const Renderer = {
         const sameDir = comp.every(p => p.dir === dir) && comp.length > 1;
 
         if (dir === 'h' && sameDir && comp.every(p => p.y === minY)) {
-          const x = minX * cs + cs * 0.06;
-          const y = minY * cs + cs * 0.33;
-          const w = (maxX - minX + 1) * cs * 0.88;
-          const h = cs * 0.34;
+          const x = minX * cs + cs * 0.03;
+          const y = minY * cs + cs * 0.30;
+          const w = (maxX - minX + 1) * cs * 0.94;
+          const h = cs * 0.40;
           this._drawPlatBlock(ctx, x, y, w, h, color, 'h');
         } else if (dir === 'v' && sameDir && comp.every(p => p.x === minX)) {
-          const x = minX * cs + cs * 0.33;
-          const y = minY * cs + cs * 0.06;
-          const w = cs * 0.34;
-          const h = (maxY - minY + 1) * cs * 0.88;
+          const x = minX * cs + cs * 0.30;
+          const y = minY * cs + cs * 0.03;
+          const w = cs * 0.40;
+          const h = (maxY - minY + 1) * cs * 0.94;
           this._drawPlatBlock(ctx, x, y, w, h, color, 'v');
         } else {
           for (const p of comp) {
             if (p.dir === 'h') {
-              const x = p.x * cs + cs * 0.06;
-              const y = p.y * cs + cs * 0.33;
-              this._drawPlatBlock(ctx, x, y, cs * 0.88, cs * 0.34, color, 'h');
+              const x = p.x * cs + cs * 0.03;
+              const y = p.y * cs + cs * 0.30;
+              this._drawPlatBlock(ctx, x, y, cs * 0.94, cs * 0.40, color, 'h');
             } else {
-              const x = p.x * cs + cs * 0.33;
-              const y = p.y * cs + cs * 0.06;
-              this._drawPlatBlock(ctx, x, y, cs * 0.34, cs * 0.88, color, 'v');
+              const x = p.x * cs + cs * 0.30;
+              const y = p.y * cs + cs * 0.03;
+              this._drawPlatBlock(ctx, x, y, cs * 0.40, cs * 0.94, color, 'v');
             }
           }
         }
@@ -221,31 +221,31 @@ const Renderer = {
   },
 
   _drawPlatBlock(ctx, x, y, w, h, color, orientation) {
-    ctx.fillStyle = '#E8E4D8';
+    ctx.fillStyle = '#A8A090';
     ctx.beginPath();
     ctx.roundRect(x, y, w, h, 3);
     ctx.fill();
 
-    ctx.strokeStyle = '#C0B8A8';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#787068';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.roundRect(x, y, w, h, 3);
     ctx.stroke();
 
     ctx.strokeStyle = '#E8C820';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.beginPath();
     if (orientation === 'h') {
-      ctx.moveTo(x + 3, y + 2);
-      ctx.lineTo(x + w - 3, y + 2);
-      ctx.moveTo(x + 3, y + h - 2);
-      ctx.lineTo(x + w - 3, y + h - 2);
+      ctx.moveTo(x + 4, y + 3);
+      ctx.lineTo(x + w - 4, y + 3);
+      ctx.moveTo(x + 4, y + h - 3);
+      ctx.lineTo(x + w - 4, y + h - 3);
     } else {
-      ctx.moveTo(x + 2, y + 3);
-      ctx.lineTo(x + 2, y + h - 3);
-      ctx.moveTo(x + w - 2, y + 3);
-      ctx.lineTo(x + w - 2, y + h - 3);
+      ctx.moveTo(x + 3, y + 4);
+      ctx.lineTo(x + 3, y + h - 4);
+      ctx.moveTo(x + w - 3, y + 4);
+      ctx.lineTo(x + w - 3, y + h - 4);
     }
     ctx.stroke();
   },
