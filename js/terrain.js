@@ -169,7 +169,7 @@ const Terrain = {
 
         if (mountainRatio > 0) {
           const mNoise = this._fbm(x / mountainScale, y / mountainScale, seed + 5000, 4);
-          const mountainThreshold = 1.0 - mountainRatio;
+          const mountainThreshold = 0.80 - mountainRatio * 0.55;
 
           if (mNoise > mountainThreshold) {
             terrain[idx] = TERRAIN.MOUNTAIN;
