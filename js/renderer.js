@@ -117,9 +117,10 @@ const Renderer = {
     ctx.strokeStyle = '#555555';
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
-    ctx.beginPath();
 
     const drawn = new Set();
+    const cs = G.CELL_SIZE;
+
     for (const [key, neighbors] of Object.entries(G.connectionMap)) {
       const [x1, y1] = key.split(',').map(Number);
       for (const nKey of neighbors) {
@@ -127,11 +128,41 @@ const Renderer = {
         if (drawn.has(pairKey)) continue;
         drawn.add(pairKey);
         const [x2, y2] = nKey.split(',').map(Number);
-        ctx.moveTo(x1 * G.CELL_SIZE + G.CELL_SIZE / 2, y1 * G.CELL_SIZE + G.CELL_SIZE / 2);
-        ctx.lineTo(x2 * G.CELL_SIZE + G.CELL_SIZE / 2, y2 * G.CELL_SIZE + G.CELL_SIZE / 2);
+
+        let ax = x1 * cs + cs / 2, ay = y1 * cs + cs / 2;
+        let bx = x2 * cs + cs / 2, by = y2 * cs + cs / 2;
+
+        if (G.activeSwitches[key] !== undefined) {
+          const dir = Graph.getSwitchExitDirection(key);
+          if (dir) {
+            const dx = (x2 - x1), dy = (y2 - y1);
+            if (dx !== dir.x || dy !== dir.y) {
+              const gap = cs * 0.15;
+              const d = Math.hypot(bx - ax, by - ay);
+              ax += (bx - ax) / d * gap;
+              ay += (by - ay) / d * gap;
+            }
+          }
+        }
+        if (G.activeSwitches[nKey] !== undefined) {
+          const dir = Graph.getSwitchExitDirection(nKey);
+          if (dir) {
+            const dx = (x1 - x2), dy = (y1 - y2);
+            if (dx !== dir.x || dy !== dir.y) {
+              const gap = cs * 0.15;
+              const d = Math.hypot(ax - bx, ay - by);
+              bx += (ax - bx) / d * gap;
+              by += (ay - by) / d * gap;
+            }
+          }
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.stroke();
       }
     }
-    ctx.stroke();
 
     if (G.selectedItem && G.selectedItem.type === 'edge') {
       const [x1, y1] = G.selectedItem.k1.split(',').map(Number);
@@ -139,8 +170,8 @@ const Renderer = {
       ctx.strokeStyle = '#E8734A';
       ctx.lineWidth = 5;
       ctx.beginPath();
-      ctx.moveTo(x1 * G.CELL_SIZE + G.CELL_SIZE / 2, y1 * G.CELL_SIZE + G.CELL_SIZE / 2);
-      ctx.lineTo(x2 * G.CELL_SIZE + G.CELL_SIZE / 2, y2 * G.CELL_SIZE + G.CELL_SIZE / 2);
+      ctx.moveTo(x1 * cs + cs / 2, y1 * cs + cs / 2);
+      ctx.lineTo(x2 * cs + cs / 2, y2 * cs + cs / 2);
       ctx.stroke();
     }
   },
@@ -226,42 +257,23 @@ const Renderer = {
       const [x, y] = key.split(',').map(Number);
       const cx = x * cs + cs / 2;
       const cy = y * cs + cs / 2;
-      const neighbors = Graph.getNeighbors(key);
-      const dotR = cs * 0.2;
-
-      ctx.fillStyle = '#999';
-      for (const nk of neighbors) {
-        const [nx, ny] = nk.split(',').map(Number);
-        const ndx = nx - x, ndy = ny - y;
-        const dotX = cx + ndx * dotR;
-        const dotY = cy + ndy * dotR;
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.fillStyle = '#4A90D9';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-      ctx.fill();
 
       const dir = Graph.getSwitchExitDirection(key);
       if (dir) {
-        const len = cs * 0.2;
-        const ex = cx + dir.x * len;
-        const ey = cy + dir.y * len;
-        ctx.strokeStyle = '#FFF';
-        ctx.lineWidth = 3;
+        const len = cs * 0.14;
+        ctx.strokeStyle = '#555555';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        ctx.lineTo(ex, ey);
+        ctx.lineTo(cx + dir.x * len, cy + dir.y * len);
         ctx.stroke();
-
-        ctx.fillStyle = '#FFF';
-        ctx.beginPath();
-        ctx.arc(ex, ey, 4.5, 0, Math.PI * 2);
-        ctx.fill();
       }
+
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+      ctx.fill();
     }
   },
 
