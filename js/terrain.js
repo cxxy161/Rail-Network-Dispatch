@@ -122,128 +122,74 @@ const Terrain = {
     }
   },
 
-  _fillDepressions(elev) {
-    const W = G.GRID_W, H = G.GRID_H;
-    const total = W * H;
-    const filled = new Float32Array(elev);
-    const inQueue = new Uint8Array(total);
-    const queue = [];
-
-    for (let x = 0; x < W; x++) {
-      queue.push(x); inQueue[x] = 1;
-      queue.push((H - 1) * W + x); inQueue[(H - 1) * W + x] = 1;
-    }
-    for (let y = 1; y < H - 1; y++) {
-      queue.push(y * W); inQueue[y * W] = 1;
-      queue.push(y * W + W - 1); inQueue[y * W + W - 1] = 1;
-    }
-
-    let qi = 0;
-    while (qi < queue.length) {
-      const idx = queue[qi++];
-      inQueue[idx] = 0;
-      const x = idx % W, y = Math.floor(idx / W);
-      const h = filled[idx];
-
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (dx === 0 && dy === 0) continue;
-          const nx = x + dx, ny = y + dy;
-          if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
-          const nidx = ny * W + nx;
-          if (filled[nidx] < h) {
-            filled[nidx] = h;
-            if (!inQueue[nidx]) {
-              queue.push(nidx);
-              inQueue[nidx] = 1;
-            }
-          }
-        }
-      }
-    }
-
-    return filled;
-  },
-
-  _generateTerrain(terrain, riverRatio, mountainRatio, seed) {
+  _generateRiversDF(terrain, riverRatio, seed) {
     const W = G.GRID_W;
     const H = G.GRID_H;
     const total = W * H;
-    const riverTarget = riverRatio > 0 ? Math.floor(total * riverRatio) : 0;
-    const mountainTarget = mountainRatio > 0 ? Math.floor(total * mountainRatio) : 0;
-    const scale = 14;
-    const octaves = 4;
+    const target = Math.floor(total * riverRatio / 2.0);
+    const SC = 0.035;
+    const NUM = 18;
+    const STEPS = 160;
+    let placed = 0;
+    let s = seed * 7919;
 
-    const elev = new Float32Array(total);
-    for (let i = 0; i < total; i++) {
-      elev[i] = this._fbm((i % W) / scale, Math.floor(i / W) / scale, seed, octaves);
+    for (let i = 0; i < NUM && placed < target; i++) {
+      let cx = this._randBetween(3, W - 3, s++);
+      let cy = this._randBetween(3, H - 3, s++);
+
+      for (let step = 0; step < STEPS; step++) {
+        const idx = cy * W + cx;
+        if (terrain[idx] !== TERRAIN.RIVER) {
+          terrain[idx] = TERRAIN.RIVER;
+          placed++;
+          if (placed >= target) break;
+        }
+        if (cx <= 2 || cx >= W - 3 || cy <= 2 || cy >= H - 3) break;
+
+        const a = this._valueNoise(cx * SC, cy * SC, seed + i * 100) * Math.PI * 2;
+        const dx = Math.cos(a);
+        const dy = Math.sin(a);
+        const nx = Math.round(cx + dx);
+        const ny = Math.round(cy + dy);
+        if (nx === cx && ny === cy) {
+          cx += dx > 0 ? 1 : dx < 0 ? -1 : 0;
+          cy += dy > 0 ? 1 : dy < 0 ? -1 : 0;
+        } else {
+          cx = nx;
+          cy = ny;
+        }
+        if (cx < 0 || cx >= W || cy < 0 || cy >= H) break;
+      }
+    }
+  },
+
+  _generateTerrain(terrain, riverRatio, mountainRatio, seed) {
+    const total = G.GRID_W * G.GRID_H;
+
+    if (riverRatio > 0) {
+      this._generateRiversDF(terrain, riverRatio, seed);
+      this._dilateRivers(terrain);
     }
 
-    const cells = new Uint32Array(total);
-    for (let i = 0; i < total; i++) cells[i] = i;
-
-    if (mountainTarget > 0) {
-      cells.sort((a, b) => elev[b] - elev[a]);
-      for (let i = 0; i < Math.min(mountainTarget, total); i++) {
-        terrain[cells[i]] = TERRAIN.MOUNTAIN;
-      }
-      this._smoothMountains(terrain);
-    }
-
-    if (riverTarget > 0) {
-      const filled = this._fillDepressions(elev);
-
-      const flow = new Float32Array(total);
-      for (let i = 0; i < total; i++) flow[i] = 1;
-
-      const sorted = new Uint32Array(total);
-      for (let i = 0; i < total; i++) sorted[i] = i;
-      sorted.sort((a, b) => filled[b] - filled[a]);
-
-      for (let si = 0; si < total; si++) {
-        const idx = sorted[si];
-        const x = idx % W;
-        const y = Math.floor(idx / W);
-        const h = filled[idx];
-        let bestDrop = -Infinity;
-        let bestNx = -1;
-        let bestNy = -1;
-
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nx = x + dx, ny = y + dy;
-            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
-            const nh = filled[ny * W + nx];
-            if (nh >= h) continue;
-            const drop = (h - nh) / (dx !== 0 && dy !== 0 ? 1.414 : 1);
-            if (drop > bestDrop) {
-              bestDrop = drop;
-              bestNx = nx;
-              bestNy = ny;
-            }
-          }
-        }
-
-        if (bestNx >= 0) {
-          flow[bestNy * W + bestNx] += flow[idx];
-        }
+    if (mountainRatio > 0) {
+      const elev = new Float32Array(total);
+      const scale = 14;
+      for (let i = 0; i < total; i++) {
+        elev[i] = this._fbm((i % G.GRID_W) / scale, Math.floor(i / G.GRID_W) / scale, seed + 5000, 4);
       }
 
-      const flowList = [];
+      const mountainTarget = Math.floor(total * mountainRatio);
+      const candidates = [];
       for (let i = 0; i < total; i++) {
         if (terrain[i] === TERRAIN.PLAIN) {
-          flowList.push({ idx: i, f: flow[i] });
+          candidates.push({ idx: i, v: elev[i] });
         }
       }
-      flowList.sort((a, b) => b.f - a.f);
-
-      const preTarget = Math.max(1, Math.floor(riverTarget / 2.2));
-      for (let i = 0; i < Math.min(preTarget, flowList.length); i++) {
-        terrain[flowList[i].idx] = TERRAIN.RIVER;
+      candidates.sort((a, b) => b.v - a.v);
+      for (let i = 0; i < Math.min(mountainTarget, candidates.length); i++) {
+        terrain[candidates[i].idx] = TERRAIN.MOUNTAIN;
       }
-
-      this._dilateRivers(terrain);
+      this._smoothMountains(terrain);
     }
   },
 
