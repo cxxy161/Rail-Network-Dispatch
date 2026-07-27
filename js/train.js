@@ -132,41 +132,47 @@ const Train = {
     const plat = Station.platformAtKey(nodeKey);
     const stationId = plat ? plat.stationId : null;
 
-    if (plat && stationId !== train.lastDockedStationId) {
-      const capacity = this.maxLoad(train);
-      const currentLoad = Object.values(train.passengers).reduce((a, b) => a + b, 0);
-      const canBoard = capacity > currentLoad;
-      const queue = G.stationQueues[stationId] || {};
-      const hasMatch = Object.keys(queue).some(destId => queue[destId] > 0);
-
-      if (canBoard && hasMatch) {
-        train.fromKey = nodeKey;
-        train.toKey = nextKey || fromKey;
-        train.dockedTimer = 3;
-        train.t = 0;
-        train.speed = 0;
-        train.state = 'docked';
+    if (plat) {
+      if (stationId !== train.lastDockedStationId) {
         train.lastDockedStationId = stationId;
-
         const alighted = Station.alightPassengers(train, stationId);
         G.passengersDeliveredToday += alighted;
         G.totalPassengersDelivered += alighted;
-        this.boardAtStation(train, nodeKey);
+
+        const capacity = this.maxLoad(train);
+        const currentLoad = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+        const canBoard = capacity > currentLoad;
+        const queue = G.stationQueues[stationId] || {};
+        const hasMatch = Object.keys(queue).some(destId => queue[destId] > 0);
+
+        if (canBoard && hasMatch) {
+          train.fromKey = nodeKey;
+          train.toKey = nextKey || fromKey;
+          train.dockedTimer = 3;
+          train.t = 0;
+          train.speed = 0;
+          train.state = 'docked';
+          this.boardAtStation(train, nodeKey);
+        } else if (nextKey) {
+          train.fromKey = nodeKey;
+          train.toKey = nextKey;
+          train.t = 0;
+        } else {
+          this.reverseTrain(train);
+        }
       } else if (nextKey) {
         train.fromKey = nodeKey;
         train.toKey = nextKey;
         train.t = 0;
       } else {
-        train.lastDockedStationId = null;
         this.reverseTrain(train);
       }
     } else if (nextKey) {
-      if (!plat) train.lastDockedStationId = null;
       train.fromKey = nodeKey;
       train.toKey = nextKey;
       train.t = 0;
     } else {
-      if (!plat) train.lastDockedStationId = null;
+      train.lastDockedStationId = null;
       this.reverseTrain(train);
     }
   },

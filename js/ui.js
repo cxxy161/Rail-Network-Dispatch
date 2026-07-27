@@ -202,7 +202,6 @@ const Ui = {
     document.getElementById('settle-gold').textContent = Math.max(0, nextGold);
 
     document.getElementById('settlement-panel').classList.remove('hidden');
-    document.getElementById('dispatch-panel').classList.add('hidden');
     this.showOverlay();
     this.updateTopBar();
   },
