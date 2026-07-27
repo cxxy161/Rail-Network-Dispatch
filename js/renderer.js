@@ -134,30 +134,28 @@ const Renderer = {
 
         if (G.activeSwitches[key] !== undefined) {
           const dir = Graph.getSwitchExitDirection(key);
-          if (dir) {
-            const ndx = x2 - x1, ndy = y2 - y1;
-            const notSelected = ndx !== dir.x || ndy !== dir.y;
-            const notThrough = ndx !== -dir.x || ndy !== -dir.y;
-            if (notSelected && notThrough) {
-              const gap = cs * 0.22;
-              const d = Math.hypot(bx - ax, by - ay);
-              ax += (bx - ax) / d * gap;
-              ay += (by - ay) / d * gap;
-            }
+          const ndx = x2 - x1, ndy = y2 - y1;
+          const notSelected = !dir || ndx !== dir.x || ndy !== dir.y;
+          const throughKey = Graph.key(x1 - ndx, y1 - ndy);
+          const isThrough = G.connectionMap[key] && G.connectionMap[key].includes(throughKey);
+          if (notSelected && !isThrough) {
+            const gap = cs * 0.33;
+            const d = Math.hypot(bx - ax, by - ay);
+            ax += (bx - ax) / d * gap;
+            ay += (by - ay) / d * gap;
           }
         }
         if (G.activeSwitches[nKey] !== undefined) {
           const dir = Graph.getSwitchExitDirection(nKey);
-          if (dir) {
-            const ndx = x1 - x2, ndy = y1 - y2;
-            const notSelected = ndx !== dir.x || ndy !== dir.y;
-            const notThrough = ndx !== -dir.x || ndy !== -dir.y;
-            if (notSelected && notThrough) {
-              const gap = cs * 0.22;
-              const d = Math.hypot(ax - bx, ay - by);
-              bx += (ax - bx) / d * gap;
-              by += (ay - by) / d * gap;
-            }
+          const ndx = x1 - x2, ndy = y1 - y2;
+          const notSelected = !dir || ndx !== dir.x || ndy !== dir.y;
+          const throughKey = Graph.key(x2 - ndx, y2 - ndy);
+          const isThrough = G.connectionMap[nKey] && G.connectionMap[nKey].includes(throughKey);
+          if (notSelected && !isThrough) {
+            const gap = cs * 0.33;
+            const d = Math.hypot(ax - bx, ay - by);
+            bx += (ax - bx) / d * gap;
+            by += (ay - by) / d * gap;
           }
         }
 
