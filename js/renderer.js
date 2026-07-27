@@ -487,13 +487,12 @@ const Renderer = {
       const carW = G.CELL_SIZE * 0.92;
       const carH = G.CELL_SIZE * 0.45;
       const gap = 4;
-      const trailGap = 55;
 
       const trail = train.trail || [];
       for (let c = 0; c < train.carCount; c++) {
-        const idx = c * trailGap;
-        if (idx >= trail.length) break;
-        const pos = trail[idx];
+        const targetDist = c * (carW + gap);
+        const pos = this.trailPosAt(trail, targetDist);
+        if (!pos) break;
 
         ctx.save();
         ctx.translate(pos.x, pos.y);
@@ -529,6 +528,25 @@ const Renderer = {
         ctx.restore();
       }
     }
+  },
+
+  trailPosAt(trail, targetDist) {
+    if (trail.length < 2) return trail[0] || null;
+    let accum = 0;
+    for (let i = 1; i < trail.length; i++) {
+      const seg = Math.hypot(trail[i - 1].x - trail[i].x, trail[i - 1].y - trail[i].y);
+      accum += seg;
+      if (accum >= targetDist) {
+        const overshoot = accum - targetDist;
+        const t = seg > 0 ? 1 - overshoot / seg : 0;
+        return {
+          x: trail[i - 1].x + (trail[i].x - trail[i - 1].x) * t,
+          y: trail[i - 1].y + (trail[i].y - trail[i - 1].y) * t,
+          angle: trail[i - 1].angle,
+        };
+      }
+    }
+    return trail[trail.length - 1];
   },
 
   roundRect(ctx, x, y, w, h, r) {
