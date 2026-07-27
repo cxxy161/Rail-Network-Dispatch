@@ -5,6 +5,7 @@ const MenuDecor = {
   trainT: 0,
   trainDir: 1,
   pulseT: 0,
+  depotImg: null,
 
   stations: [
     { x: 70,  y: 260, color: '#E84A4A' },
@@ -27,7 +28,25 @@ const MenuDecor = {
     this.ctx = this.canvas.getContext('2d');
     this.canvas.width = 500;
     this.canvas.height = 380;
+    this._loadDepotImg();
     this.loop();
+  },
+
+  _loadDepotImg() {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 76" width="100" height="76">' +
+      '<rect x="2" y="2" width="96" height="72" rx="4" fill="#D4CCC0" opacity="0.6"/>' +
+      '<rect x="0" y="0" width="96" height="72" rx="4" fill="#F0ECE4" stroke="#8B5CF6" stroke-width="2.5"/>' +
+      '<line x1="6" y1="18" x2="90" y2="18" stroke="#8B5CF6" stroke-width="1.2" opacity="0.35"/>' +
+      '<polygon points="0,0 96,0 96,18 0,18" fill="#8B5CF6" opacity="0.06"/>' +
+      '<polygon points="0,0 96,0 90,18 6,18" fill="#8B5CF6" opacity="0.10"/>' +
+      '<rect x="6" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="23" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="40" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="57" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="74" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '</svg>';
+    this.depotImg = new Image();
+    this.depotImg.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
   },
 
   stop() {
@@ -79,21 +98,13 @@ const MenuDecor = {
     }
 
     // ── 车辆段 ──
-    const dx = this.depot.x, dy = this.depot.y, s = 7;
-    ctx.fillStyle = '#ECE8E0';
-    ctx.strokeStyle = '#D0C8B8';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(dx - s*1.2, dy - s*1.2, s*2.4, s*2.4, 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#8B5CF618';
-    ctx.strokeStyle = '#8B5CF6';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(dx - s*0.6, dy - s*0.5, s*1.6, s, 2);
-    ctx.fill();
-    ctx.stroke();
+    const dx = this.depot.x, dy = this.depot.y;
+    if (this.depotImg.complete) {
+      ctx.drawImage(this.depotImg, dx - 17, dy - 13, 34, 26);
+    } else {
+      ctx.fillStyle = '#8B5CF6';
+      ctx.fillRect(dx - 7, dy - 7, 14, 14);
+    }
 
     const p = this.pointOnPath(this.trainT);
     ctx.fillStyle = '#E8734A';

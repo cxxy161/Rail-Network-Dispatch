@@ -1,10 +1,29 @@
 const Renderer = {
   canvas: null,
   ctx: null,
+  depotImg: null,
 
   init(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    this._loadDepotImg();
+  },
+
+  _loadDepotImg() {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 76" width="100" height="76">' +
+      '<rect x="2" y="2" width="96" height="72" rx="4" fill="#D4CCC0" opacity="0.6"/>' +
+      '<rect x="0" y="0" width="96" height="72" rx="4" fill="#F0ECE4" stroke="#8B5CF6" stroke-width="2.5"/>' +
+      '<line x1="6" y1="18" x2="90" y2="18" stroke="#8B5CF6" stroke-width="1.2" opacity="0.35"/>' +
+      '<polygon points="0,0 96,0 96,18 0,18" fill="#8B5CF6" opacity="0.06"/>' +
+      '<polygon points="0,0 96,0 90,18 6,18" fill="#8B5CF6" opacity="0.10"/>' +
+      '<rect x="6" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="23" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="40" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="57" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '<rect x="74" y="52" width="14" height="16" rx="2" fill="#D0C8B8"/>' +
+      '</svg>';
+    this.depotImg = new Image();
+    this.depotImg.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
   },
 
   resize() {
@@ -384,69 +403,9 @@ const Renderer = {
 
   drawDepot(ctx) {
     const cs = G.CELL_SIZE;
-    const cx = G.depotX * cs;
-    const cy = G.depotY * cs;
-    const hw = cs * 0.88;
-    const hh = cs * 0.88;
-
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    // 1. 地面底板
-    ctx.fillStyle = '#ECE8E0';
-    ctx.strokeStyle = '#D0C8B8';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(-hw, -hh, hw * 2, hh * 2, 3);
-    ctx.fill();
-    ctx.stroke();
-
-    // 2. 厂房建筑（紫色边框 + 半透明填充）
-    const bx = hw * 0.20, bw = hw * 1.1, by = -hh * 0.55, bh = hh * 1.1;
-    ctx.fillStyle = '#8B5CF618';
-    ctx.strokeStyle = '#8B5CF6';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // 3. 厂房顶线（双坡屋顶）
-    ctx.beginPath();
-    ctx.moveTo(bx, by);
-    ctx.lineTo(bx + bw * 0.3, -hh * 0.65);
-    ctx.lineTo(bx + bw * 0.7, -hh * 0.65);
-    ctx.lineTo(bx + bw, by);
-    ctx.stroke();
-
-    // 4. 内部存车线（4条水平短轨）
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    const trackY = [-hh * 0.05, hh * 0.15, hh * 0.35, hh * 0.55];
-    if (trackY[3] < by + bh - 4) trackY.length = 3;
-    for (const ty of trackY) {
-      ctx.beginPath();
-      ctx.moveTo(bx + 4, ty);
-      ctx.lineTo(bx + bw - 4, ty);
-      ctx.stroke();
-    }
-
-    // 5. 道岔汇合（多条线收敛到主线）
-    const exitX = hw * 1.0;
-    ctx.beginPath();
-    ctx.moveTo(bx + bw * 0.3, trackY[0]);
-    ctx.quadraticCurveTo(bx + bw * 0.6, trackY[0], bx + bw * 0.8, by + bh * 0.5);
-    ctx.lineTo(exitX, by + bh * 0.5);
-    ctx.stroke();
-
-    // 6. 主线出口延伸
-    ctx.beginPath();
-    ctx.moveTo(exitX, by + bh * 0.5);
-    ctx.lineTo(exitX + cs * 0.30, by + bh * 0.5);
-    ctx.stroke();
-
-    ctx.restore();
+    const x0 = (G.depotX - 1) * cs, y0 = (G.depotY - 1) * cs;
+    const size = cs * 2;
+    ctx.drawImage(this.depotImg, x0 + cs * 0.04, y0 + cs * 0.06, size * 0.92, size * 0.88);
   },
 
   drawTrains(ctx) {
