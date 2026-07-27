@@ -135,9 +135,11 @@ const Renderer = {
         if (G.activeSwitches[key] !== undefined) {
           const dir = Graph.getSwitchExitDirection(key);
           if (dir) {
-            const dx = (x2 - x1), dy = (y2 - y1);
-            if (dx !== dir.x || dy !== dir.y) {
-              const gap = cs * 0.15;
+            const ndx = x2 - x1, ndy = y2 - y1;
+            const notSelected = ndx !== dir.x || ndy !== dir.y;
+            const notThrough = ndx !== -dir.x || ndy !== -dir.y;
+            if (notSelected && notThrough) {
+              const gap = cs * 0.22;
               const d = Math.hypot(bx - ax, by - ay);
               ax += (bx - ax) / d * gap;
               ay += (by - ay) / d * gap;
@@ -147,9 +149,11 @@ const Renderer = {
         if (G.activeSwitches[nKey] !== undefined) {
           const dir = Graph.getSwitchExitDirection(nKey);
           if (dir) {
-            const dx = (x1 - x2), dy = (y1 - y2);
-            if (dx !== dir.x || dy !== dir.y) {
-              const gap = cs * 0.15;
+            const ndx = x1 - x2, ndy = y1 - y2;
+            const notSelected = ndx !== dir.x || ndy !== dir.y;
+            const notThrough = ndx !== -dir.x || ndy !== -dir.y;
+            if (notSelected && notThrough) {
+              const gap = cs * 0.22;
               const d = Math.hypot(ax - bx, ay - by);
               bx += (ax - bx) / d * gap;
               by += (ay - by) / d * gap;
