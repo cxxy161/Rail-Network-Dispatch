@@ -269,15 +269,25 @@ const Renderer = {
       const len = cs * 0.36;
       const pairs = Graph.getThroughPairs(key);
       const fixedSet = new Set();
-      for (const [a, b] of pairs) {
-        const [ax, ay] = a.split(',').map(Number);
-        const [bx, by] = b.split(',').map(Number);
-        const adx = ax - sx, ady = ay - sy;
-        const bdx = bx - sx, bdy = by - sy;
-        const cntA = Graph.countBranchesNear(key, adx, ady, b);
-        const cntB = Graph.countBranchesNear(key, bdx, bdy, a);
-        const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
-        if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
+
+      if (pairs.length > 0) {
+        for (const [a, b] of pairs) {
+          const [ax, ay] = a.split(',').map(Number);
+          const [bx, by] = b.split(',').map(Number);
+          const adx = ax - sx, ady = ay - sy;
+          const bdx = bx - sx, bdy = by - sy;
+          const cntA = Graph.countBranchesNear(key, adx, ady, b);
+          const cntB = Graph.countBranchesNear(key, bdx, bdy, a);
+          const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
+          if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
+        }
+      } else {
+        const mp = Graph.findMinAnglePair(key);
+        if (mp) {
+          for (const nk of neighbors) {
+            if (nk !== mp[0] && nk !== mp[1]) fixedSet.add(nk);
+          }
+        }
       }
 
       for (const nk of neighbors) {

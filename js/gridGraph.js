@@ -143,6 +143,25 @@ const Graph = {
     return count;
   },
 
+  findMinAnglePair(key) {
+    const ns = this.getNeighbors(key);
+    const [sx, sy] = key.split(',').map(Number);
+    let bestAngle = Infinity, bestPair = null;
+    for (let i = 0; i < ns.length; i++) {
+      const [ax, ay] = ns[i].split(',').map(Number);
+      const adx = ax - sx, ady = ay - sy;
+      for (let j = i + 1; j < ns.length; j++) {
+        const [bx, by] = ns[j].split(',').map(Number);
+        const bdx = bx - sx, bdy = by - sy;
+        const dot = adx * bdx + ady * bdy;
+        const la = Math.hypot(adx, ady), lb = Math.hypot(bdx, bdy);
+        const angle = Math.acos(Math.max(-1, Math.min(1, dot / (la * lb))));
+        if (angle < bestAngle) { bestAngle = angle; bestPair = [ns[i], ns[j]]; }
+      }
+    }
+    return bestPair;
+  },
+
   cycleSwitch(key) {
     const deg = this.getDegree(key);
     if (deg < 3) return;
@@ -151,16 +170,27 @@ const Graph = {
     const [sx, sy] = key.split(',').map(Number);
     const pairs = this.getThroughPairs(key);
     const fixedSet = new Set();
-    for (const [a, b] of pairs) {
-      const [ax, ay] = a.split(',').map(Number);
-      const [bx, by] = b.split(',').map(Number);
-      const adx = ax - sx, ady = ay - sy;
-      const bdx = bx - sx, bdy = by - sy;
-      const cntA = this.countBranchesNear(key, adx, ady, b);
-      const cntB = this.countBranchesNear(key, bdx, bdy, a);
-      const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
-      if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
+
+    if (pairs.length > 0) {
+      for (const [a, b] of pairs) {
+        const [ax, ay] = a.split(',').map(Number);
+        const [bx, by] = b.split(',').map(Number);
+        const adx = ax - sx, ady = ay - sy;
+        const bdx = bx - sx, bdy = by - sy;
+        const cntA = this.countBranchesNear(key, adx, ady, b);
+        const cntB = this.countBranchesNear(key, bdx, bdy, a);
+        const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
+        if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
+      }
+    } else {
+      const mp = this.findMinAnglePair(key);
+      if (mp) {
+        for (const nk of ns) {
+          if (nk !== mp[0] && nk !== mp[1]) fixedSet.add(nk);
+        }
+      }
     }
+
     const candidates = ns.filter((nk, i) => !fixedSet.has(nk));
     if (candidates.length === 0) return;
 
