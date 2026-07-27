@@ -122,43 +122,40 @@ const Terrain = {
     }
   },
 
-  _generateRiversDF(terrain, riverRatio, seed) {
+  _generateRiversValley(terrain, riverRatio, seed) {
     const W = G.GRID_W;
     const H = G.GRID_H;
-    const total = W * H;
-    const target = Math.floor(total * riverRatio / 2.0);
-    const SC = 0.035;
-    const NUM = 18;
-    const STEPS = 160;
-    let placed = 0;
-    let s = seed * 7919;
+    const scale = 0.025;
+    const threshold = 0.93 - riverRatio * 0.3;
 
-    for (let i = 0; i < NUM && placed < target; i++) {
-      let cx = this._randBetween(3, W - 3, s++);
-      let cy = this._randBetween(3, H - 3, s++);
-
-      for (let step = 0; step < STEPS; step++) {
-        const idx = cy * W + cx;
-        if (terrain[idx] !== TERRAIN.RIVER) {
-          terrain[idx] = TERRAIN.RIVER;
-          placed++;
-          if (placed >= target) break;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const n = this._valueNoise(x * scale, y * scale, seed);
+        const r = 1 - Math.abs(n - 0.5) * 2;
+        if (r > threshold) {
+          terrain[y * W + x] = TERRAIN.RIVER;
         }
-        if (cx <= 2 || cx >= W - 3 || cy <= 2 || cy >= H - 3) break;
+      }
+    }
 
-        const a = this._valueNoise(cx * SC, cy * SC, seed + i * 100) * Math.PI * 2;
-        const dx = Math.cos(a);
-        const dy = Math.sin(a);
-        const nx = Math.round(cx + dx);
-        const ny = Math.round(cy + dy);
-        if (nx === cx && ny === cy) {
-          cx += dx > 0 ? 1 : dx < 0 ? -1 : 0;
-          cy += dy > 0 ? 1 : dy < 0 ? -1 : 0;
-        } else {
-          cx = nx;
-          cy = ny;
-        }
-        if (cx < 0 || cx >= W || cy < 0 || cy >= H) break;
+    this._pruneIsolated(terrain, TERRAIN.RIVER);
+    this._dilateRivers(terrain);
+  },
+
+  _pruneIsolated(terrain, type) {
+    const copy = new Uint8Array(terrain);
+    const W = G.GRID_W;
+    const H = G.GRID_H;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const i = y * W + x;
+        if (copy[i] !== type) continue;
+        let n = 0;
+        if (y > 0 && copy[i - W] === type) n++;
+        if (y < H - 1 && copy[i + W] === type) n++;
+        if (x > 0 && copy[i - 1] === type) n++;
+        if (x < W - 1 && copy[i + 1] === type) n++;
+        if (n === 0) terrain[i] = TERRAIN.PLAIN;
       }
     }
   },
@@ -167,8 +164,7 @@ const Terrain = {
     const total = G.GRID_W * G.GRID_H;
 
     if (riverRatio > 0) {
-      this._generateRiversDF(terrain, riverRatio, seed);
-      this._dilateRivers(terrain);
+      this._generateRiversValley(terrain, riverRatio, seed);
     }
 
     if (mountainRatio > 0) {
