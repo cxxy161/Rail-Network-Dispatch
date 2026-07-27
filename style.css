@@ -429,3 +429,54 @@ body {
   justify-content: center;
   gap: 36px;
 }
+
+/* ── 地图设置面板 ── */
+.map-config {
+  margin-top: 12px;
+}
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  font-size: 14px;
+  font-weight: 300;
+  color: #555;
+}
+.config-row > span:first-child {
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.config-row input[type="range"] {
+  width: 200px;
+  accent-color: #E8734A;
+  cursor: pointer;
+}
+.config-row input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  background: #DDD8CE;
+  border-radius: 1px;
+}
+.config-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #E8734A;
+  margin-top: -6px;
+  cursor: pointer;
+}
+.config-future {
+  margin-top: 24px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: #CCC;
+  letter-spacing: 0.15em;
+  justify-content: center;
+}
+.config-btns {
+  display: flex;
+  gap: 28px;
+  margin-top: 16px;
+}

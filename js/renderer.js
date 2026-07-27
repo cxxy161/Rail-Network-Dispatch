@@ -44,6 +44,7 @@ const Renderer = {
     ctx.translate(G.offsetX, G.offsetY);
     ctx.scale(G.zoom, G.zoom);
 
+    this.drawTerrain(ctx);
     this.drawGrid(ctx);
     this.drawStationGroups(ctx);
     this.drawStationAreas(ctx);
@@ -58,6 +59,50 @@ const Renderer = {
     this.drawCursorHighlight(ctx);
 
     ctx.restore();
+  },
+
+  drawTerrain(ctx) {
+    if (!G.terrain) return;
+    const cs = G.CELL_SIZE;
+    const invZ = 1 / G.zoom;
+    const visLeft = (-G.offsetX) * invZ - cs;
+    const visTop = (-G.offsetY) * invZ - cs;
+    const visRight = (this.canvas.width - G.offsetX) * invZ + cs;
+    const visBottom = (this.canvas.height - G.offsetY) * invZ + cs;
+
+    const startX = Math.max(0, Math.floor(visLeft / cs));
+    const startY = Math.max(0, Math.floor(visTop / cs));
+    const endX = Math.min(G.GRID_W - 1, Math.ceil(visRight / cs));
+    const endY = Math.min(G.GRID_H - 1, Math.ceil(visBottom / cs));
+
+    for (let gy = startY; gy <= endY; gy++) {
+      for (let gx = startX; gx <= endX; gx++) {
+        const t = G.terrain[gy * G.GRID_W + gx];
+        if (t === TERRAIN.RIVER) {
+          ctx.fillStyle = '#B8D8E8';
+          ctx.globalAlpha = 0.35;
+          ctx.fillRect(gx * cs, gy * cs, cs, cs);
+          ctx.globalAlpha = 1;
+        } else if (t === TERRAIN.MOUNTAIN) {
+          ctx.fillStyle = '#C8B898';
+          ctx.globalAlpha = 0.4;
+          ctx.fillRect(gx * cs, gy * cs, cs, cs);
+
+          const cx = gx * cs + cs / 2;
+          const cy = gy * cs + cs / 2;
+          const hs = cs * 0.22;
+          ctx.fillStyle = '#A09070';
+          ctx.globalAlpha = 0.55;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - hs);
+          ctx.lineTo(cx + hs * 0.9, cy + hs * 0.55);
+          ctx.lineTo(cx - hs * 0.9, cy + hs * 0.55);
+          ctx.closePath();
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
   },
 
   drawGrid(ctx) {

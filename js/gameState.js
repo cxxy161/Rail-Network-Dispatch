@@ -29,25 +29,21 @@ const G = {
     wagon: 50,
   },
 
+  terrain: null,
+  mapSeed: 0,
   connectionMap: {},
   activeSwitches: {},
 
   platforms: [],
 
-  stations: [
-    { id: 'A', x: 6, y: 12, color: '#E84A4A' },
-    { id: 'B', x: 16, y: 4, color: '#4A90D9' },
-    { id: 'C', x: 16, y: 12, color: '#50B86C' },
-  ],
+  stations: [],
 
-  depotX: 31,
-  depotY: 12,
+  depotX: 0,
+  depotY: 0,
 
-  depotTrains: [
-    { id: 1, carCount: 2, passengers: {} },
-  ],
+  depotTrains: [],
   activeTrains: [],
-  nextTrainId: 2,
+  nextTrainId: 1,
 
   stationQueues: {},
 
@@ -76,7 +72,7 @@ const G = {
   _dirty: false,
 };
 
-function resetGame() {
+function resetGame(opts) {
   G.zoom = 0.65;
   G.offsetX = 0;
   G.offsetY = 0;
@@ -94,10 +90,6 @@ function resetGame() {
   G.connectionMap = {};
   G.activeSwitches = {};
   G.platforms = [];
-  G.depotTrains = [{ id: 1, carCount: 2, passengers: {} }];
-  G.activeTrains = [];
-  G.nextTrainId = 2;
-  G.stationQueues = {};
   G.selectedTool = 'track';
   G.mouseGridX = -1;
   G.mouseGridY = -1;
@@ -112,6 +104,13 @@ function resetGame() {
   G.operateSubTool = null;
   G._passengerAccum = {};
   G.infoTarget = null;
+
+  Terrain.generateMap(opts || {});
+}
+
+function terrainAt(gx, gy) {
+  if (!G.terrain) return TERRAIN.PLAIN;
+  return G.terrain[gy * G.GRID_W + gx];
 }
 
 function worldToScreen(wx, wy) {
@@ -154,6 +153,8 @@ function saveGame() {
     trackFragments: G.trackFragments, platformComponents: G.platformComponents, wagons: G.wagons,
     connectionMap: G.connectionMap, activeSwitches: G.activeSwitches,
     platforms: G.platforms, stationQueues: G.stationQueues,
+    stations: G.stations, depotX: G.depotX, depotY: G.depotY, mapSeed: G.mapSeed,
+    terrain: G.terrain ? Array.from(G.terrain) : null,
     depotTrains: G.depotTrains, activeTrains: G.activeTrains, nextTrainId: G.nextTrainId,
     passengersDeliveredToday: G.passengersDeliveredToday, totalPassengersDelivered: G.totalPassengersDelivered,
     zoom: G.zoom, offsetX: G.offsetX, offsetY: G.offsetY,
@@ -179,6 +180,26 @@ function loadGame() {
     G.activeSwitches = data.activeSwitches || {};
     G.platforms = data.platforms || [];
     G.stationQueues = data.stationQueues || {};
+    G.mapSeed = data.mapSeed || 0;
+
+    if (data.terrain) {
+      G.terrain = new Uint8Array(data.terrain);
+    } else {
+      G.terrain = null;
+    }
+
+    if (data.stations && data.stations.length > 0) {
+      G.stations = data.stations;
+    } else {
+      G.stations = [
+        { id: 'A', x: 6, y: 12, color: '#E84A4A' },
+        { id: 'B', x: 16, y: 4, color: '#4A90D9' },
+        { id: 'C', x: 16, y: 12, color: '#50B86C' },
+      ];
+    }
+    G.depotX = data.depotX != null ? data.depotX : 31;
+    G.depotY = data.depotY != null ? data.depotY : 12;
+
     G.depotTrains = data.depotTrains || [{ id: 1, carCount: 2, passengers: {} }];
     G.activeTrains = (data.activeTrains || []).map(t => ({ ...t }));
     G.nextTrainId = data.nextTrainId || 2;

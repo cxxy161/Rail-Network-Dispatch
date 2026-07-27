@@ -160,6 +160,16 @@ const Ui = {
     document.getElementById('confirm-newgame').classList.add('hidden');
   },
 
+  showMapConfig() {
+    document.getElementById('map-config').classList.remove('hidden');
+    document.querySelector('#main-menu .menu-buttons').classList.add('hidden');
+  },
+
+  hideMapConfig() {
+    document.getElementById('map-config').classList.add('hidden');
+    document.querySelector('#main-menu .menu-buttons').classList.remove('hidden');
+  },
+
   startBuild() {
     G.phase = 'build';
     G.passengersDeliveredToday = 0;

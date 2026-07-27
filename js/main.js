@@ -17,18 +17,44 @@ function init() {
     if (saveExists()) {
       Ui.showNewGameConfirm();
     } else {
-      startNewGame();
+      Ui.showMapConfig();
     }
   });
 
   document.getElementById('confirm-yes').addEventListener('click', () => {
     deleteSave();
     Ui.hideNewGameConfirm();
-    startNewGame();
+    Ui.showMapConfig();
   });
 
   document.getElementById('confirm-no').addEventListener('click', () => {
     Ui.hideNewGameConfirm();
+  });
+
+  document.getElementById('cfg-start').addEventListener('click', () => {
+    const mRatio = parseInt(document.getElementById('cfg-mountain').value) / 100;
+    const rRatio = parseInt(document.getElementById('cfg-river').value) / 100;
+    startNewGame({ mountainRatio: mRatio, riverRatio: rRatio });
+  });
+
+  document.getElementById('cfg-back').addEventListener('click', () => {
+    Ui.hideMapConfig();
+  });
+
+  document.getElementById('cfg-mountain').addEventListener('input', () => {
+    const mv = parseInt(document.getElementById('cfg-mountain').value);
+    document.getElementById('cfg-mountain-val').textContent = mv + '%';
+    document.getElementById('cfg-river').max = Math.min(50, 80 - mv);
+    const rv = parseInt(document.getElementById('cfg-river').value);
+    document.getElementById('cfg-plain-val').textContent = (100 - mv - rv) + '%';
+  });
+
+  document.getElementById('cfg-river').addEventListener('input', () => {
+    const rv = parseInt(document.getElementById('cfg-river').value);
+    document.getElementById('cfg-river-val').textContent = rv + '%';
+    document.getElementById('cfg-mountain').max = Math.min(50, 80 - rv);
+    const mv = parseInt(document.getElementById('cfg-mountain').value);
+    document.getElementById('cfg-plain-val').textContent = (100 - mv - rv) + '%';
   });
 
   document.getElementById('menu-continue').addEventListener('click', () => {
@@ -61,8 +87,8 @@ function init() {
   requestAnimationFrame(gameLoop);
 }
 
-function startNewGame() {
-  resetGame();
+function startNewGame(opts) {
+  resetGame(opts);
   Ui.startBuild();
   Renderer.centerCamera();
   MenuDecor.stop();

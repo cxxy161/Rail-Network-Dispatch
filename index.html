@@ -22,6 +22,29 @@
       <button id="menu-tutorial" class="menu-btn">教 程</button>
       <button id="menu-settings" class="menu-btn">关 于</button>
     </div>
+    <div id="map-config" class="map-config hidden">
+      <div class="config-row">
+        <span>山地</span>
+        <input type="range" id="cfg-mountain" min="0" max="50" value="20">
+        <span id="cfg-mountain-val">20%</span>
+      </div>
+      <div class="config-row">
+        <span>河流</span>
+        <input type="range" id="cfg-river" min="0" max="50" value="20">
+        <span id="cfg-river-val">20%</span>
+      </div>
+      <div class="config-row">
+        <span>平原</span>
+        <span id="cfg-plain-val">60%</span>
+      </div>
+      <div class="config-row config-future">
+        ─── 未来选项 ───
+      </div>
+      <div class="config-btns">
+        <button id="cfg-start" class="menu-btn">开 始 游 戏</button>
+        <button id="cfg-back" class="menu-btn">返 回</button>
+      </div>
+    </div>
     <div class="menu-version">v0.1</div>
   </div>
   <div id="confirm-newgame" class="confirm-overlay hidden">
@@ -168,6 +191,7 @@
 </div>
 
 <script src="js/gameState.js"></script>
+<script src="js/terrain.js"></script>
 <script src="js/menuDecor.js"></script>
 <script src="js/gridGraph.js"></script>
 <script src="js/station.js"></script>
