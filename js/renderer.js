@@ -248,11 +248,6 @@ const Renderer = {
       ctx.lineTo(x + w - 2, y + h - 3);
     }
     ctx.stroke();
-
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.13, 0, Math.PI * 2);
-    ctx.fill();
   },
 
   drawTracks(ctx) {
