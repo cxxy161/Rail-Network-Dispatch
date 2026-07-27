@@ -7,9 +7,17 @@ function init() {
   const canvas = document.getElementById('game-canvas');
   Renderer.init(canvas);
 
+  const loaded = loadGame();
+
   Ui.init();
   Ui.updateToolButtons();
-  Ui.startBuild();
+
+  if (loaded) {
+    G.phase = 'build';
+    Ui.startBuild();
+  } else {
+    Ui.startBuild();
+  }
 
   Renderer.resize();
   Renderer.centerCamera();

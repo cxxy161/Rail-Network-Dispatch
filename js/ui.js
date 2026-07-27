@@ -68,6 +68,25 @@ const Ui = {
       this.startBuild();
     });
 
+    document.getElementById('btn-settings').addEventListener('click', () => this.openSettings());
+    document.getElementById('btn-settings-close').addEventListener('click', () => this.closeSettings());
+    document.getElementById('btn-manual-save').addEventListener('click', () => { saveGame(); this.flashMessage('已保存'); });
+    document.getElementById('btn-copy-export').addEventListener('click', () => this.copyExport());
+    document.getElementById('btn-confirm-import').addEventListener('click', () => this.confirmImport());
+    document.getElementById('btn-delete-save').addEventListener('click', () => this.confirmDeleteSave());
+    document.getElementById('btn-reset-game').addEventListener('click', () => this.confirmReset());
+
+    for (const tabBtn of document.querySelectorAll('.settings-tab')) {
+      tabBtn.addEventListener('click', () => this.switchSettingsTab(tabBtn.dataset.tab));
+    }
+
+    window.addEventListener('beforeunload', (e) => {
+      if (G._dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
     for (const btn of document.querySelectorAll('.buy-btn')) {
       btn.addEventListener('click', () => {
         const resource = btn.dataset.resource;
@@ -202,6 +221,7 @@ const Ui = {
     G.dayNumber++;
     document.getElementById('settlement-panel').classList.add('hidden');
     this.hideOverlay();
+    saveGame();
     this.startBuild();
   },
 
@@ -239,6 +259,7 @@ const Ui = {
     if (resource === 'trackFragment') G.trackFragments += count;
     else if (resource === 'platformComponent') G.platformComponents += count;
     else if (resource === 'wagon') G.wagons += count;
+    G._dirty = true;
     this.updateShopDisplay();
     this.updateTopBar();
   },
@@ -267,5 +288,49 @@ const Ui = {
     el.textContent = msg;
     el.style.opacity = '1';
     this.flashTimer = setTimeout(() => { el.style.opacity = '0'; }, 1200);
+  },
+
+  openSettings() {
+    document.getElementById('settings-overlay').classList.remove('hidden');
+    document.getElementById('ta-export').value = exportToBase64();
+  },
+
+  closeSettings() {
+    document.getElementById('settings-overlay').classList.add('hidden');
+  },
+
+  switchSettingsTab(tabId) {
+    document.querySelectorAll('.settings-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    document.querySelectorAll('.settings-content').forEach(c => c.classList.add('hidden'));
+    document.getElementById(tabId).classList.remove('hidden');
+  },
+
+  copyExport() {
+    const ta = document.getElementById('ta-export');
+    navigator.clipboard.writeText(ta.value).then(() => this.flashMessage('已复制到剪贴板'));
+  },
+
+  confirmImport() {
+    const b64 = document.getElementById('ta-import').value.trim();
+    if (!b64) { this.flashMessage('请粘贴存档文本'); return; }
+    if (importFromBase64(b64)) {
+      this.flashMessage('导入成功，即将刷新');
+      setTimeout(() => location.reload(), 500);
+    } else {
+      this.flashMessage('存档格式无效');
+    }
+  },
+
+  confirmDeleteSave() {
+    deleteSave();
+    this.flashMessage('存档已删除');
+  },
+
+  confirmReset() {
+    deleteSave();
+    resetGame();
+    Renderer.centerCamera();
+    this.startBuild();
+    this.closeSettings();
   },
 };

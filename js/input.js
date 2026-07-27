@@ -173,6 +173,7 @@ const Input = {
 
     if (edges.length > 0) {
       this.pushUndo({ type: 'add_edges', pairs: edges.map(e => [e.k1, e.k2]) });
+      G._dirty = true;
     }
 
     G.trackDrag.startX = -1;
@@ -258,6 +259,7 @@ const Input = {
         type: 'remove_platforms',
         items: plats,
       });
+      G._dirty = true;
     }
   },
 
@@ -296,6 +298,7 @@ const Input = {
     this.dragBatchEdges = [];
     if (items.length > 0) {
       this.pushUndo({ type: 'batch', items });
+      G._dirty = true;
     }
   },
 
@@ -320,6 +323,7 @@ const Input = {
           if (idx >= 0) {
             const train = G.depotTrains.splice(idx, 1)[0];
             if (Train.dispatch(train)) {
+              G._dirty = true;
               Input.showDepotPopup();
             } else {
               G.depotTrains.push(train);
@@ -359,6 +363,7 @@ const Input = {
     if (idx >= 0) {
       G.wagons += G.depotTrains[idx].carCount;
       G.depotTrains.splice(idx, 1);
+      G._dirty = true;
       Ui.updateShopDisplay();
       Input.showDepotBuildPopup();
     }
@@ -372,6 +377,7 @@ const Input = {
     }
     G.wagons -= n;
     G.depotTrains.push(Train.create(n));
+    G._dirty = true;
     Ui.updateShopDisplay();
     Input.showDepotBuildPopup();
   },

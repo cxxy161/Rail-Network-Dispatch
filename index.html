@@ -9,6 +9,7 @@
 <body>
 
 <div id="top-bar">
+  <button id="btn-settings" title="设置">⚙</button>
   <span id="gold-label">资金: <strong id="gold-val">500</strong></span>
   <span id="delivered-label">今日: <strong id="delivered-val">0</strong> 人</span>
   <span id="day-label">周期: <strong id="day-val">1</strong></span>
@@ -107,6 +108,35 @@
     <p>总运送: <strong id="gameover-total">0</strong> 人</p>
     <p>存活周期: <strong id="gameover-days">1</strong></p>
     <button id="btn-restart" class="primary-btn secondary">重新开始</button>
+  </div>
+</div>
+
+<div id="settings-overlay" class="overlay hidden">
+  <div id="settings-panel" class="settings-panel">
+    <h2>⚙ 设置</h2>
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="tab-save">存档</button>
+      <button class="settings-tab" data-tab="tab-game">游戏</button>
+      <button class="settings-tab" data-tab="tab-ui">界面</button>
+    </div>
+    <div id="tab-save" class="settings-content">
+      <button id="btn-manual-save" class="settings-btn">💾 手动保存</button>
+      <hr>
+      <label>导出存档</label>
+      <textarea id="ta-export" class="settings-ta" readonly></textarea>
+      <button id="btn-copy-export" class="settings-btn">📋 一键复制</button>
+      <hr>
+      <label>导入存档</label>
+      <textarea id="ta-import" class="settings-ta" placeholder="在此粘贴 Base64 存档文本..."></textarea>
+      <button id="btn-confirm-import" class="settings-btn">确认导入</button>
+      <hr>
+      <button id="btn-delete-save" class="settings-btn danger">删除存档</button>
+      <button id="btn-reset-game" class="settings-btn danger">重置游戏</button>
+    </div>
+    <div id="tab-game" class="settings-content hidden">暂未开放</div>
+    <div id="tab-ui" class="settings-content hidden">暂未开放</div>
+    <br>
+    <button id="btn-settings-close" class="settings-btn">关闭</button>
   </div>
 </div>
 

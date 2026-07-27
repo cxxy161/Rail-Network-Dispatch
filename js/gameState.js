@@ -73,6 +73,7 @@ const G = {
   operateSubTool: null,
   _passengerAccum: {},
   infoTarget: null,
+  _dirty: false,
 };
 
 function resetGame() {
@@ -143,4 +144,77 @@ function dayTimeToClock() {
   const h = Math.floor(totalMin / 60);
   const m = Math.floor(totalMin % 60);
   return { h, m };
+}
+
+const SAVE_KEY = 'mini_rail_ops_save';
+
+function saveGame() {
+  const data = {
+    gold: G.gold, dayNumber: G.dayNumber, dayTime: G.dayTime,
+    trackFragments: G.trackFragments, platformComponents: G.platformComponents, wagons: G.wagons,
+    connectionMap: G.connectionMap, activeSwitches: G.activeSwitches,
+    platforms: G.platforms, stationQueues: G.stationQueues,
+    depotTrains: G.depotTrains, activeTrains: G.activeTrains, nextTrainId: G.nextTrainId,
+    passengersDeliveredToday: G.passengersDeliveredToday, totalPassengersDelivered: G.totalPassengersDelivered,
+    zoom: G.zoom, offsetX: G.offsetX, offsetY: G.offsetY,
+    undoStack: G.undoStack.map(a => a.type === 'add_edges' || a.type === 'remove_edges' ? { ...a } :
+      a.type === 'batch' ? { ...a, items: a.items.map(i => ({ ...i })) } : { ...a }),
+  };
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  G._dirty = false;
+}
+
+function loadGame() {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    G.gold = data.gold || 500;
+    G.dayNumber = data.dayNumber || 1;
+    G.dayTime = data.dayTime || 300;
+    G.trackFragments = data.trackFragments || 30;
+    G.platformComponents = data.platformComponents || 5;
+    G.wagons = data.wagons || 4;
+    G.connectionMap = data.connectionMap || {};
+    G.activeSwitches = data.activeSwitches || {};
+    G.platforms = data.platforms || [];
+    G.stationQueues = data.stationQueues || {};
+    G.depotTrains = data.depotTrains || [{ id: 1, carCount: 2, passengers: {} }];
+    G.activeTrains = (data.activeTrains || []).map(t => ({ ...t }));
+    G.nextTrainId = data.nextTrainId || 2;
+    G.passengersDeliveredToday = data.passengersDeliveredToday || 0;
+    G.totalPassengersDelivered = data.totalPassengersDelivered || 0;
+    if (data.zoom !== undefined) { G.zoom = data.zoom; G.offsetX = data.offsetX; G.offsetY = data.offsetY; }
+    G.undoStack = data.undoStack || [];
+    G._passengerAccum = {};
+    G._dirty = false;
+    G.phase = 'build';
+    G.paused = false;
+    G.speedMultiplier = 1;
+    G.infoTarget = null;
+    G.trackDrag = { active: false, startX: -1, startY: -1 };
+    G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
+    G.selectedTool = 'track';
+    G.mouseGridX = -1; G.mouseGridY = -1;
+    return true;
+  } catch (e) { return false; }
+}
+
+function saveExists() { return !!localStorage.getItem(SAVE_KEY); }
+
+function deleteSave() { localStorage.removeItem(SAVE_KEY); G._dirty = true; }
+
+function exportToBase64() {
+  saveGame();
+  const raw = localStorage.getItem(SAVE_KEY);
+  return raw ? btoa(raw) : '';
+}
+
+function importFromBase64(b64) {
+  try {
+    const raw = atob(b64.trim());
+    JSON.parse(raw);
+    localStorage.setItem(SAVE_KEY, raw);
+    return true;
+  } catch (e) { return false; }
 }
