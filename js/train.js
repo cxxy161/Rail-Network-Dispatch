@@ -29,6 +29,7 @@ const Train = {
       dockedTimer: 0,
       passengers: {},
       lastDockedStationId: null,
+      trail: [],
     };
   },
 
@@ -45,6 +46,7 @@ const Train = {
     train.dockedTimer = 0;
     train.passengers = {};
     train.lastDockedStationId = null;
+    train.trail = [];
     G.activeTrains.push(train);
     return true;
   },
@@ -66,6 +68,7 @@ const Train = {
         train.state = 'moving';
         train.t = 0;
         train.speed = 0;
+        train.trail = [];
       }
       return;
     }
@@ -107,6 +110,25 @@ const Train = {
       train.t = 1;
       this.arriveNode(train, train.toKey, train.fromKey);
     }
+
+    if (train.state === 'moving') {
+      this.recordTrail(train);
+    }
+  },
+
+  recordTrail(train) {
+    if (!train.fromKey || !train.toKey) return;
+    const [x1, y1] = train.fromKey.split(',').map(Number);
+    const [x2, y2] = train.toKey.split(',').map(Number);
+    const wx1 = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const wy1 = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const wx2 = x2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const wy2 = y2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const px = wx1 + (wx2 - wx1) * train.t;
+    const py = wy1 + (wy2 - wy1) * train.t;
+    const angle = Math.atan2(wy2 - wy1, wx2 - wx1);
+    train.trail.unshift({ x: px, y: py, angle });
+    if (train.trail.length > 500) train.trail.length = 500;
   },
 
   isPlatformNode(key) {
@@ -148,10 +170,11 @@ const Train = {
         if (canBoard && hasMatch) {
           train.fromKey = nodeKey;
           train.toKey = nextKey || fromKey;
-          train.dockedTimer = 3;
-          train.t = 0;
-          train.speed = 0;
-          train.state = 'docked';
+      train.dockedTimer = train.carCount * 2.5;
+      train.t = 0;
+      train.speed = 0;
+      train.state = 'docked';
+      train.trail = [];
           this.boardAtStation(train, nodeKey);
         } else if (nextKey) {
           train.fromKey = nodeKey;
@@ -185,6 +208,7 @@ const Train = {
     train.t = 0;
     train.speed = 0;
     train.state = 'moving';
+    train.trail = [];
   },
 
   boardAtStation(train, nodeKey) {

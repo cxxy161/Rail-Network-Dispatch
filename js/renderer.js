@@ -411,49 +411,51 @@ const Renderer = {
   drawTrains(ctx) {
     for (const train of G.activeTrains) {
       if (!train.fromKey || !train.toKey) continue;
-      const [x1, y1] = train.fromKey.split(',').map(Number);
-      const [x2, y2] = train.toKey.split(',').map(Number);
 
-      const wx1 = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const wy1 = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const wx2 = x2 * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const wy2 = y2 * G.CELL_SIZE + G.CELL_SIZE / 2;
-
-      const px = wx1 + (wx2 - wx1) * train.t;
-      const py = wy1 + (wy2 - wy1) * train.t;
-
-      const angle = Math.atan2(wy2 - wy1, wx2 - wx1);
-      const carW = G.CELL_SIZE * 0.7;
+      const carW = G.CELL_SIZE * 0.92;
       const carH = G.CELL_SIZE * 0.45;
-      const gap = 3;
-      const totalLen = train.carCount * carW + (train.carCount - 1) * gap;
+      const gap = 4;
+      const trailGap = 55;
 
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate(angle);
-
+      const trail = train.trail;
       for (let c = 0; c < train.carCount; c++) {
-        const cx = -totalLen / 2 + carW * (c + 0.5) + gap * c;
+        const idx = c * trailGap;
+        if (idx >= trail.length) break;
+        const pos = trail[idx];
+
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate(pos.angle);
+
         ctx.fillStyle = '#E8734A';
         ctx.beginPath();
-        this.roundRect(ctx, cx - carW / 2, -carH / 2, carW, carH, 4);
+        this.roundRect(ctx, -carW / 2, -carH / 2, carW, carH, 4);
         ctx.fill();
         ctx.strokeStyle = '#D06040';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        this.roundRect(ctx, cx - carW / 2, -carH / 2, carW, carH, 4);
+        this.roundRect(ctx, -carW / 2, -carH / 2, carW, carH, 4);
         ctx.stroke();
+
+        ctx.restore();
       }
 
-      const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
-      const max = Train.maxLoad(train);
-      ctx.fillStyle = '#FFF';
-      ctx.font = `bold ${G.CELL_SIZE * 0.24}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(load + '/' + max, 0, 1);
+      if (trail.length > 0) {
+        const lead = trail[0];
+        ctx.save();
+        ctx.translate(lead.x, lead.y);
+        ctx.rotate(lead.angle);
 
-      ctx.restore();
+        const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+        const max = Train.maxLoad(train);
+        ctx.fillStyle = '#FFF';
+        ctx.font = `bold ${G.CELL_SIZE * 0.24}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(load + '/' + max, 0, 1);
+
+        ctx.restore();
+      }
     }
   },
 
