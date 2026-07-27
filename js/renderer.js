@@ -267,15 +267,24 @@ const Renderer = {
       const neighbors = Graph.getNeighbors(key);
       const dir = Graph.getSwitchExitDirection(key);
       const len = cs * 0.36;
+      const pairs = Graph.getThroughPairs(key);
+      const fixedSet = new Set();
+      for (const [a, b] of pairs) {
+        const [ax, ay] = a.split(',').map(Number);
+        const [bx, by] = b.split(',').map(Number);
+        const adx = ax - sx, ady = ay - sy;
+        const bdx = bx - sx, bdy = by - sy;
+        if (adx > 0 || (adx === 0 && ady < 0)) { fixedSet.add(a); }
+        else { fixedSet.add(b); }
+      }
 
       for (const nk of neighbors) {
         const [nx, ny] = nk.split(',').map(Number);
         const ndx = nx - sx, ndy = ny - sy;
-
+        const isFixed = fixedSet.has(nk);
         const isSelected = dir && ndx === dir.x && ndy === dir.y;
-        const isThrough = dir && ndx === -dir.x && ndy === -dir.y;
 
-        if (isThrough || isSelected) {
+        if (isFixed || isSelected) {
           ctx.beginPath();
           ctx.moveTo(cx, cy);
           ctx.lineTo(cx + ndx * len, cy + ndy * len);

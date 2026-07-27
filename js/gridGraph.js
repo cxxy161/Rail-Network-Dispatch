@@ -135,17 +135,23 @@ const Graph = {
     const old = G.activeSwitches[key] || 0;
     const ns = this.getNeighbors(key);
     const [sx, sy] = key.split(',').map(Number);
-    const [ox, oy] = ns[old % deg].split(',').map(Number);
-    const odx = ox - sx, ody = oy - sy;
-
-    for (let i = 1; i <= deg; i++) {
-      const attempt = (old + i) % deg;
-      const [tx, ty] = ns[attempt].split(',').map(Number);
-      const ndx = tx - sx, ndy = ty - sy;
-      if (ndx !== -odx || ndy !== -ody) {
-        G.activeSwitches[key] = attempt;
-        return;
-      }
+    const pairs = this.getThroughPairs(key);
+    const fixedSet = new Set();
+    for (const [a, b] of pairs) {
+      const [ax, ay] = a.split(',').map(Number);
+      const [bx, by] = b.split(',').map(Number);
+      const adx = ax - sx, ady = ay - sy;
+      const bdx = bx - sx, bdy = by - sy;
+      if (adx > 0 || (adx === 0 && ady < 0)) { fixedSet.add(a); }
+      else { fixedSet.add(b); }
     }
+    const candidates = ns.filter((nk, i) => !fixedSet.has(nk));
+    if (candidates.length === 0) return;
+
+    const currentCandidate = ns[old % deg];
+    let curIdx = candidates.indexOf(currentCandidate);
+    if (curIdx < 0) curIdx = 0;
+    const nextIdx = (curIdx + 1) % candidates.length;
+    G.activeSwitches[key] = ns.indexOf(candidates[nextIdx]);
   },
 };
