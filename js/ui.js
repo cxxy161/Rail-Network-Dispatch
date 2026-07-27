@@ -163,11 +163,13 @@ const Ui = {
   showMapConfig() {
     document.getElementById('map-config').classList.remove('hidden');
     document.querySelector('#main-menu .menu-buttons').classList.add('hidden');
+    document.querySelector('#main-menu .menu-title-box').classList.add('hidden');
   },
 
   hideMapConfig() {
     document.getElementById('map-config').classList.add('hidden');
     document.querySelector('#main-menu .menu-buttons').classList.remove('hidden');
+    document.querySelector('#main-menu .menu-title-box').classList.remove('hidden');
   },
 
   startBuild() {
