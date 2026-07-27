@@ -147,7 +147,7 @@ function clampGrid(gx, gy) {
 }
 
 function dayTimeToClock() {
-  const progress = 1 - (G.dayTime / 300);
+  const progress = 1 - (G.dayTime / 600);
   const totalMin = 6 * 60 + progress * 18 * 60;
   const h = Math.floor(totalMin / 60);
   const m = Math.floor(totalMin % 60);

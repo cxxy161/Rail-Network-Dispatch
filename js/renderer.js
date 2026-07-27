@@ -521,11 +521,13 @@ const Renderer = {
 
       const cx = (grp.bounds.minX + grp.bounds.maxX + 1) * G.CELL_SIZE / 2;
       const cy = grp.bounds.minY * G.CELL_SIZE + G.CELL_SIZE / 2 - 10;
+      const platformCells = Math.max(1, G.platforms.filter(p => p.stationId === sid).length);
+      const avg = total / platformCells;
 
-      const blink = total >= 100 && Math.floor(Date.now() / 500) % 2 === 1;
+      const blink = avg >= 100 && Math.floor(Date.now() / 500) % 2 === 1;
       if (blink) continue;
 
-      const color = total >= 50 ? '#E84A4A' : total >= 40 ? '#D09000' : '#333';
+      const color = avg >= 50 ? '#E84A4A' : avg >= 40 ? '#D09000' : '#333';
 
       ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
@@ -538,7 +540,7 @@ const Renderer = {
       ctx.textBaseline = 'middle';
       ctx.fillText(total + '', cx, cy + 1);
 
-      if (total >= 100) {
+      if (avg >= 100) {
         ctx.fillStyle = color;
         ctx.font = `bold ${G.CELL_SIZE * 0.18}px sans-serif`;
         ctx.fillText('⚠', cx, cy - G.CELL_SIZE * 0.3);

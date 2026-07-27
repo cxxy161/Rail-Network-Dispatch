@@ -149,10 +149,10 @@ function updateOperate(dt) {
     for (const st of G.stations) {
       const queue = G.stationQueues[st.id] || {};
       const total = Object.values(queue).reduce((a, b) => a + b, 0);
-      const platformCells = G.platforms.filter(p => p.stationId === st.id).length;
-      const buffer = platformCells * 50;
-      if (total > buffer + 50) G.satisfaction = Math.max(0, G.satisfaction - 1.0);
-      else if (total > buffer) G.satisfaction = Math.max(0, G.satisfaction - 0.5);
+      const platformCells = Math.max(1, G.platforms.filter(p => p.stationId === st.id).length);
+      const avg = total / platformCells;
+      if (avg >= 100) G.satisfaction = Math.max(0, G.satisfaction - 1.0);
+      else if (avg >= 50) G.satisfaction = Math.max(0, G.satisfaction - 0.5);
     }
   }
 
