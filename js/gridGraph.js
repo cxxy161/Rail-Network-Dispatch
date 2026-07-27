@@ -62,11 +62,13 @@ const Graph = {
 
   getSwitchExit(key, entryKey) {
     const neighbors = this.getNeighbors(key);
-    const options = neighbors.filter(nk => nk !== entryKey);
-    if (options.length === 0) return null;
-    if (options.length === 1) return options[0];
-    const idx = G.activeSwitches[key] || 0;
-    return options[idx % options.length] || options[0];
+    if (neighbors.length === 0) return null;
+    let idx = G.activeSwitches[key] || 0;
+    for (let i = 0; i < neighbors.length; i++) {
+      const nk = neighbors[(idx + i) % neighbors.length];
+      if (nk !== entryKey) return nk;
+    }
+    return neighbors[0];
   },
 
   getSwitchExitDirection(key) {
