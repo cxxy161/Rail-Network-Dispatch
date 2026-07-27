@@ -154,28 +154,105 @@ const Renderer = {
 
   drawStationGroups(ctx) {
     const groups = Station.getStationGroups();
+    const cs = G.CELL_SIZE;
+
     for (const [sid, grp] of Object.entries(groups)) {
       if (grp.platforms.length === 0) continue;
-      const b = grp.bounds;
-      const cs = G.CELL_SIZE;
+      const color = grp.color;
 
-      ctx.beginPath();
-      for (const plat of grp.platforms) {
-        const x = plat.x * cs + cs * 0.05;
-        const y = plat.y * cs + cs * 0.05;
-        ctx.rect(x, y, cs * 0.9, cs * 0.9);
-      }
-      ctx.fillStyle = grp.color + '55';
-      ctx.fill();
+      const grid = {};
+      for (const p of grp.platforms) grid[p.x + ',' + p.y] = p;
 
-      ctx.strokeStyle = grp.color;
-      ctx.lineWidth = 2;
+      const visited = new Set();
+
       for (const plat of grp.platforms) {
-        const x = plat.x * cs + cs * 0.05;
-        const y = plat.y * cs + cs * 0.05;
-        ctx.strokeRect(x, y, cs * 0.9, cs * 0.9);
+        const key = plat.x + ',' + plat.y;
+        if (visited.has(key)) continue;
+
+        const comp = [];
+        const q = [plat];
+        visited.add(key);
+        while (q.length) {
+          const p = q.shift();
+          comp.push(p);
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nk = (p.x + dx) + ',' + (p.y + dy);
+            if (visited.has(nk)) continue;
+            if (grid[nk]) { visited.add(nk); q.push(grid[nk]); }
+          }
+        }
+
+        const xs = comp.map(p => p.x);
+        const ys = comp.map(p => p.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        const dir = comp[0].dir;
+        const sameDir = comp.every(p => p.dir === dir) && comp.length > 1;
+
+        if (dir === 'h' && sameDir && comp.every(p => p.y === minY)) {
+          const x = minX * cs + cs * 0.06;
+          const y = minY * cs + cs * 0.33;
+          const w = (maxX - minX + 1) * cs * 0.88;
+          const h = cs * 0.34;
+          this._drawPlatBlock(ctx, x, y, w, h, color, 'h');
+        } else if (dir === 'v' && sameDir && comp.every(p => p.x === minX)) {
+          const x = minX * cs + cs * 0.33;
+          const y = minY * cs + cs * 0.06;
+          const w = cs * 0.34;
+          const h = (maxY - minY + 1) * cs * 0.88;
+          this._drawPlatBlock(ctx, x, y, w, h, color, 'v');
+        } else {
+          for (const p of comp) {
+            if (p.dir === 'h') {
+              const x = p.x * cs + cs * 0.06;
+              const y = p.y * cs + cs * 0.33;
+              this._drawPlatBlock(ctx, x, y, cs * 0.88, cs * 0.34, color, 'h');
+            } else {
+              const x = p.x * cs + cs * 0.33;
+              const y = p.y * cs + cs * 0.06;
+              this._drawPlatBlock(ctx, x, y, cs * 0.34, cs * 0.88, color, 'v');
+            }
+          }
+        }
       }
     }
+  },
+
+  _drawPlatBlock(ctx, x, y, w, h, color, orientation) {
+    ctx.fillStyle = '#E8E4D8';
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 3);
+    ctx.fill();
+
+    ctx.strokeStyle = '#C0B8A8';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 3);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#E8C820';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (orientation === 'h') {
+      ctx.moveTo(x + 3, y + 2);
+      ctx.lineTo(x + w - 3, y + 2);
+      ctx.moveTo(x + 3, y + h - 2);
+      ctx.lineTo(x + w - 3, y + h - 2);
+    } else {
+      ctx.moveTo(x + 2, y + 3);
+      ctx.lineTo(x + 2, y + h - 3);
+      ctx.moveTo(x + w - 2, y + 3);
+      ctx.lineTo(x + w - 2, y + h - 3);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.13, 0, Math.PI * 2);
+    ctx.fill();
   },
 
   drawTracks(ctx) {
