@@ -6,7 +6,7 @@ const TUTORIAL_DATA = {
   mapPreset: {
     gridW: 32,
     gridH: 24,
-    startingResources: { gold: 100, trackFragments: 8, platformComponents: 5, wagons: 4 },
+    startingResources: { gold: 100, trackFragments: 14, platformComponents: 5, wagons: 4 },
     stations: [
       { id: 'A', x: 8,  y: 12, color: '#E84A4A', flowLevel: 30 },
       { id: 'B', x: 16, y: 6,  color: '#4A90D9', flowLevel: 20, appearsOnDay: 2 },
@@ -18,9 +18,6 @@ const TUTORIAL_DATA = {
       const k = (x, y) => x + ',' + y;
       for (let x = 22; x >= 17; x--) {
         pairs.push([k(x, 12), k(x - 1, 12)]);
-      }
-      for (let y = 12; y <= 17; y++) {
-        pairs.push([k(16, y), k(16, y + 1)]);
       }
       return pairs;
     })(),
@@ -165,7 +162,7 @@ const TUTORIAL_DATA = {
       text: '从<span class="tut-hl">交叉路口</span>向B站拖拽铺轨。这样主线就分叉了——三向道岔。',
       highlight: { type: 'zone', x: 15, y: 6, w: 2, h: 7, desc: '交叉口→B站' },
       allowActions: ['drag_track'],
-      check: () => Tutorial.helpers.pathBetweenNodes(G.depotX + ',' + G.depotY, '16,6'),
+      check: () => Tutorial.helpers.stationInNetworkWithDepot('B'),
     },
     {
       id: 's16',

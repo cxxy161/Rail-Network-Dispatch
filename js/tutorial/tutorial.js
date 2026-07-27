@@ -10,30 +10,45 @@ const Tutorial = {
 
   helpers: {
     pathBetweenStations(aId, bId) {
-      const starts = new Set();
-      const ends = new Set();
-      for (const p of G.platforms) {
-        if (p.stationId === aId) starts.add(p.x + ',' + p.y);
-        if (p.stationId === bId) ends.add(p.x + ',' + p.y);
+      const aPlats = G.platforms.filter(p => p.stationId === aId);
+      const bPlats = G.platforms.filter(p => p.stationId === bId);
+      if (aPlats.length === 0 || bPlats.length === 0) return false;
+
+      const starts = [];
+      for (const p of aPlats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) starts.push(key);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) starts.push(adj);
+        }
       }
-      if (starts.size === 0 || ends.size === 0) return false;
+      if (starts.length === 0) return false;
+
+      const targets = new Set();
+      for (const p of bPlats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) targets.add(key);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) targets.add(adj);
+        }
+      }
+      if (targets.size === 0) return false;
+
       const visited = new Set();
       const queue = [];
-      for (const k of starts) {
-        const neighbors = G.connectionMap[k];
-        if (!neighbors) continue;
-        for (const n of neighbors) {
-          if (ends.has(n)) return true;
-          const key = n;
-          if (!visited.has(key)) { visited.add(key); queue.push(key); }
-        }
+      for (const s of starts) {
+        if (targets.has(s)) return true;
+        visited.add(s);
+        queue.push(s);
       }
       while (queue.length > 0) {
         const cur = queue.shift();
-        if (ends.has(cur)) return true;
         const neighbors = G.connectionMap[cur];
         if (!neighbors) continue;
         for (const n of neighbors) {
+          if (targets.has(n)) return true;
           if (!visited.has(n)) { visited.add(n); queue.push(n); }
         }
       }
@@ -59,14 +74,67 @@ const Tutorial = {
 
     depotConnected() {
       const depotCells = [
-        G.depotX + ',' + G.depotY,
-        (G.depotX - 1) + ',' + G.depotY,
-        G.depotX + ',' + (G.depotY - 1),
         (G.depotX - 1) + ',' + (G.depotY - 1),
+        G.depotX + ',' + (G.depotY - 1),
+        (G.depotX - 1) + ',' + G.depotY,
+        G.depotX + ',' + G.depotY,
       ];
       for (const cell of depotCells) {
         const deg = (G.connectionMap[cell] || []).length;
         if (deg > 0) return true;
+      }
+      return false;
+    },
+
+    stationHasTracks(sId) {
+      const plats = G.platforms.filter(p => p.stationId === sId);
+      for (const p of plats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) return true;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) return true;
+        }
+      }
+      return false;
+    },
+
+    stationInNetworkWithDepot(sId) {
+      const depotCells = [
+        (G.depotX - 1) + ',' + (G.depotY - 1),
+        G.depotX + ',' + (G.depotY - 1),
+        (G.depotX - 1) + ',' + G.depotY,
+        G.depotX + ',' + G.depotY,
+      ];
+      let depotStart = null;
+      for (const cell of depotCells) {
+        if ((G.connectionMap[cell] || []).length > 0) { depotStart = cell; break; }
+      }
+      if (!depotStart) return false;
+
+      const plats = G.platforms.filter(p => p.stationId === sId);
+      const targets = new Set();
+      for (const p of plats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) targets.add(key);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) targets.add(adj);
+        }
+      }
+      if (targets.size === 0) return false;
+
+      const visited = new Set();
+      const queue = [depotStart];
+      visited.add(depotStart);
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        if (targets.has(cur)) return true;
+        const neighbors = G.connectionMap[cur];
+        if (!neighbors) continue;
+        for (const n of neighbors) {
+          if (!visited.has(n)) { visited.add(n); queue.push(n); }
+        }
       }
       return false;
     },
