@@ -122,6 +122,49 @@ const Terrain = {
     }
   },
 
+  _fillDepressions(elev) {
+    const W = G.GRID_W, H = G.GRID_H;
+    const total = W * H;
+    const filled = new Float32Array(elev);
+    const inQueue = new Uint8Array(total);
+    const queue = [];
+
+    for (let x = 0; x < W; x++) {
+      queue.push(x); inQueue[x] = 1;
+      queue.push((H - 1) * W + x); inQueue[(H - 1) * W + x] = 1;
+    }
+    for (let y = 1; y < H - 1; y++) {
+      queue.push(y * W); inQueue[y * W] = 1;
+      queue.push(y * W + W - 1); inQueue[y * W + W - 1] = 1;
+    }
+
+    let qi = 0;
+    while (qi < queue.length) {
+      const idx = queue[qi++];
+      inQueue[idx] = 0;
+      const x = idx % W, y = Math.floor(idx / W);
+      const h = filled[idx];
+
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+          const nidx = ny * W + nx;
+          if (filled[nidx] < h) {
+            filled[nidx] = h;
+            if (!inQueue[nidx]) {
+              queue.push(nidx);
+              inQueue[nidx] = 1;
+            }
+          }
+        }
+      }
+    }
+
+    return filled;
+  },
+
   _generateTerrain(terrain, riverRatio, mountainRatio, seed) {
     const W = G.GRID_W;
     const H = G.GRID_H;
@@ -148,20 +191,20 @@ const Terrain = {
     }
 
     if (riverTarget > 0) {
-      for (let i = 0; i < total; i++) cells[i] = i;
+      const filled = this._fillDepressions(elev);
 
       const flow = new Float32Array(total);
       for (let i = 0; i < total; i++) flow[i] = 1;
 
       const sorted = new Uint32Array(total);
       for (let i = 0; i < total; i++) sorted[i] = i;
-      sorted.sort((a, b) => elev[b] - elev[a]);
+      sorted.sort((a, b) => filled[b] - filled[a]);
 
       for (let si = 0; si < total; si++) {
         const idx = sorted[si];
         const x = idx % W;
         const y = Math.floor(idx / W);
-        const h = elev[idx];
+        const h = filled[idx];
         let bestDrop = -Infinity;
         let bestNx = -1;
         let bestNy = -1;
@@ -171,7 +214,7 @@ const Terrain = {
             if (dx === 0 && dy === 0) continue;
             const nx = x + dx, ny = y + dy;
             if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
-            const nh = elev[ny * W + nx];
+            const nh = filled[ny * W + nx];
             if (nh >= h) continue;
             const drop = (h - nh) / (dx !== 0 && dy !== 0 ? 1.414 : 1);
             if (drop > bestDrop) {
