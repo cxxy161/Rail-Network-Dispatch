@@ -46,7 +46,6 @@ const Train = {
     train.dockedTimer = 0;
     train.passengers = {};
     train.lastDockedStationId = null;
-    train.trail = [];
     G.activeTrains.push(train);
     return true;
   },
@@ -68,7 +67,6 @@ const Train = {
         train.state = 'moving';
         train.t = 0;
         train.speed = 0;
-        train.trail = [];
       }
       return;
     }
@@ -157,32 +155,38 @@ const Train = {
 
     if (plat) {
       if (stationId !== train.lastDockedStationId) {
-        train.lastDockedStationId = stationId;
-        const alighted = Station.alightPassengers(train, stationId);
-        G.passengersDeliveredToday += alighted;
-        G.totalPassengersDelivered += alighted;
-
-        const capacity = this.maxLoad(train);
-        const currentLoad = Object.values(train.passengers).reduce((a, b) => a + b, 0);
-        const canBoard = capacity > currentLoad;
-        const queue = G.stationQueues[stationId] || {};
-        const hasMatch = Object.keys(queue).some(destId => queue[destId] > 0);
-
-        if (canBoard && hasMatch) {
-          train.fromKey = nodeKey;
-          train.toKey = nextKey || fromKey;
-      train.dockedTimer = train.carCount * 2.5;
-      train.t = 0;
-      train.speed = 0;
-      train.state = 'docked';
-      train.trail = [];
-          this.boardAtStation(train, nodeKey);
-        } else if (nextKey) {
+        const nextPlat = nextKey ? Station.platformAtKey(nextKey) : null;
+        if (nextPlat && nextPlat.stationId === stationId && nextKey) {
           train.fromKey = nodeKey;
           train.toKey = nextKey;
           train.t = 0;
         } else {
-          this.reverseTrain(train);
+          train.lastDockedStationId = stationId;
+          const alighted = Station.alightPassengers(train, stationId);
+          G.passengersDeliveredToday += alighted;
+          G.totalPassengersDelivered += alighted;
+
+          const capacity = this.maxLoad(train);
+          const currentLoad = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+          const canBoard = capacity > currentLoad;
+          const queue = G.stationQueues[stationId] || {};
+          const hasMatch = Object.keys(queue).some(destId => queue[destId] > 0);
+
+          if (canBoard && hasMatch) {
+            train.fromKey = nodeKey;
+            train.toKey = nextKey || fromKey;
+            train.dockedTimer = train.carCount * 2.5;
+            train.t = 0;
+            train.speed = 0;
+            train.state = 'docked';
+            this.boardAtStation(train, nodeKey);
+          } else if (nextKey) {
+            train.fromKey = nodeKey;
+            train.toKey = nextKey;
+            train.t = 0;
+          } else {
+            this.reverseTrain(train);
+          }
         }
       } else if (nextKey) {
         train.fromKey = nodeKey;
