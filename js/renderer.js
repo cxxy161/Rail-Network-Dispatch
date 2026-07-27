@@ -261,25 +261,27 @@ const Renderer = {
     ctx.lineCap = 'round';
 
     for (const key of Object.keys(G.activeSwitches)) {
-      const [x, y] = key.split(',').map(Number);
-      const cx = x * cs + cs / 2;
-      const cy = y * cs + cs / 2;
-
+      const [sx, sy] = key.split(',').map(Number);
+      const cx = sx * cs + cs / 2;
+      const cy = sy * cs + cs / 2;
+      const neighbors = Graph.getNeighbors(key);
       const dir = Graph.getSwitchExitDirection(key);
-      if (!dir) continue;
       const len = cs * 0.36;
 
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + dir.x * len, cy + dir.y * len);
-      ctx.stroke();
+      for (const nk of neighbors) {
+        const [nx, ny] = nk.split(',').map(Number);
+        const ndx = nx - sx, ndy = ny - sy;
 
-      const oppKey = Graph.key(x - dir.x, y - dir.y);
-      if (G.connectionMap[key] && G.connectionMap[key].includes(oppKey)) {
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx - dir.x * len, cy - dir.y * len);
-        ctx.stroke();
+        const oppKey = Graph.key(sx - ndx, sy - ndy);
+        const isThrough = neighbors.includes(oppKey);
+        const isSelected = dir && ndx === dir.x && ndy === dir.y;
+
+        if (isThrough || isSelected) {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + ndx * len, cy + ndy * len);
+          ctx.stroke();
+        }
       }
     }
   },
