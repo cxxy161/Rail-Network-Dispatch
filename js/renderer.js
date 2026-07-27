@@ -469,24 +469,45 @@ const Renderer = {
     const groups = Station.getStationGroups();
     for (const [sid, grp] of Object.entries(groups)) {
       if (!grp.bounds) continue;
-      const dests = G.stationQueues[sid];
-      if (!dests) continue;
+      const dests = G.stationQueues[sid] || {};
       const total = Object.values(dests).reduce((a, b) => a + b, 0);
       if (total <= 0) continue;
 
-      const cx = grp.cx * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const cy = grp.cy * G.CELL_SIZE + G.CELL_SIZE / 2;
+      const cx = (grp.bounds.minX + grp.bounds.maxX + 1) * G.CELL_SIZE / 2;
+      const cy = grp.bounds.minY * G.CELL_SIZE + G.CELL_SIZE / 2 - 10;
+
+      const blink = total >= 100 && Math.floor(Date.now() / 500) % 2 === 1;
+      if (blink) continue;
+
+      const color = total >= 50 ? '#E84A4A' : total >= 40 ? '#D09000' : '#333';
 
       ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
-      ctx.arc(cx, cy, G.CELL_SIZE * 0.25, 0, Math.PI * 2);
+      ctx.arc(cx, cy, G.CELL_SIZE * 0.22, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#333';
-      ctx.font = `bold ${G.CELL_SIZE * 0.35}px sans-serif`;
+      ctx.fillStyle = color;
+      ctx.font = `bold ${G.CELL_SIZE * 0.32}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(total + '', cx, cy + 1);
+
+      if (total >= 100) {
+        ctx.fillStyle = color;
+        ctx.font = `bold ${G.CELL_SIZE * 0.18}px sans-serif`;
+        ctx.fillText('⚠', cx, cy - G.CELL_SIZE * 0.3);
+      }
+
+      const platformCells = G.platforms.filter(p => p.stationId === sid).length;
+      const buffer = platformCells * 50;
+      if (total > buffer) {
+        const rate = total > buffer + 50 ? '1.0' : '0.5';
+        ctx.fillStyle = '#E84A4A';
+        ctx.font = `${G.CELL_SIZE * 0.16}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('−' + rate + '%/s', cx, cy - G.CELL_SIZE * 0.36);
+      }
     }
   },
 

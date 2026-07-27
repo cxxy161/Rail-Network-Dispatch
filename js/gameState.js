@@ -70,6 +70,9 @@ const G = {
   _passengerAccum: {},
   infoTarget: null,
   _dirty: false,
+  satisfaction: 100,
+  lowSatisfactionDays: 0,
+  totalGeneratedToday: 0,
 };
 
 function resetGame(opts) {
@@ -169,6 +172,9 @@ function saveGame() {
   };
   localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   G._dirty = false;
+  G.satisfaction = 100;
+  G.lowSatisfactionDays = 0;
+  G.totalGeneratedToday = 0;
 }
 
 function loadGame() {

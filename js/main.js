@@ -142,6 +142,20 @@ function updateOperate(dt) {
   const realDt = dt * G.speedMultiplier;
   G.dayTime -= realDt;
   Station.tickPassengers(realDt);
+
+  for (const st of G.stations) {
+    const queue = G.stationQueues[st.id] || {};
+    const total = Object.values(queue).reduce((a, b) => a + b, 0);
+    const platformCells = G.platforms.filter(p => p.stationId === st.id).length;
+    const buffer = platformCells * 50;
+    let deduct = 0;
+    if (total > buffer + 50) deduct = 1.0;
+    else if (total > buffer) deduct = 0.5;
+    if (deduct > 0) {
+      G.satisfaction = Math.max(0, G.satisfaction - deduct * realDt);
+    }
+  }
+
   if (G.dayTime <= 0) {
     G.dayTime = 0;
     endDay();

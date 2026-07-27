@@ -95,13 +95,14 @@ const Station = {
   generatePassengers() {},
 
   tickPassengers(dt) {
-    const RATE = 2.0;
+    const RATE = 1.0;
     for (const st of G.stations) {
       if (!this.stationHasTrackConnection(st.id)) continue;
       if (st.id in G._passengerAccum === false) G._passengerAccum[st.id] = 0;
-      G._passengerAccum[st.id] += RATE * dt;
+      G._passengerAccum[st.id] += RATE * (G.satisfaction / 100) * dt;
       while (G._passengerAccum[st.id] >= 1) {
         G._passengerAccum[st.id] -= 1;
+        G.totalGeneratedToday++;
         const others = G.stations.filter(s => s.id !== st.id && this.stationHasTrackConnection(s.id));
         if (others.length === 0) continue;
         const dest = others[Math.floor(Math.random() * others.length)];

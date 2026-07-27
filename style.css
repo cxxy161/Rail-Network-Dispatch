@@ -33,6 +33,33 @@ body {
 }
 #btn-settings:hover { color: #333; }
 
+.satisfaction-high { color: #50B86C !important; }
+.satisfaction-mid { color: #E8A840 !important; }
+.satisfaction-low { color: #E84A4A !important; }
+
+.satisfaction-alert {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  color: #E84A4A;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 60;
+  animation: satisfactionFloat 1.5s ease-out forwards;
+}
+@keyframes satisfactionFloat {
+  0% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -30px); }
+}
+
+.satisfaction-blink { animation: blink 0.5s infinite; }
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 #time-control {
   margin-left: auto;
   position: relative;

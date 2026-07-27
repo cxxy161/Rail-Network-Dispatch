@@ -116,6 +116,9 @@ const Ui = {
     document.getElementById('delivered-val').textContent = G.passengersDeliveredToday;
     document.getElementById('day-val').textContent = G.dayNumber;
     document.getElementById('sidebar-gold').textContent = G.gold;
+    document.getElementById('satisfaction-val').textContent = Math.round(G.satisfaction) + '%';
+    const sl = document.getElementById('satisfaction-label');
+    sl.className = G.satisfaction > 70 ? 'satisfaction-high' : G.satisfaction > 30 ? 'satisfaction-mid' : 'satisfaction-low';
 
     if (G.phase === 'operate') {
       const clk = dayTimeToClock();
@@ -219,6 +222,7 @@ const Ui = {
     G.speedMultiplier = 1;
     G._passengerAccum = {};
     G.stationQueues = {};
+    G.totalGeneratedToday = 0;
     this.updatePauseButton();
     this.updateSpeedButtons();
     this.updateTopBar();
@@ -236,11 +240,34 @@ const Ui = {
   nextCycle() {
     G.gold += G.passengersDeliveredToday * G.passengerPrice;
     G.gold -= G.maintenanceCost;
+
+    if (G.totalGeneratedToday > 0) {
+      const rate = G.passengersDeliveredToday / G.totalGeneratedToday;
+      if (rate > 0.8) G.satisfaction = Math.min(100, G.satisfaction + 10);
+      else if (rate > 0.5) G.satisfaction = Math.min(100, G.satisfaction + 5);
+    }
+    const allZero = G.stations.every(st => {
+      const q = G.stationQueues[st.id] || {};
+      return Object.values(q).reduce((a,b)=>a+b,0) === 0;
+    });
+    if (allZero) G.satisfaction = Math.min(100, G.satisfaction + 3);
+
+    if (G.satisfaction < 10) {
+      G.lowSatisfactionDays++;
+      if (G.lowSatisfactionDays >= 3) {
+        this.showGameOver('满意度过低，线路被废弃');
+        return;
+      }
+    } else {
+      G.lowSatisfactionDays = 0;
+    }
+
     G.passengersDeliveredToday = 0;
+    G.totalGeneratedToday = 0;
     G.stationQueues = {};
 
     if (G.gold < 0) {
-      this.showGameOver();
+      this.showGameOver('破产');
       return;
     }
 
@@ -265,9 +292,11 @@ const Ui = {
     this.updateTopBar();
   },
 
-  showGameOver() {
+  showGameOver(reason) {
     document.getElementById('gameover-total').textContent = G.totalPassengersDelivered;
     document.getElementById('gameover-days').textContent = G.dayNumber - 1;
+    const title = document.querySelector('#gameover-panel h2');
+    if (title) title.textContent = reason || '破产！';
     document.getElementById('gameover-panel').classList.remove('hidden');
     document.getElementById('settlement-panel').classList.add('hidden');
     document.getElementById('shop-panel').classList.add('hidden');
@@ -323,6 +352,14 @@ const Ui = {
 
   closeSettings() {
     document.getElementById('settings-overlay').classList.add('hidden');
+  },
+
+  showSatisfactionAlert(text) {
+    const el = document.createElement('div');
+    el.className = 'satisfaction-alert';
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
   },
 
   switchSettingsTab(tabId) {
