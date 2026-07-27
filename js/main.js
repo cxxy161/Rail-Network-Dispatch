@@ -48,6 +48,7 @@ function gameLoop(ts) {
 function update(dt) {
   Ui.updateTopBar();
   Ui.updateShopDisplay();
+  if (G.infoTarget) updateInfoPopup();
   if (G.phase === 'operate') updateOperate(dt);
 }
 

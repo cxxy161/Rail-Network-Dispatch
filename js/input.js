@@ -417,28 +417,19 @@ const Input = {
 
     const train = this.findTrainAt(clamped.x, clamped.y);
     if (train) {
-      const load = Object.values(train.passengers).reduce((a,b)=>a+b,0);
-      let html = `<b>列车 #${train.id}</b> (${train.carCount}节)<br>载客: ${load} / ${Train.maxLoad(train)}`;
-      for (const [dest, cnt] of Object.entries(train.passengers)) {
-        if (cnt > 0) html += `<br>&nbsp;&nbsp;→ ${dest}站: ${cnt}人`;
-      }
-      showPopup(e, html);
+      G.infoTarget = { type: 'train', id: train.id };
+      updateInfoPopup();
       return;
     }
 
     const plat = Station.getPlatformAdjacent(clamped.x, clamped.y) || Station.getPlatformAt(clamped.x, clamped.y);
     if (plat) {
-      const sid = plat.stationId;
-      const queue = G.stationQueues[sid] || {};
-      const total = Object.values(queue).reduce((a,b)=>a+b,0);
-      let html = `<b>${sid}站</b> 待乘: ${total}`;
-      for (const [dest, cnt] of Object.entries(queue)) {
-        if (cnt > 0) html += `<br>&nbsp;&nbsp;→ ${dest}站: ${cnt}人`;
-      }
-      showPopup(e, html);
+      G.infoTarget = { type: 'station', id: plat.stationId };
+      updateInfoPopup();
       return;
     }
 
+    G.infoTarget = null;
     hidePopup();
   },
 
@@ -579,6 +570,7 @@ function showPopup(e, html, interactive) {
 }
 
 function hidePopup() {
+  G.infoTarget = null;
   const el = document.getElementById('info-popup');
   el.classList.add('hidden');
   el.classList.remove('clickable');
@@ -597,4 +589,32 @@ function computeOptimalPath(sx, sy, ex, ey) {
   if (adx > ady) { ddx = sdx; } else if (ady > adx) { ddy = sdy; }
   for (let i = 0; i < straight; i++) { cx += ddx; cy += ddy; path.push({ x: cx, y: cy }); }
   return path;
+}
+
+function updateInfoPopup() {
+  if (!G.infoTarget) return;
+  const el = document.getElementById('info-popup');
+  let html = '';
+
+  if (G.infoTarget.type === 'train') {
+    const train = G.activeTrains.find(t => t.id === G.infoTarget.id);
+    if (!train) { hidePopup(); return; }
+    const load = Object.values(train.passengers).reduce((a,b)=>a+b,0);
+    html = `<b>列车 #${train.id}</b> (${train.carCount}节)<br>载客: ${load} / ${Train.maxLoad(train)}`;
+    for (const [dest, cnt] of Object.entries(train.passengers)) {
+      if (cnt > 0) html += `<br>&nbsp;&nbsp;→ ${dest}站: ${cnt}人`;
+    }
+  } else if (G.infoTarget.type === 'station') {
+    const sid = G.infoTarget.id;
+    const queue = G.stationQueues[sid] || {};
+    const total = Object.values(queue).reduce((a,b)=>a+b,0);
+    html = `<b>${sid}站</b> 待乘: ${total}`;
+    for (const [dest, cnt] of Object.entries(queue)) {
+      if (cnt > 0) html += `<br>&nbsp;&nbsp;→ ${dest}站: ${cnt}人`;
+    }
+  }
+
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+  el.classList.remove('clickable');
 }
