@@ -111,23 +111,39 @@ const Graph = {
     return null;
   },
 
+  getThroughPairs(key) {
+    const ns = this.getNeighbors(key);
+    const pairs = [];
+    const [sx, sy] = key.split(',').map(Number);
+    for (let i = 0; i < ns.length; i++) {
+      const [ax, ay] = ns[i].split(',').map(Number);
+      const adx = ax - sx, ady = ay - sy;
+      for (let j = i + 1; j < ns.length; j++) {
+        const [bx, by] = ns[j].split(',').map(Number);
+        const bdx = bx - sx, bdy = by - sy;
+        if (adx === -bdx && ady === -bdy) {
+          pairs.push([ns[i], ns[j]]);
+        }
+      }
+    }
+    return pairs;
+  },
+
   cycleSwitch(key) {
     const deg = this.getDegree(key);
     if (deg < 3) return;
     const old = G.activeSwitches[key] || 0;
     const ns = this.getNeighbors(key);
-    const [cx, cy] = key.split(',').map(Number);
-    const [ox, oy] = ns[old % deg].split(',').map(Number);
-    const odx = ox - cx, ody = oy - cy;
+    const pairs = this.getThroughPairs(key);
+    const skipSet = new Set();
+    for (const [a, b] of pairs) { skipSet.add(a); skipSet.add(b); }
+    const candidates = ns.filter((nk, i) => !skipSet.has(nk));
+    if (candidates.length <= 1) return;
 
-    for (let i = 1; i <= deg; i++) {
-      const attempt = (old + i) % deg;
-      const [tx, ty] = ns[attempt].split(',').map(Number);
-      const ndx = tx - cx, ndy = ty - cy;
-      if (ndx !== -odx || ndy !== -ody) {
-        G.activeSwitches[key] = attempt;
-        return;
-      }
-    }
+    const currentCandidate = ns[old % deg];
+    const curIdx = candidates.indexOf(currentCandidate);
+    const nextIdx = curIdx >= 0 ? (curIdx + 1) % candidates.length : 0;
+    const nextNeighbor = candidates[nextIdx];
+    G.activeSwitches[key] = ns.indexOf(nextNeighbor);
   },
 };

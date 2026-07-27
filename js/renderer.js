@@ -268,12 +268,15 @@ const Renderer = {
       const dir = Graph.getSwitchExitDirection(key);
       const len = cs * 0.36;
 
+      const pairs = Graph.getThroughPairs(key);
+      const throughSet = new Set();
+      for (const [a, b] of pairs) { throughSet.add(a); throughSet.add(b); }
+
       for (const nk of neighbors) {
         const [nx, ny] = nk.split(',').map(Number);
         const ndx = nx - sx, ndy = ny - sy;
-
+        const isThrough = throughSet.has(nk);
         const isSelected = dir && ndx === dir.x && ndy === dir.y;
-        const isThrough = dir && ndx === -dir.x && ndy === -dir.y;
 
         if (isThrough || isSelected) {
           ctx.beginPath();
