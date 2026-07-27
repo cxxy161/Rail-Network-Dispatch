@@ -126,11 +126,11 @@ const Terrain = {
     const W = G.GRID_W;
     const H = G.GRID_H;
     const scale = 0.0125;
-    const threshold = 0.95 - riverRatio * 0.2;
+    const threshold = 0.94 - riverRatio * 0.2;
 
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
-        const n = this._valueNoise(x * scale, y * scale, seed);
+        const n = this._fbm(x * scale, y * scale, seed, 2);
         const r = 1 - Math.abs(n - 0.5) * 2;
         if (r > threshold) {
           terrain[y * W + x] = TERRAIN.RIVER;
