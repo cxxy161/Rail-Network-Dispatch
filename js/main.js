@@ -10,14 +10,33 @@ function init() {
   const loaded = loadGame();
 
   Ui.init();
-  Ui.updateToolButtons();
 
-  if (loaded) {
-    G.phase = 'build';
+  document.getElementById('menu-continue').classList.toggle('hidden', !saveExists());
+
+  document.getElementById('menu-new-game').addEventListener('click', () => {
+    resetGame();
     Ui.startBuild();
-  } else {
+    Renderer.centerCamera();
+    MenuDecor.stop();
+    Ui.hideMenu();
+  });
+
+  document.getElementById('menu-continue').addEventListener('click', () => {
     Ui.startBuild();
-  }
+    Renderer.centerCamera();
+    MenuDecor.stop();
+    Ui.hideMenu();
+  });
+
+  document.getElementById('menu-tutorial').addEventListener('click', () => {
+    Ui.flashMessage('教程尚未开放');
+  });
+
+  document.getElementById('menu-settings').addEventListener('click', () => {
+    Ui.openSettings();
+  });
+
+  MenuDecor.init();
 
   Renderer.resize();
   Renderer.centerCamera();

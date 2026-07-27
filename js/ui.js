@@ -146,6 +146,12 @@ const Ui = {
     document.getElementById('overlay').classList.add('hidden');
   },
 
+  hideMenu() {
+    const menu = document.getElementById('main-menu');
+    menu.classList.add('fade-out');
+    setTimeout(() => menu.classList.add('hidden'), 400);
+  },
+
   startBuild() {
     G.phase = 'build';
     G.passengersDeliveredToday = 0;

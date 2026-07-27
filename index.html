@@ -8,6 +8,24 @@
 </head>
 <body>
 
+<div id="main-menu" class="menu-overlay">
+  <canvas id="menu-canvas"></canvas>
+  <div class="menu-content">
+    <div class="menu-title-box">
+      <div class="menu-title-en">mini-Rail</div>
+      <div class="menu-title-en">Network Dispatch</div>
+      <div class="menu-title-cn">铁路调度运营</div>
+    </div>
+    <div class="menu-buttons">
+      <button id="menu-new-game" class="menu-btn">&#x2023; 新 游 戏</button>
+      <button id="menu-continue" class="menu-btn hidden">继 续 游 戏</button>
+      <button id="menu-tutorial" class="menu-btn">教 程</button>
+      <button id="menu-settings" class="menu-btn">设 置</button>
+    </div>
+    <div class="menu-version">v0.1</div>
+  </div>
+</div>
+
 <div id="top-bar">
   <button id="btn-settings" title="设置">⚙</button>
   <span id="gold-label">资金: <strong id="gold-val">500</strong></span>
@@ -141,6 +159,7 @@
 </div>
 
 <script src="js/gameState.js"></script>
+<script src="js/menuDecor.js"></script>
 <script src="js/gridGraph.js"></script>
 <script src="js/station.js"></script>
 <script src="js/train.js"></script>
