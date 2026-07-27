@@ -277,9 +277,10 @@ const Renderer = {
         const isSelected = dir && ndx === dir.x && ndy === dir.y;
 
         if (isThrough || isSelected) {
+          const l = isThrough && !isSelected ? len * 0.5 : len;
           ctx.beginPath();
           ctx.moveTo(cx, cy);
-          ctx.lineTo(cx + ndx * len, cy + ndy * len);
+          ctx.lineTo(cx + ndx * l, cy + ndy * l);
           ctx.stroke();
         }
       }
