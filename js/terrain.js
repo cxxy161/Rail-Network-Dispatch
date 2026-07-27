@@ -103,6 +103,24 @@ const Terrain = {
     }
   },
 
+  _pruneIsolated(terrain, type) {
+    const copy = new Uint8Array(terrain);
+    const W = G.GRID_W;
+    const H = G.GRID_H;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const i = y * W + x;
+        if (copy[i] !== type) continue;
+        let n = 0;
+        if (y > 0 && copy[i - W] === type) n++;
+        if (y < H - 1 && copy[i + W] === type) n++;
+        if (x > 0 && copy[i - 1] === type) n++;
+        if (x < W - 1 && copy[i + 1] === type) n++;
+        if (n === 0) terrain[i] = TERRAIN.PLAIN;
+      }
+    }
+  },
+
   _getWarpedNoise(x, y, seed) {
     const noiseScale = 0.007;
     const warpScale = 0.005;
