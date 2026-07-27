@@ -115,7 +115,9 @@ const Input = {
 
       if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
           G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
-        this.showDepotBuildPopup(e);
+        if (Tutorial.gateAction('click_depot')) {
+          this.showDepotBuildPopup(e);
+        }
         return;
       }
 
@@ -123,10 +125,13 @@ const Input = {
       this.dragBatchPlats = [];
 
       if (G.selectedTool === 'track') {
+        if (!Tutorial.gateAction('drag_track')) return;
         this.trackDown(clamped.x, clamped.y);
       } else if (G.selectedTool === 'platform') {
+        if (!Tutorial.gateAction('drag_platform')) return;
         this.platformDown(clamped.x, clamped.y);
       } else if (G.selectedTool === 'eraser') {
+        if (!Tutorial.gateAction('drag_track')) return;
         G.eraserDragging = true;
         G.eraserLastGX = clamped.x;
         G.eraserLastGY = clamped.y;
@@ -388,40 +393,52 @@ const Input = {
 
     if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
         G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
-      this.showDepotPopup(e);
+      if (Tutorial.gateAction('click_depot')) {
+        this.showDepotPopup(e);
+      }
       return;
     }
 
     if (G.operateSubTool === 'stop') {
+      if (!Tutorial.gateAction('click_train')) return;
       const train = this.findTrainAt(clamped.x, clamped.y);
       if (train) {
         if (train.state === 'moving') {
           train.state = 'stopped';
+          Tutorial.flags.usedStop = true;
         } else if (train.state === 'stopped') {
           train.state = 'moving';
           train.speed = 0;
+          Tutorial.flags.usedStop = true;
         }
       }
       return;
     }
 
     if (G.operateSubTool === 'reverse') {
+      if (!Tutorial.gateAction('click_train')) return;
       const train = this.findTrainAt(clamped.x, clamped.y);
       if (train) {
         Train.reverseTrain(train);
+        Tutorial.flags.usedReverse = true;
       }
       return;
     }
 
     if (G.activeSwitches[key] !== undefined) {
-      Graph.cycleSwitch(key);
+      if (Tutorial.gateAction('click_switch')) {
+        Graph.cycleSwitch(key);
+        Tutorial.flags.switchToggled = true;
+      }
       return;
     }
 
     const train = this.findTrainAt(clamped.x, clamped.y);
     if (train) {
-      G.infoTarget = { type: 'train', id: train.id };
-      updateRightPanel();
+      if (Tutorial.gateAction('click_train')) {
+        G.infoTarget = { type: 'train', id: train.id };
+        updateRightPanel();
+      }
       return;
     }
 

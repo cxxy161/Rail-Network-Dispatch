@@ -248,6 +248,19 @@ const Ui = {
   },
 
   nextCycle() {
+    if (G.tutorialId) {
+      G.passengersDeliveredToday = 0;
+      G.totalGeneratedToday = 0;
+      G.stationQueues = {};
+      for (const st of G.stations) G.stationQueues[st.id] = {};
+      G.dayNumber++;
+      document.getElementById('settlement-panel').classList.add('hidden');
+      this.hideOverlay();
+      this.startBuild();
+      Renderer.centerCamera();
+      return;
+    }
+
     G.gold += G.passengersDeliveredToday * G.passengerPrice;
     G.gold -= G.maintenanceCost;
 

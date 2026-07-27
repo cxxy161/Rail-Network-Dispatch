@@ -74,6 +74,9 @@ const G = {
   lowSatisfactionDays: 0,
   totalGeneratedToday: 0,
   lastDeductHour: 6,
+
+  tutorialId: null,
+  tutorialStep: 0,
 };
 
 function resetGame(opts) {
@@ -108,6 +111,8 @@ function resetGame(opts) {
   G.operateSubTool = null;
   G._passengerAccum = {};
   G.infoTarget = null;
+  G.tutorialId = null;
+  G.tutorialStep = 0;
 
   const mapScale = opts.mapScale || 0.5;
   G.GRID_W = Math.floor(192 * mapScale);

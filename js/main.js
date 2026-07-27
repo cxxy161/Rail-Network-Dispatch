@@ -79,7 +79,8 @@ function init() {
   });
 
   document.getElementById('menu-tutorial').addEventListener('click', () => {
-    Ui.flashMessage('教程尚未开放');
+    Ui.hideMenu();
+    Tutorial.start();
   });
 
   document.getElementById('menu-settings').addEventListener('click', () => {
@@ -95,6 +96,16 @@ function init() {
   window.addEventListener('resize', () => {
     Renderer.resize();
     Renderer.centerCamera();
+  });
+
+  document.getElementById('tutorial-skip').addEventListener('click', () => {
+    Tutorial.skip();
+  });
+  document.getElementById('tc-menu').addEventListener('click', () => {
+    Tutorial.completeAction('menu');
+  });
+  document.getElementById('tc-freeplay').addEventListener('click', () => {
+    Tutorial.completeAction('freeplay');
   });
 
   lastTimestamp = performance.now();
@@ -134,6 +145,7 @@ function update(dt) {
   Ui.updateTopBar();
   Ui.updateShopDisplay();
   if (G.infoTarget) updateInfoPopup();
+  if (G.tutorialId) Tutorial.update();
   if (G.phase === 'operate') updateOperate(dt);
 }
 

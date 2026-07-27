@@ -143,6 +143,24 @@
 <div id="right-panel" class="hidden"></div>
 </div>
 
+<canvas id="tutorial-spotlight" class="hidden"></canvas>
+<div id="tutorial-bubble" class="hidden">
+  <div id="tutorial-text"></div>
+  <div id="tutorial-dots"></div>
+</div>
+<button id="tutorial-skip" class="hidden">跳过教程 →</button>
+
+<div id="tutorial-complete" class="hidden">
+  <div class="tc-panel">
+    <h2>教程完成！</h2>
+    <div id="tc-lines"></div>
+    <div class="tc-btns">
+      <button id="tc-menu" class="menu-btn">返回主菜单</button>
+      <button id="tc-freeplay" class="menu-btn">自由模式</button>
+    </div>
+  </div>
+</div>
+
 <div id="bottom-bar">
   <button id="tool-track" class="tool-btn build-only active">铺轨</button>
   <button id="tool-platform" class="tool-btn build-only">站台</button>
@@ -213,6 +231,8 @@
 <script src="js/renderer.js"></script>
 <script src="js/input.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/tutorial/tutorialData.js"></script>
+<script src="js/tutorial/tutorial.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

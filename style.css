@@ -506,4 +506,166 @@ body {
   font-weight: 300;
   letter-spacing: 0.2em;
   color: #B0ADA5;
-} 
+}
+
+#tutorial-spotlight {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 15;
+  pointer-events: none;
+}
+
+#tutorial-bubble {
+  position: fixed;
+  z-index: 18;
+  pointer-events: none;
+  max-width: 340px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 16px 20px 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.tut-bubble-enter {
+  animation: tutBubbleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tutBubbleIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#tutorial-bubble .tut-hl {
+  color: #D4830A;
+  font-weight: 600;
+}
+
+#tutorial-text { margin-bottom: 8px; }
+
+#tutorial-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.tdot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #D8D0C0;
+  display: inline-block;
+}
+.tdot.done    { background: #A0A090; }
+.tdot.current { background: #C8960C; box-shadow: 0 0 6px rgba(200,150,12,0.5); animation: tdotPulse 1.2s ease-in-out infinite; }
+
+@keyframes tdotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.35); opacity: 0.6; }
+}
+
+#tutorial-bubble.arrow-top::after,
+#tutorial-bubble.arrow-bottom::after,
+#tutorial-bubble.arrow-left::after,
+#tutorial-bubble.arrow-right::after {
+  content: '';
+  position: absolute;
+  width: 0; height: 0;
+}
+
+#tutorial-bubble.arrow-top::after {
+  top: -8px;
+  left: 50%;
+  margin-left: -8px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid rgba(255,255,255,0.94);
+}
+
+#tutorial-bubble.arrow-bottom::after {
+  bottom: -8px;
+  left: 50%;
+  margin-left: -8px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(255,255,255,0.94);
+}
+
+#tutorial-bubble.arrow-left::after {
+  left: -8px;
+  top: 50%;
+  margin-top: -8px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid rgba(255,255,255,0.94);
+}
+
+#tutorial-bubble.arrow-right::after {
+  right: -8px;
+  top: 50%;
+  margin-top: -8px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 8px solid rgba(255,255,255,0.94);
+}
+
+#tutorial-skip {
+  position: fixed;
+  top: 50px;
+  right: 16px;
+  z-index: 25;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  font-family: inherit;
+  transition: color 0.2s;
+}
+#tutorial-skip:hover { color: #FFF; }
+
+#tutorial-complete {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tc-panel {
+  background: #F5F0E8;
+  border-radius: 12px;
+  padding: 40px 48px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  animation: tutBubbleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tc-panel h2 {
+  font-size: 24px;
+  font-weight: 300;
+  color: #333;
+  letter-spacing: 0.15em;
+  margin-bottom: 20px;
+}
+#tc-lines {
+  font-size: 15px;
+  color: #555;
+  line-height: 2;
+  margin-bottom: 32px;
+}
+.tc-btns {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+.tc-btns .menu-btn {
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+}
