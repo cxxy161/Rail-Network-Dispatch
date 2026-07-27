@@ -17,7 +17,7 @@ const Ui = {
       this.updateOperateToolButtons();
     });
 
-    document.getElementById('time-dropdown-btn').addEventListener('click', (e) => {
+    document.getElementById('time-display').addEventListener('click', (e) => {
       e.stopPropagation();
       const dd = document.getElementById('time-dropdown');
       dd.classList.toggle('hidden');
@@ -123,7 +123,7 @@ const Ui = {
     if (G.phase === 'operate') {
       const clk = dayTimeToClock();
       document.getElementById('time-display').textContent =
-        '⏱ ' + String(clk.h).padStart(2, '0') + ':' + String(clk.m).padStart(2, '0') + ' ×' + G.speedMultiplier;
+        '⏱ ' + String(clk.h).padStart(2, '0') + ':' + String(clk.m).padStart(2, '0') + ' ×' + G.speedMultiplier + ' ▾';
     } else {
       document.getElementById('time-display').textContent = '⏱ --:--';
     }

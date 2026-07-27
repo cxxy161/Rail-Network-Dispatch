@@ -170,6 +170,7 @@ function endDay() {
   G.phase = 'settlement';
   for (const train of [...G.activeTrains]) {
     Train.recall(train);
+    train.trail = [];
   }
   Ui.showSettlement();
 }

@@ -51,9 +51,11 @@ body {
   gap: 4px;
   cursor: pointer;
 }
-#time-display { font-size: 16px; font-weight: bold; color: #333; }
-#time-dropdown-btn { background: none; border: none; font-size: 12px; cursor: pointer; color: #888; }
-#time-dropdown-btn:hover { color: #333; }
+#time-display {
+  font-size: 16px; font-weight: bold; color: #333;
+  cursor: pointer; padding: 2px 6px; user-select: none;
+}
+#time-display:hover { background: #EDE8E0; border-radius: 4px; }
 
 #time-dropdown {
   position: absolute;
