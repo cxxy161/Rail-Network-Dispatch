@@ -13,15 +13,15 @@ const G = {
   speedMultiplier: 1,
   dayNumber: 1,
 
-  gold: 500,
+  gold: 100,
   maintenanceCost: 30,
   passengerPrice: 2,
   passengersDeliveredToday: 0,
   totalPassengersDelivered: 0,
 
-  trackFragments: 30,
-  platformComponents: 5,
-  wagons: 4,
+  trackFragments: 50,
+  platformComponents: 4,
+  wagons: 2,
 
   shopPrices: {
     trackFragment: 10,
@@ -46,7 +46,7 @@ const G = {
   nextTrainId: 1,
 
   stationQueues: {},
-  edgeOccupancy: {},
+  cellOccupancy: {},
 
   selectedTool: 'track',
   mouseGridX: -1,
@@ -89,15 +89,15 @@ function resetGame(opts) {
   G.paused = false;
   G.speedMultiplier = 1;
   G.dayNumber = 1;
-  G.gold = 500;
+  G.gold = 100;
   G.passengersDeliveredToday = 0;
   G.totalPassengersDelivered = 0;
-  G.trackFragments = 30;
-  G.platformComponents = 5;
+  G.trackFragments = 50;
+  G.platformComponents = 4;
   G.wagons = 4;
   G.connectionMap = {};
   G.activeSwitches = {};
-  G.edgeOccupancy = {};
+  G.cellOccupancy = {};
   G.platforms = [];
   G.selectedTool = 'track';
   G.mouseGridX = -1;
@@ -167,7 +167,7 @@ function saveGame() {
   const data = {
     gold: G.gold, dayNumber: G.dayNumber, dayTime: G.dayTime,
     trackFragments: G.trackFragments, platformComponents: G.platformComponents, wagons: G.wagons,
-    connectionMap: G.connectionMap, activeSwitches: G.activeSwitches, edgeOccupancy: G.edgeOccupancy,
+    connectionMap: G.connectionMap, activeSwitches: G.activeSwitches, cellOccupancy: G.cellOccupancy,
     platforms: G.platforms, stationQueues: G.stationQueues,
     stations: G.stations, depotX: G.depotX, depotY: G.depotY, mapSeed: G.mapSeed,
     terrain: G.terrain ? Array.from(G.terrain) : null,
@@ -196,7 +196,7 @@ function loadGame() {
     G.wagons = data.wagons || 4;
     G.connectionMap = data.connectionMap || {};
     G.activeSwitches = data.activeSwitches || {};
-    G.edgeOccupancy = data.edgeOccupancy || {};
+    G.cellOccupancy = data.cellOccupancy || {};
     G.platforms = data.platforms || [];
     G.stationQueues = data.stationQueues || {};
     G.mapSeed = data.mapSeed || 0;

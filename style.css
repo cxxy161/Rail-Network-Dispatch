@@ -248,12 +248,14 @@ body {
   position: fixed;
   right: 12px;
   bottom: 52px;
-  background: rgba(40,40,40,0.92);
-  color: #FFF;
-  font-size: 12px;
+  background: #F5F0E8;
+  color: #555;
+  font-size: 13px;
   line-height: 18px;
-  padding: 10px 14px;
+  padding: 14px 16px;
   border-radius: 6px;
+  border: 1px solid #D8D0C0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
   z-index: 50;
   width: 20vw;
   max-width: 260px;
@@ -261,19 +263,80 @@ body {
   overflow-y: auto;
   pointer-events: auto;
 }
-#right-panel b { color: #E8734A; }
-#right-panel button {
-  background: none;
-  border: 1px solid #888;
-  border-radius: 3px;
-  color: #FFF;
-  cursor: pointer;
+.rp-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+.rp-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rp-row .rp-dot {
+  width: 8px;
+  height: 8px;
+  vertical-align: middle;
+  margin-right: 3px;
+}
+.rp-key-stat {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 2px;
+}
+.rp-key-stat strong {
+  color: #333;
+  font-weight: 600;
+}
+.rp-stat {
+  font-size: 12px;
+  color: #888;
+  margin-top: 3px;
+}
+.rp-section-title {
   font-size: 10px;
-  padding: 1px 6px;
+  color: #AAA;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+  margin-top: 2px;
+}
+.rp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+  padding: 2px 0;
+}
+.rp-row strong {
+  color: #333;
+  font-weight: 600;
+}
+.rp-divider {
+  border: none;
+  border-top: 1px solid #E0D8C8;
+  margin: 8px 0;
+}
+#right-panel button {
+  background: #F5F0E8;
+  border: 1px solid #D8D0C0;
+  border-radius: 4px;
+  color: #555;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 8px;
   margin: 1px 2px;
 }
-#right-panel button:hover { border-color: #E8734A; }
-#right-panel hr { border: none; border-top: 1px solid #555; margin: 4px 0; }
+#right-panel button:hover {
+  border-color: #999;
+  background: #EDE8DE;
+}
 
 .settings-panel {
   background: #FFF;

@@ -462,15 +462,22 @@ const Input = {
     const cw = gx * G.CELL_SIZE + G.CELL_SIZE / 2;
     const ch = gy * G.CELL_SIZE + G.CELL_SIZE / 2;
     for (const train of G.activeTrains) {
-      if (!train.fromKey || !train.toKey) continue;
-      const [x1, y1] = train.fromKey.split(',').map(Number);
-      const [x2, y2] = train.toKey.split(',').map(Number);
-      const wx1 = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const wy1 = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const wx2 = x2 * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const wy2 = y2 * G.CELL_SIZE + G.CELL_SIZE / 2;
-      const px = wx1 + (wx2 - wx1) * train.t;
-      const py = wy1 + (wy2 - wy1) * train.t;
+      if (!train.fromKey) continue;
+      let px, py;
+      if (train.toKey) {
+        const [x1, y1] = train.fromKey.split(',').map(Number);
+        const [x2, y2] = train.toKey.split(',').map(Number);
+        const wx1 = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const wy1 = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const wx2 = x2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const wy2 = y2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        px = wx1 + (wx2 - wx1) * train.t;
+        py = wy1 + (wy2 - wy1) * train.t;
+      } else {
+        const [x1, y1] = train.fromKey.split(',').map(Number);
+        px = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        py = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+      }
       if (Math.hypot(cw - px, ch - py) < G.CELL_SIZE) return train;
     }
     return null;
@@ -615,27 +622,53 @@ function hideRightPanel() {
 
 function updateInfoPopup() {
   if (!G.infoTarget) { hideRightPanel(); return; }
-  const el = document.getElementById('right-panel');
   let html = '';
 
   if (G.infoTarget.type === 'train') {
     const train = G.activeTrains.find(t => t.id === G.infoTarget.id);
     if (!train) { hideRightPanel(); return; }
-    const load = Object.values(train.passengers).reduce((a,b)=>a+b,0);
-    html = `<b>列车 #${train.id}</b> (${train.carCount}节)<br>载客: ${load} / ${Train.maxLoad(train)}`;
-    for (const [dest, cnt] of Object.entries(train.passengers)) {
-      if (cnt > 0) html += `<br>&nbsp;&nbsp;→ ${dest}站: ${cnt}人`;
+    const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+    const maxLoad = Train.maxLoad(train);
+
+    const status = train.docked ? '停靠中' : (train.speed > 0 ? `运行中 (${train.speed.toFixed(1)} 格/秒)` : '待发');
+
+    html += `<div class="rp-header">列车 #${train.id} (${train.carCount}节)</div>`;
+    html += `<div class="rp-key-stat">载客: <strong>${load} / ${maxLoad}</strong></div>`;
+    html += `<div class="rp-stat">状态: ${status}</div>`;
+
+    const dests = Object.entries(train.passengers).filter(([, cnt]) => cnt > 0);
+    if (dests.length > 0) {
+      html += '<hr class="rp-divider">';
+      html += '<div class="rp-section-title">目的地</div>';
+      for (const [dest, cnt] of dests) {
+        const st = Station.getStationById(dest);
+        const color = st ? st.color : '#999';
+        html += `<div class="rp-row"><span><span class="rp-dot" style="display:inline-block;background:${color}"></span> ${dest}站</span><strong>${cnt}人</strong></div>`;
+      }
     }
   } else if (G.infoTarget.type === 'station') {
     const sid = G.infoTarget.id;
+    const st = Station.getStationById(sid);
+    const color = st ? st.color : '#999';
     const queue = G.stationQueues[sid] || {};
-    const total = Object.values(queue).reduce((a,b)=>a+b,0);
-    html = `<b>${sid}站</b> 待乘: ${total}`;
-    for (const [dest, cnt] of Object.entries(queue)) {
-      if (cnt > 0) html += `<br>&nbsp;&nbsp;→ ${dest}站: ${cnt}人`;
+    const total = Object.values(queue).reduce((a, b) => a + b, 0);
+
+    html += `<div class="rp-header"><span class="rp-dot" style="background:${color}"></span> ${sid}站</div>`;
+    html += `<div class="rp-key-stat">待乘: <strong>${total} 人</strong></div>`;
+    if (st && st.flowLevel) html += `<div class="rp-stat">客流等级: ${st.flowLevel}</div>`;
+
+    const dests = Object.entries(queue).filter(([, cnt]) => cnt > 0);
+    if (dests.length > 0) {
+      html += '<hr class="rp-divider">';
+      html += '<div class="rp-section-title">目的地</div>';
+      for (const [dest, cnt] of dests) {
+        const dt = Station.getStationById(dest);
+        const dcolor = dt ? dt.color : '#999';
+        html += `<div class="rp-row"><span><span class="rp-dot" style="display:inline-block;background:${dcolor}"></span> ${dest}站</span><strong>${cnt}人</strong></div>`;
+      }
     }
   }
 
-  el.innerHTML = html;
-  el.classList.remove('hidden');
+  document.getElementById('right-panel').innerHTML = html;
+  document.getElementById('right-panel').classList.remove('hidden');
 }

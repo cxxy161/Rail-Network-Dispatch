@@ -9,21 +9,14 @@ const Train = {
     return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
   },
 
-  edgeKey(k1, k2) {
-    return k1 < k2 ? k1 + '|' + k2 : k2 + '|' + k1;
+  _occupyCell(train, key) {
+    if (G.cellOccupancy[key] && G.cellOccupancy[key] !== train.id) return false;
+    G.cellOccupancy[key] = train.id;
+    return true;
   },
 
-  _occupyNextEdge(train, k1, k2) {
-    const ek = this.edgeKey(k1, k2);
-    if (train.occupiedEdges.length > 0 && train.occupiedEdges[0] === ek) {
-      return;
-    }
-    G.edgeOccupancy[ek] = train.id;
-    train.occupiedEdges.unshift(ek);
-    while (train.occupiedEdges.length > train.carCount) {
-      const old = train.occupiedEdges.pop();
-      delete G.edgeOccupancy[old];
-    }
+  _releaseCell(train, key) {
+    if (G.cellOccupancy[key] === train.id) delete G.cellOccupancy[key];
   },
 
   maxLoad(train) {
@@ -47,8 +40,8 @@ const Train = {
       passengers: {},
       lastDockedStationId: null,
       trail: [],
-      occupiedEdges: [],
       nextDesiredKey: null,
+      prevKey: null,
     };
   },
 
@@ -57,17 +50,16 @@ const Train = {
     const neighbors = Graph.getNeighbors(depotKey);
     if (neighbors.length === 0) return false;
 
-    const firstEdge = this.edgeKey(depotKey, neighbors[0]);
-    if (G.edgeOccupancy[firstEdge]) {
+    const firstKey = neighbors[0];
+    this._occupyCell(train, depotKey);
+    if (!this._occupyCell(train, firstKey)) {
       train.fromKey = depotKey;
       train.toKey = null;
-      train.nextDesiredKey = neighbors[0];
+      train.nextDesiredKey = firstKey;
       train.state = 'waiting';
     } else {
-      G.edgeOccupancy[firstEdge] = train.id;
-      train.occupiedEdges = [firstEdge];
       train.fromKey = depotKey;
-      train.toKey = neighbors[0];
+      train.toKey = firstKey;
       train.state = 'moving';
       train.nextDesiredKey = null;
     }
@@ -81,10 +73,8 @@ const Train = {
   },
 
   recall(train) {
-    for (const ek of train.occupiedEdges) {
-      delete G.edgeOccupancy[ek];
-    }
-    train.occupiedEdges = [];
+    this._releaseCell(train, train.fromKey);
+    this._releaseCell(train, train.toKey);
     train.nextDesiredKey = null;
     const idx = G.activeTrains.indexOf(train);
     if (idx >= 0) {
@@ -99,28 +89,22 @@ const Train = {
       train.dockedTimer -= dt;
       if (train.dockedTimer <= 0) {
         train.dockedTimer = 0;
-        const nextEdge = this.edgeKey(train.fromKey, train.toKey);
-        if (G.edgeOccupancy[nextEdge] && G.edgeOccupancy[nextEdge] !== train.id) {
-          train.state = 'waiting';
+        if (!this._occupyCell(train, train.toKey)) {
           train.nextDesiredKey = train.toKey;
           train.toKey = null;
-          train.t = 0;
-          train.speed = 0;
+          train.state = 'waiting';
         } else {
-          this._occupyNextEdge(train, train.fromKey, train.toKey);
           train.state = 'moving';
-          train.t = 0;
-          train.speed = 0;
         }
+        train.t = 0;
+        train.speed = 0;
       }
       return;
     }
 
     if (train.state === 'waiting') {
       if (!train.nextDesiredKey) return;
-      const desiredEdge = this.edgeKey(train.fromKey, train.nextDesiredKey);
-      if (!G.edgeOccupancy[desiredEdge]) {
-        this._occupyNextEdge(train, train.fromKey, train.nextDesiredKey);
+      if (this._occupyCell(train, train.nextDesiredKey)) {
         train.toKey = train.nextDesiredKey;
         train.nextDesiredKey = null;
         train.t = 0;
@@ -137,6 +121,9 @@ const Train = {
     const travelLeft = (1 - train.t) * dist;
 
     let needStop = false;
+    if (G.cellOccupancy[train.toKey] && G.cellOccupancy[train.toKey] !== train.id) {
+      needStop = true;
+    }
     if (travelLeft < 2) {
       const nextKey = train.toKey;
       const exits = Graph.getNeighbors(nextKey).filter(nk => nk !== train.fromKey);
@@ -161,8 +148,7 @@ const Train = {
           if (!aheadExit) aheadExit = exits[0];
         }
         if (aheadExit) {
-          const aheadEdge = this.edgeKey(nextKey, aheadExit);
-          if (G.edgeOccupancy[aheadEdge] && G.edgeOccupancy[aheadEdge] !== train.id) {
+          if (G.cellOccupancy[aheadExit] && G.cellOccupancy[aheadExit] !== train.id) {
             needStop = true;
           }
         }
@@ -174,7 +160,12 @@ const Train = {
     if (!needStop || travelLeft > DECEL_START) {
       targetSpeed = this.SPEED;
     } else {
-      if (travelLeft <= DECEL_END) { this.arriveNode(train, train.toKey, train.fromKey); return; }
+      if (travelLeft <= DECEL_END) {
+        if (G.cellOccupancy[train.toKey] && G.cellOccupancy[train.toKey] !== train.id) {
+          train.speed = 0; return;
+        }
+        this.arriveNode(train, train.toKey, train.fromKey); return;
+      }
       const frac = (travelLeft - DECEL_END) / (DECEL_START - DECEL_END);
       targetSpeed = MIN_SPEED + frac * (this.SPEED - MIN_SPEED);
     }
@@ -187,6 +178,9 @@ const Train = {
     train.t += (train.speed * dt) / dist;
     if (train.t >= 1) {
       train.t = 1;
+      if (G.cellOccupancy[train.toKey] && G.cellOccupancy[train.toKey] !== train.id) {
+        train.speed = 0; return;
+      }
       this.arriveNode(train, train.toKey, train.fromKey);
     }
 
@@ -216,11 +210,10 @@ const Train = {
   },
 
   arriveNode(train, nodeKey, fromKey) {
+    this._releaseCell(train, fromKey);
+
     if (nodeKey === Graph.key(G.depotX, G.depotY)) {
-      for (const ek of train.occupiedEdges) {
-        delete G.edgeOccupancy[ek];
-      }
-      train.occupiedEdges = [];
+      this._releaseCell(train, nodeKey);
       train.nextDesiredKey = null;
       train.state = 'docked';
       train.dockedTimer = 3;
@@ -250,7 +243,7 @@ const Train = {
       if (stationId !== train.lastDockedStationId) {
         const nextPlat = nextKey ? Station.platformAtKey(nextKey) : null;
         if (nextPlat && nextPlat.stationId === stationId && nextKey) {
-          this._tryEnterNextEdge(train, nodeKey, nextKey);
+          this._tryEnterCell(train, nodeKey, nextKey, fromKey);
         } else {
           train.lastDockedStationId = stationId;
           const alighted = Station.alightPassengers(train, stationId);
@@ -264,7 +257,7 @@ const Train = {
           const hasMatch = Object.keys(queue).some(destId => queue[destId] > 0);
 
           if (canBoard && hasMatch) {
-            this._occupyNextEdge(train, nodeKey, nextKey || fromKey);
+            this._occupyCell(train, nextKey || fromKey);
             train.fromKey = nodeKey;
             train.toKey = nextKey || fromKey;
             train.dockedTimer = train.carCount * 2.5;
@@ -273,36 +266,35 @@ const Train = {
             train.state = 'docked';
             this.boardAtStation(train, nodeKey);
           } else if (nextKey) {
-            this._tryEnterNextEdge(train, nodeKey, nextKey);
+            this._tryEnterCell(train, nodeKey, nextKey, fromKey);
           } else {
             this.reverseTrain(train);
           }
         }
       } else if (nextKey) {
-        this._tryEnterNextEdge(train, nodeKey, nextKey);
+        this._tryEnterCell(train, nodeKey, nextKey, fromKey);
       } else {
         this.reverseTrain(train);
       }
     } else if (nextKey) {
-      this._tryEnterNextEdge(train, nodeKey, nextKey);
+      this._tryEnterCell(train, nodeKey, nextKey, fromKey);
     } else {
       train.lastDockedStationId = null;
       this.reverseTrain(train);
     }
   },
 
-  _tryEnterNextEdge(train, nodeKey, nextKey) {
-    const newEdge = this.edgeKey(nodeKey, nextKey);
-    if (G.edgeOccupancy[newEdge] && G.edgeOccupancy[newEdge] !== train.id) {
+  _tryEnterCell(train, nodeKey, nextKey, prevKey) {
+    if (!this._occupyCell(train, nextKey)) {
       train.state = 'waiting';
       train.fromKey = nodeKey;
       train.toKey = null;
       train.nextDesiredKey = nextKey;
+      train.prevKey = prevKey || null;
       train.t = 0;
       train.speed = 0;
       return false;
     }
-    this._occupyNextEdge(train, nodeKey, nextKey);
     train.state = 'moving';
     train.fromKey = nodeKey;
     train.toKey = nextKey;
@@ -312,14 +304,26 @@ const Train = {
 
   reverseTrain(train) {
     train.lastDockedStationId = null;
-    const tmp = train.fromKey;
+    train.trail = [];
+    if (train.toKey === null) {
+      if (!train.prevKey || !this._occupyCell(train, train.prevKey)) return;
+      train.toKey = train.prevKey;
+      train.nextDesiredKey = null;
+      train.prevKey = null;
+      train.t = 0;
+      train.speed = 0;
+      train.state = 'moving';
+      return;
+    }
+    const targetKey = train.fromKey;
     train.fromKey = train.toKey;
-    train.toKey = tmp;
+    train.toKey = targetKey;
     train.t = 0;
     train.speed = 0;
     train.state = 'moving';
-    train.trail = [];
-    train.occupiedEdges.reverse();
+    if (train.fromKey && train.toKey) {
+      this._occupyCell(train, train.toKey);
+    }
   },
 
   boardAtStation(train, nodeKey) {

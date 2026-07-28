@@ -482,13 +482,17 @@ const Renderer = {
 
   drawTrains(ctx) {
     for (const train of G.activeTrains) {
-      if (!train.fromKey || !train.toKey) continue;
+      if (!train.fromKey) continue;
 
       const carW = G.CELL_SIZE * 0.92;
       const carH = G.CELL_SIZE * 0.45;
       const gap = 4;
 
-      const trail = train.trail || [];
+      let trail = train.trail || [];
+      if (trail.length < 2) {
+        trail = this._waitingTrail(train);
+      }
+
       for (let c = 0; c < train.carCount; c++) {
         const targetDist = c * (carW + gap);
         const pos = this.trailPosAt(trail, targetDist);
@@ -528,6 +532,26 @@ const Renderer = {
         ctx.restore();
       }
     }
+  },
+
+  _waitingTrail(train) {
+    const [fx, fy] = train.fromKey.split(',').map(Number);
+    const cs = G.CELL_SIZE;
+    const hx = fx * cs + cs / 2;
+    const hy = fy * cs + cs / 2;
+    let angle = 0;
+    if (train.nextDesiredKey) {
+      const [nx, ny] = train.nextDesiredKey.split(',').map(Number);
+      angle = Math.atan2(ny - fy, nx - fx);
+    }
+    const head = { x: hx, y: hy, angle: angle };
+    const carLen = cs * 0.92 + 4;
+    const tail = {
+      x: hx - Math.cos(angle) * carLen * train.carCount,
+      y: hy - Math.sin(angle) * carLen * train.carCount,
+      angle: angle,
+    };
+    return [head, tail];
   },
 
   trailPosAt(trail, targetDist) {
