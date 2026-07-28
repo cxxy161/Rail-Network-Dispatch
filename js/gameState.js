@@ -46,6 +46,7 @@ const G = {
   nextTrainId: 1,
 
   stationQueues: {},
+  edgeOccupancy: {},
 
   selectedTool: 'track',
   mouseGridX: -1,
@@ -96,6 +97,7 @@ function resetGame(opts) {
   G.wagons = 4;
   G.connectionMap = {};
   G.activeSwitches = {};
+  G.edgeOccupancy = {};
   G.platforms = [];
   G.selectedTool = 'track';
   G.mouseGridX = -1;
@@ -165,7 +167,7 @@ function saveGame() {
   const data = {
     gold: G.gold, dayNumber: G.dayNumber, dayTime: G.dayTime,
     trackFragments: G.trackFragments, platformComponents: G.platformComponents, wagons: G.wagons,
-    connectionMap: G.connectionMap, activeSwitches: G.activeSwitches,
+    connectionMap: G.connectionMap, activeSwitches: G.activeSwitches, edgeOccupancy: G.edgeOccupancy,
     platforms: G.platforms, stationQueues: G.stationQueues,
     stations: G.stations, depotX: G.depotX, depotY: G.depotY, mapSeed: G.mapSeed,
     terrain: G.terrain ? Array.from(G.terrain) : null,
@@ -194,6 +196,7 @@ function loadGame() {
     G.wagons = data.wagons || 4;
     G.connectionMap = data.connectionMap || {};
     G.activeSwitches = data.activeSwitches || {};
+    G.edgeOccupancy = data.edgeOccupancy || {};
     G.platforms = data.platforms || [];
     G.stationQueues = data.stationQueues || {};
     G.mapSeed = data.mapSeed || 0;

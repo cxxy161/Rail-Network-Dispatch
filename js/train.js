@@ -9,6 +9,23 @@ const Train = {
     return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
   },
 
+  edgeKey(k1, k2) {
+    return k1 < k2 ? k1 + '|' + k2 : k2 + '|' + k1;
+  },
+
+  _occupyNextEdge(train, k1, k2) {
+    const ek = this.edgeKey(k1, k2);
+    if (train.occupiedEdges.length > 0 && train.occupiedEdges[0] === ek) {
+      return;
+    }
+    G.edgeOccupancy[ek] = train.id;
+    train.occupiedEdges.unshift(ek);
+    while (train.occupiedEdges.length > train.carCount) {
+      const old = train.occupiedEdges.pop();
+      delete G.edgeOccupancy[old];
+    }
+  },
+
   maxLoad(train) {
     return train.carCount * 20;
   },
@@ -30,6 +47,8 @@ const Train = {
       passengers: {},
       lastDockedStationId: null,
       trail: [],
+      occupiedEdges: [],
+      nextDesiredKey: null,
     };
   },
 
@@ -38,11 +57,22 @@ const Train = {
     const neighbors = Graph.getNeighbors(depotKey);
     if (neighbors.length === 0) return false;
 
-    train.fromKey = depotKey;
-    train.toKey = neighbors[0];
+    const firstEdge = this.edgeKey(depotKey, neighbors[0]);
+    if (G.edgeOccupancy[firstEdge]) {
+      train.fromKey = depotKey;
+      train.toKey = null;
+      train.nextDesiredKey = neighbors[0];
+      train.state = 'waiting';
+    } else {
+      G.edgeOccupancy[firstEdge] = train.id;
+      train.occupiedEdges = [firstEdge];
+      train.fromKey = depotKey;
+      train.toKey = neighbors[0];
+      train.state = 'moving';
+      train.nextDesiredKey = null;
+    }
     train.t = 0;
     train.speed = 0;
-    train.state = 'moving';
     train.dockedTimer = 0;
     train.passengers = {};
     train.lastDockedStationId = null;
@@ -51,6 +81,11 @@ const Train = {
   },
 
   recall(train) {
+    for (const ek of train.occupiedEdges) {
+      delete G.edgeOccupancy[ek];
+    }
+    train.occupiedEdges = [];
+    train.nextDesiredKey = null;
     const idx = G.activeTrains.indexOf(train);
     if (idx >= 0) {
       G.activeTrains.splice(idx, 1);
@@ -64,9 +99,34 @@ const Train = {
       train.dockedTimer -= dt;
       if (train.dockedTimer <= 0) {
         train.dockedTimer = 0;
-        train.state = 'moving';
+        const nextEdge = this.edgeKey(train.fromKey, train.toKey);
+        if (G.edgeOccupancy[nextEdge] && G.edgeOccupancy[nextEdge] !== train.id) {
+          train.state = 'waiting';
+          train.nextDesiredKey = train.toKey;
+          train.toKey = null;
+          train.t = 0;
+          train.speed = 0;
+        } else {
+          this._occupyNextEdge(train, train.fromKey, train.toKey);
+          train.state = 'moving';
+          train.t = 0;
+          train.speed = 0;
+        }
+      }
+      return;
+    }
+
+    if (train.state === 'waiting') {
+      if (!train.nextDesiredKey) return;
+      const desiredEdge = this.edgeKey(train.fromKey, train.nextDesiredKey);
+      if (!G.edgeOccupancy[desiredEdge]) {
+        this._occupyNextEdge(train, train.fromKey, train.nextDesiredKey);
+        train.toKey = train.nextDesiredKey;
+        train.nextDesiredKey = null;
         train.t = 0;
         train.speed = 0;
+        train.state = 'moving';
+        this.recordTrail(train);
       }
       return;
     }
@@ -90,6 +150,21 @@ const Train = {
             return np && np.stationId === plat.stationId;
           });
           if (!hasFurther) needStop = true;
+        }
+      }
+      if (!needStop) {
+        let aheadExit = null;
+        if (exits.length === 1) {
+          aheadExit = exits[0];
+        } else if (exits.length >= 2) {
+          aheadExit = Graph.getSwitchExit(nextKey, train.fromKey);
+          if (!aheadExit) aheadExit = exits[0];
+        }
+        if (aheadExit) {
+          const aheadEdge = this.edgeKey(nextKey, aheadExit);
+          if (G.edgeOccupancy[aheadEdge] && G.edgeOccupancy[aheadEdge] !== train.id) {
+            needStop = true;
+          }
         }
       }
     }
@@ -142,6 +217,11 @@ const Train = {
 
   arriveNode(train, nodeKey, fromKey) {
     if (nodeKey === Graph.key(G.depotX, G.depotY)) {
+      for (const ek of train.occupiedEdges) {
+        delete G.edgeOccupancy[ek];
+      }
+      train.occupiedEdges = [];
+      train.nextDesiredKey = null;
       train.state = 'docked';
       train.dockedTimer = 3;
       train.fromKey = nodeKey;
@@ -170,9 +250,7 @@ const Train = {
       if (stationId !== train.lastDockedStationId) {
         const nextPlat = nextKey ? Station.platformAtKey(nextKey) : null;
         if (nextPlat && nextPlat.stationId === stationId && nextKey) {
-          train.fromKey = nodeKey;
-          train.toKey = nextKey;
-          train.t = 0;
+          this._tryEnterNextEdge(train, nodeKey, nextKey);
         } else {
           train.lastDockedStationId = stationId;
           const alighted = Station.alightPassengers(train, stationId);
@@ -186,6 +264,7 @@ const Train = {
           const hasMatch = Object.keys(queue).some(destId => queue[destId] > 0);
 
           if (canBoard && hasMatch) {
+            this._occupyNextEdge(train, nodeKey, nextKey || fromKey);
             train.fromKey = nodeKey;
             train.toKey = nextKey || fromKey;
             train.dockedTimer = train.carCount * 2.5;
@@ -194,28 +273,41 @@ const Train = {
             train.state = 'docked';
             this.boardAtStation(train, nodeKey);
           } else if (nextKey) {
-            train.fromKey = nodeKey;
-            train.toKey = nextKey;
-            train.t = 0;
+            this._tryEnterNextEdge(train, nodeKey, nextKey);
           } else {
             this.reverseTrain(train);
           }
         }
       } else if (nextKey) {
-        train.fromKey = nodeKey;
-        train.toKey = nextKey;
-        train.t = 0;
+        this._tryEnterNextEdge(train, nodeKey, nextKey);
       } else {
         this.reverseTrain(train);
       }
     } else if (nextKey) {
-      train.fromKey = nodeKey;
-      train.toKey = nextKey;
-      train.t = 0;
+      this._tryEnterNextEdge(train, nodeKey, nextKey);
     } else {
       train.lastDockedStationId = null;
       this.reverseTrain(train);
     }
+  },
+
+  _tryEnterNextEdge(train, nodeKey, nextKey) {
+    const newEdge = this.edgeKey(nodeKey, nextKey);
+    if (G.edgeOccupancy[newEdge] && G.edgeOccupancy[newEdge] !== train.id) {
+      train.state = 'waiting';
+      train.fromKey = nodeKey;
+      train.toKey = null;
+      train.nextDesiredKey = nextKey;
+      train.t = 0;
+      train.speed = 0;
+      return false;
+    }
+    this._occupyNextEdge(train, nodeKey, nextKey);
+    train.state = 'moving';
+    train.fromKey = nodeKey;
+    train.toKey = nextKey;
+    train.t = 0;
+    return true;
   },
 
   reverseTrain(train) {
@@ -227,6 +319,7 @@ const Train = {
     train.speed = 0;
     train.state = 'moving';
     train.trail = [];
+    train.occupiedEdges.reverse();
   },
 
   boardAtStation(train, nodeKey) {
