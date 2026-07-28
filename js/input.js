@@ -314,18 +314,19 @@ const Input = {
 
   // ── Operate ──
   showDepotPopup(e) {
-    let html = '<b>车辆段</b>';
+    let html = '<div class="rp-header">🏭 车辆段</div>';
     if (G.depotTrains.length === 0) {
-      html += '<br>暂无停放列车';
+      html += '<div class="rp-stat">暂无停放列车</div>';
     } else {
+      html += `<div class="rp-key-stat">待发列车: <strong>${G.depotTrains.length}</strong></div>`;
+      html += '<hr class="rp-divider">';
       for (const train of G.depotTrains) {
-        html += `<br>列车 #${train.id} (${train.carCount}节) <span class="depot-dispatch-btn" data-id="${train.id}">[发车]</span>`;
+        html += `<div class="rp-row"><span>列车 #${train.id} · ${train.carCount}节</span><button class="rp-btn primary depot-dispatch-btn" data-id="${train.id}">发车</button></div>`;
       }
     }
     updateRightPanel(html);
     setTimeout(() => {
-      const btns = document.querySelectorAll('.depot-dispatch-btn');
-      btns.forEach(btn => {
+      for (const btn of document.querySelectorAll('.depot-dispatch-btn')) {
         btn.onclick = (ev) => {
           ev.stopPropagation();
           const tid = parseInt(btn.dataset.id);
@@ -342,24 +343,32 @@ const Input = {
             }
           }
         };
-      });
+      }
     }, 0);
   },
 
   showDepotBuildPopup(e) {
-    let body = `<b>车辆段</b><br>可用车厢: ${G.wagons}<hr>`;
-    body += `新编组: <button onclick="Input._depotChange(-1)">−</button> <span id="form-count">2</span> 节 <button onclick="Input._depotChange(1)">+</button>`;
-    body += ` <button onclick="Input._depotCreate()">创建</button><hr>`;
-    body += '现有列车:';
+    let html = '<div class="rp-header">🏭 车辆段</div>';
+    html += `<div class="rp-key-stat">可用车厢: <strong>${G.wagons}</strong> 节</div>`;
+    html += '<hr class="rp-divider">';
+    html += '<div class="rp-section-title">新编组</div>';
+    html += '<div class="rp-form-row">';
+    html += '<button class="rp-btn" onclick="Input._depotChange(-1)">−</button>';
+    html += '<span id="form-count">2</span>';
+    html += '<button class="rp-btn" onclick="Input._depotChange(1)">+</button>';
+    html += '<button class="rp-btn primary" onclick="Input._depotCreate()">创建</button>';
+    html += '</div>';
+    html += '<hr class="rp-divider">';
+    html += '<div class="rp-section-title">现有列车</div>';
     if (G.depotTrains.length === 0) {
-      body += '<br>暂无';
+      html += '<div class="rp-stat">暂无</div>';
     } else {
       for (const train of G.depotTrains) {
-        body += `<br>#${train.id} (${train.carCount}节) <button onclick="Input._depotDelete(${train.id})">删除</button>`;
+        html += `<div class="rp-row"><span>#${train.id} · ${train.carCount}节</span><button class="rp-btn danger" onclick="Input._depotDelete(${train.id})">删除</button></div>`;
       }
     }
     Input._depotFormCount = 2;
-    updateRightPanel(body);
+    updateRightPanel(html);
   },
 
   _depotChange(d) {

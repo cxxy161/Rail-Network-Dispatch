@@ -540,8 +540,9 @@ const Renderer = {
     const hx = fx * cs + cs / 2;
     const hy = fy * cs + cs / 2;
     let angle = 0;
-    if (train.nextDesiredKey) {
-      const [nx, ny] = train.nextDesiredKey.split(',').map(Number);
+    const dirKey = train.nextDesiredKey || train.toKey;
+    if (dirKey) {
+      const [nx, ny] = dirKey.split(',').map(Number);
       angle = Math.atan2(ny - fy, nx - fx);
     }
     const head = { x: hx, y: hy, angle: angle };

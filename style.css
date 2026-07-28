@@ -219,17 +219,6 @@ body {
 .panel strong { color: #333; }
 .panel hr { border: none; border-top: 1px solid #EEE; margin: 8px 0; }
 
-.depot-train-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-  font-size: 13px;
-  border-bottom: 1px solid #EEE;
-  cursor: pointer;
-}
-.depot-train-item span { color: #555; }
-
 .back-btn {
   display: block;
   margin-top: 8px;
@@ -323,6 +312,28 @@ body {
   border-top: 1px solid #E0D8C8;
   margin: 8px 0;
 }
+.rp-btn {
+  font-size: 11px;
+  padding: 2px 10px;
+  border: 1px solid #D8D0C0;
+  border-radius: 4px;
+  background: #F5F0E8;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rp-btn:hover { border-color: #999; background: #EDE8DE; }
+.rp-btn.primary { background: #E8734A; color: #FFF; border-color: #E8734A; }
+.rp-btn.primary:hover { background: #D06040; }
+.rp-btn.danger { color: #E84A4A; border-color: #E84A4A; }
+.rp-btn.danger:hover { background: #FFF0F0; }
+.rp-form-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+.rp-form-row span { min-width: 24px; text-align: center; font-size: 14px; color: #333; }
 #right-panel button {
   background: #F5F0E8;
   border: 1px solid #D8D0C0;
