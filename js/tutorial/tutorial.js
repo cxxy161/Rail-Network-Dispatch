@@ -245,7 +245,11 @@ const Tutorial = {
     G.lastDeductHour = 6;
     G.connectionMap = {};
     G.activeSwitches = {};
+    G._switchMeta = {};
+    G._graphCachesDirty = true;
     G.platforms = [];
+    G._stationGroupsCache = null;
+    G._stationGroupsDirty = true;
     G.depotTrains = [];
     G.activeTrains = [];
     G.nextTrainId = 1;
@@ -279,6 +283,7 @@ const Tutorial = {
       if (!G.connectionMap[k1].includes(k2)) G.connectionMap[k1].push(k2);
       if (!G.connectionMap[k2].includes(k1)) G.connectionMap[k2].push(k1);
     }
+    G._graphCachesDirty = true;
   },
 
   _showUI() {

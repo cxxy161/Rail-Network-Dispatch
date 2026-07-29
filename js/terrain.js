@@ -319,9 +319,13 @@ const Terrain = {
     G.depotY = dp.y;
 
     G.platforms = [];
+    G._stationGroupsCache = null;
+    G._stationGroupsDirty = true;
     G.stationQueues = {};
     G.connectionMap = {};
     G.activeSwitches = {};
+    G._switchMeta = {};
+    G._graphCachesDirty = true;
     G.activeTrains = [];
     G.depotTrains = [{ id: 1, carCount: 2, passengers: {} }];
     G.nextTrainId = 2;

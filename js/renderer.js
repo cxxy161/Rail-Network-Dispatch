@@ -251,43 +251,35 @@ const Renderer = {
   },
 
   drawTracks(ctx) {
+    Graph.ensureCaches();
+    const edges = G._edgeRenderCache;
+    if (!edges || edges.length === 0) return;
+
     ctx.strokeStyle = '#555555';
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
-
-    const drawn = new Set();
     const cs = G.CELL_SIZE;
 
-    for (const [key, neighbors] of Object.entries(G.connectionMap)) {
-      const [x1, y1] = key.split(',').map(Number);
-      for (const nKey of neighbors) {
-        const pairKey = key < nKey ? key + '|' + nKey : nKey + '|' + key;
-        if (drawn.has(pairKey)) continue;
-        drawn.add(pairKey);
-        const [x2, y2] = nKey.split(',').map(Number);
+    ctx.beginPath();
+    for (const e of edges) {
+      let ax = e.x1 * cs + cs / 2, ay = e.y1 * cs + cs / 2;
+      let bx = e.x2 * cs + cs / 2, by = e.y2 * cs + cs / 2;
 
-        let ax = x1 * cs + cs / 2, ay = y1 * cs + cs / 2;
-        let bx = x2 * cs + cs / 2, by = y2 * cs + cs / 2;
-
-        if (G.activeSwitches[key] !== undefined) {
-          const gap = cs * 0.33;
-          const d = Math.hypot(bx - ax, by - ay);
-          ax += (bx - ax) / d * gap;
-          ay += (by - ay) / d * gap;
-        }
-        if (G.activeSwitches[nKey] !== undefined) {
-          const gap = cs * 0.33;
-          const d = Math.hypot(ax - bx, ay - by);
-          bx += (ax - bx) / d * gap;
-          by += (ay - by) / d * gap;
-        }
-
-        ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(bx, by);
-        ctx.stroke();
+      if (e.hasS1) {
+        const gap = cs * 0.33;
+        const d = Math.hypot(bx - ax, by - ay);
+        if (d > 0.001) { ax += (bx - ax) / d * gap; ay += (by - ay) / d * gap; }
       }
+      if (e.hasS2) {
+        const gap = cs * 0.33;
+        const d = Math.hypot(ax - bx, ay - by);
+        if (d > 0.001) { bx += (ax - bx) / d * gap; by += (ay - by) / d * gap; }
+      }
+
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
     }
+    ctx.stroke();
 
     if (G.selectedItem && G.selectedItem.type === 'edge') {
       const [x1, y1] = G.selectedItem.k1.split(',').map(Number);
@@ -391,6 +383,7 @@ const Renderer = {
   },
 
   drawSwitchConnections(ctx) {
+    Graph.ensureCaches();
     const cs = G.CELL_SIZE;
     ctx.strokeStyle = '#555555';
     ctx.lineWidth = 4;
@@ -400,36 +393,17 @@ const Renderer = {
       const [sx, sy] = key.split(',').map(Number);
       const cx = sx * cs + cs / 2;
       const cy = sy * cs + cs / 2;
-      const neighbors = Graph.getNeighbors(key);
       const dir = Graph.getSwitchExitDirection(key);
       const len = cs * 0.36;
-      const pairs = Graph.getThroughPairs(key);
-      const fixedSet = new Set();
 
-      if (pairs.length > 0) {
-        for (const [a, b] of pairs) {
-          const [ax, ay] = a.split(',').map(Number);
-          const [bx, by] = b.split(',').map(Number);
-          const adx = ax - sx, ady = ay - sy;
-          const bdx = bx - sx, bdy = by - sy;
-          const cntA = Graph.countBranchesNear(key, adx, ady, b);
-          const cntB = Graph.countBranchesNear(key, bdx, bdy, a);
-          const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
-          if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
-        }
-      } else {
-        const mp = Graph.findMinAnglePair(key);
-        if (mp) {
-          for (const nk of neighbors) {
-            if (nk !== mp[0] && nk !== mp[1]) fixedSet.add(nk);
-          }
-        }
-      }
+      const meta = G._switchMeta[key];
+      if (!meta) continue;
+      const neighbors = Graph.getNeighbors(key);
 
       for (const nk of neighbors) {
         const [nx, ny] = nk.split(',').map(Number);
         const ndx = nx - sx, ndy = ny - sy;
-        const isFixed = fixedSet.has(nk);
+        const isFixed = meta.fixedSet.has(nk);
         const isSelected = dir && ndx === dir.x && ndy === dir.y;
 
         if (isFixed || isSelected) {

@@ -51,11 +51,13 @@ const Input = {
     }
     if (action.type === 'add_platform') {
       G.platforms.pop();
+      G._stationGroupsDirty = true;
       G.platformComponents++;
       return true;
     }
     if (action.type === 'remove_platform') {
       G.platforms.push(action.platform);
+      G._stationGroupsDirty = true;
       G.platformComponents--;
       return true;
     }
@@ -64,6 +66,7 @@ const Input = {
         G.platforms.push(item.platform);
         G.platformComponents--;
       }
+      G._stationGroupsDirty = true;
       return true;
     }
     if (action.type === 'batch') {
@@ -84,9 +87,11 @@ const Input = {
       G.trackFragments--;
     } else if (item.type === 'add_platform') {
       G.platforms.pop();
+      G._stationGroupsDirty = true;
       G.platformComponents++;
     } else if (item.type === 'remove_platform') {
       G.platforms.push(item.platform);
+      G._stationGroupsDirty = true;
       G.platformComponents--;
     }
   },

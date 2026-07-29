@@ -98,6 +98,19 @@ function init() {
     Renderer.centerCamera();
   });
 
+  let _wasPausedBeforeHidden = false;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      _wasPausedBeforeHidden = G.paused;
+      G.paused = true;
+    } else {
+      if (!_wasPausedBeforeHidden) {
+        G.paused = false;
+      }
+      lastTimestamp = performance.now();
+    }
+  });
+
   document.getElementById('tutorial-skip').addEventListener('click', () => {
     Tutorial.skip();
   });

@@ -75,6 +75,11 @@ const G = {
   lowSatisfactionDays: 0,
   totalGeneratedToday: 0,
   lastDeductHour: 6,
+  _stationGroupsCache: null,
+  _stationGroupsDirty: true,
+  _edgeRenderCache: null,
+  _graphCachesDirty: true,
+  _switchMeta: {},
 
   tutorialId: null,
   tutorialStep: 0,
@@ -96,6 +101,8 @@ function resetGame(opts) {
   G.platformComponents = 4;
   G.wagons = 4;
   G.connectionMap = {};
+  G._switchMeta = {};
+  G._graphCachesDirty = true;
   G.activeSwitches = {};
   G.cellOccupancy = {};
   G.platforms = [];
@@ -115,6 +122,8 @@ function resetGame(opts) {
   G.infoTarget = null;
   G.tutorialId = null;
   G.tutorialStep = 0;
+  G._stationGroupsCache = null;
+  G._stationGroupsDirty = true;
 
   const mapScale = opts.mapScale || 0.5;
   G.GRID_W = Math.floor(192 * mapScale);
@@ -246,6 +255,10 @@ function loadGame() {
     G.mouseGridX = -1; G.mouseGridY = -1;
     G.lowSatisfactionDays = 0;
     G.lastDeductHour = 6;
+    G._stationGroupsCache = null;
+    G._stationGroupsDirty = true;
+    G._graphCachesDirty = true;
+    G._switchMeta = {};
     return true;
   } catch (e) { return false; }
 }

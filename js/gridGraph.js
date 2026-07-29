@@ -12,6 +12,7 @@ const Graph = {
     G.connectionMap[k2].push(k1);
     this.updateSwitches(k1);
     this.updateSwitches(k2);
+    G._graphCachesDirty = true;
     return true;
   },
 
@@ -21,6 +22,7 @@ const Graph = {
     G.connectionMap[k2] = G.connectionMap[k2].filter(k => k !== k1);
     this.updateSwitches(k1);
     this.updateSwitches(k2);
+    G._graphCachesDirty = true;
   },
 
   hasEdge(k1, k2) {
@@ -45,6 +47,7 @@ const Graph = {
     }
     delete G.connectionMap[key];
     delete G.activeSwitches[key];
+    G._graphCachesDirty = true;
   },
 
   updateSwitches(key) {
@@ -189,39 +192,68 @@ const Graph = {
   cycleSwitch(key) {
     const deg = this.getDegree(key);
     if (deg < 3) return;
+    this.ensureCaches();
+    const meta = G._switchMeta[key];
+    if (!meta || meta.candidates.length === 0) return;
     const old = G.activeSwitches[key] || 0;
     const ns = this.getNeighbors(key);
-    const [sx, sy] = key.split(',').map(Number);
-    const pairs = this.getThroughPairs(key);
-    const fixedSet = new Set();
+    const currentCandidate = ns[old % deg];
+    let curIdx = meta.candidates.indexOf(currentCandidate);
+    if (curIdx < 0) curIdx = 0;
+    const nextIdx = (curIdx + 1) % meta.candidates.length;
+    G.activeSwitches[key] = ns.indexOf(meta.candidates[nextIdx]);
+  },
 
-    if (pairs.length > 0) {
-      for (const [a, b] of pairs) {
-        const [ax, ay] = a.split(',').map(Number);
-        const [bx, by] = b.split(',').map(Number);
-        const adx = ax - sx, ady = ay - sy;
-        const bdx = bx - sx, bdy = by - sy;
-        const cntA = this.countBranchesNear(key, adx, ady, b);
-        const cntB = this.countBranchesNear(key, bdx, bdy, a);
-        const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
-        if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
-      }
-    } else {
-      const mp = this.findMinAnglePair(key);
-      if (mp) {
-        for (const nk of ns) {
-          if (nk !== mp[0] && nk !== mp[1]) fixedSet.add(nk);
-        }
+  ensureCaches() {
+    if (!G._graphCachesDirty) return;
+    G._graphCachesDirty = false;
+
+    const cs = G.CELL_SIZE;
+    const edges = [];
+    const drawn = new Set();
+
+    for (const [key, neighbors] of Object.entries(G.connectionMap)) {
+      for (const nKey of neighbors) {
+        const pairKey = key < nKey ? key + '|' + nKey : nKey + '|' + key;
+        if (drawn.has(pairKey)) continue;
+        drawn.add(pairKey);
+        const [x1, y1] = key.split(',').map(Number);
+        const [x2, y2] = nKey.split(',').map(Number);
+        edges.push({ x1, y1, x2, y2, hasS1: G.activeSwitches[key] !== undefined, hasS2: G.activeSwitches[nKey] !== undefined });
       }
     }
 
-    const candidates = ns.filter((nk, i) => !fixedSet.has(nk));
-    if (candidates.length === 0) return;
+    G._switchMeta = {};
+    for (const key of Object.keys(G.activeSwitches)) {
+      const [sx, sy] = key.split(',').map(Number);
+      const ns = this.getNeighbors(key);
+      const pairs = this.getThroughPairs(key);
+      const fixedSet = new Set();
 
-    const currentCandidate = ns[old % deg];
-    let curIdx = candidates.indexOf(currentCandidate);
-    if (curIdx < 0) curIdx = 0;
-    const nextIdx = (curIdx + 1) % candidates.length;
-    G.activeSwitches[key] = ns.indexOf(candidates[nextIdx]);
+      if (pairs.length > 0) {
+        for (const [a, b] of pairs) {
+          const [ax, ay] = a.split(',').map(Number);
+          const [bx, by] = b.split(',').map(Number);
+          const adx = ax - sx, ady = ay - sy;
+          const bdx = bx - sx, bdy = by - sy;
+          const cntA = this.countBranchesNear(key, adx, ady, b);
+          const cntB = this.countBranchesNear(key, bdx, bdy, a);
+          const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
+          if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
+        }
+      } else {
+        const mp = this.findMinAnglePair(key);
+        if (mp) {
+          for (const nk of ns) {
+            if (nk !== mp[0] && nk !== mp[1]) fixedSet.add(nk);
+          }
+        }
+      }
+
+      const candidates = ns.filter(nk => !fixedSet.has(nk));
+      G._switchMeta[key] = { pairs, fixedSet, candidates };
+    }
+
+    G._edgeRenderCache = edges;
   },
 };

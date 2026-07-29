@@ -35,6 +35,7 @@ const Station = {
     if (G.platformComponents <= 0) return 'err_no_comp';
 
     G.platforms.push({ x: gx, y: gy, dir: dir, stationId: station.id });
+    G._stationGroupsDirty = true;
     G.platformComponents--;
     return { type: 'add_platform', x: gx, y: gy, dir: dir, stationId: station.id };
   },
@@ -43,6 +44,7 @@ const Station = {
     const idx = G.platforms.findIndex(p => p.x === gx && p.y === gy);
     if (idx < 0) return null;
     const removed = G.platforms.splice(idx, 1)[0];
+    G._stationGroupsDirty = true;
     G.platformComponents++;
     return removed;
   },
@@ -69,6 +71,8 @@ const Station = {
   },
 
   getStationGroups() {
+    if (!G._stationGroupsDirty && G._stationGroupsCache) return G._stationGroupsCache;
+    G._stationGroupsDirty = false;
     const groups = {};
     for (const plat of G.platforms) {
       if (!groups[plat.stationId]) {
@@ -89,6 +93,7 @@ const Station = {
       grp.cx = (grp.bounds.minX + grp.bounds.maxX) / 2;
       grp.cy = (grp.bounds.minY + grp.bounds.maxY) / 2;
     }
+    G._stationGroupsCache = groups;
     return groups;
   },
 
