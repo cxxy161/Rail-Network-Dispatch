@@ -9,9 +9,18 @@ const Train = {
     return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
   },
 
-  _occupyCell(train, key) {
+  _advanceOccupied(train, key) {
     if (G.cellOccupancy[key] && G.cellOccupancy[key] !== train.id) return false;
     G.cellOccupancy[key] = train.id;
+    if (!train.occupiedCells) train.occupiedCells = [];
+    if (train.occupiedCells[0] !== key) {
+      train.occupiedCells.unshift(key);
+      const limit = train.carCount + 1;
+      while (train.occupiedCells.length > limit) {
+        const old = train.occupiedCells.pop();
+        this._releaseCell(train, old);
+      }
+    }
     return true;
   },
 
@@ -40,6 +49,8 @@ const Train = {
       passengers: {},
       lastDockedStationId: null,
       trail: [],
+      occupiedCells: [],
+      reversed: false,
       nextDesiredKey: null,
       prevKey: null,
     };
@@ -51,8 +62,8 @@ const Train = {
     if (neighbors.length === 0) return false;
 
     const firstKey = neighbors[0];
-    this._occupyCell(train, depotKey);
-    if (!this._occupyCell(train, firstKey)) {
+    this._advanceOccupied(train, depotKey);
+    if (!this._advanceOccupied(train, firstKey)) {
       train.fromKey = depotKey;
       train.toKey = null;
       train.nextDesiredKey = firstKey;
@@ -73,8 +84,10 @@ const Train = {
   },
 
   recall(train) {
-    this._releaseCell(train, train.fromKey);
-    this._releaseCell(train, train.toKey);
+    for (const cell of (train.occupiedCells || [])) {
+      this._releaseCell(train, cell);
+    }
+    train.occupiedCells = [];
     train.nextDesiredKey = null;
     const idx = G.activeTrains.indexOf(train);
     if (idx >= 0) {
@@ -89,7 +102,7 @@ const Train = {
       train.dockedTimer -= dt;
       if (train.dockedTimer <= 0) {
         train.dockedTimer = 0;
-        if (!this._occupyCell(train, train.toKey)) {
+        if (!this._advanceOccupied(train, train.toKey)) {
           train.nextDesiredKey = train.toKey;
           train.toKey = null;
           train.state = 'waiting';
@@ -104,7 +117,7 @@ const Train = {
 
     if (train.state === 'waiting') {
       if (!train.nextDesiredKey) return;
-      if (this._occupyCell(train, train.nextDesiredKey)) {
+      if (this._advanceOccupied(train, train.nextDesiredKey)) {
         train.toKey = train.nextDesiredKey;
         train.nextDesiredKey = null;
         train.t = 0;
@@ -210,10 +223,11 @@ const Train = {
   },
 
   arriveNode(train, nodeKey, fromKey) {
-    this._releaseCell(train, fromKey);
-
     if (nodeKey === Graph.key(G.depotX, G.depotY)) {
-      this._releaseCell(train, nodeKey);
+      for (const cell of (train.occupiedCells || [])) {
+        this._releaseCell(train, cell);
+      }
+      train.occupiedCells = [];
       train.nextDesiredKey = null;
       train.state = 'docked';
       train.dockedTimer = 3;
@@ -257,7 +271,7 @@ const Train = {
           const hasMatch = Object.keys(queue).some(destId => queue[destId] > 0);
 
           if (canBoard && hasMatch) {
-            this._occupyCell(train, nextKey || fromKey);
+            this._advanceOccupied(train, nextKey || fromKey);
             train.fromKey = nodeKey;
             train.toKey = nextKey || fromKey;
             train.dockedTimer = train.carCount * 2.5;
@@ -285,7 +299,11 @@ const Train = {
   },
 
   _tryEnterCell(train, nodeKey, nextKey, prevKey) {
-    if (!this._occupyCell(train, nextKey)) {
+    if (!this._advanceOccupied(train, nextKey)) {
+      if (train.occupiedCells.length > 0) {
+        const old = train.occupiedCells.pop();
+        this._releaseCell(train, old);
+      }
       train.state = 'waiting';
       train.fromKey = nodeKey;
       train.toKey = null;
@@ -304,9 +322,15 @@ const Train = {
 
   reverseTrain(train) {
     train.lastDockedStationId = null;
-    train.trail = [];
+    const tr = train.trail || [];
+    for (let i = 0; i < tr.length; i++) {
+      tr[i].angle += Math.PI;
+      if (tr[i].angle > Math.PI) tr[i].angle -= 2 * Math.PI;
+      if (tr[i].angle < -Math.PI) tr[i].angle += 2 * Math.PI;
+    }
+    train.reversed = !train.reversed;
     if (train.toKey === null) {
-      if (!train.prevKey || !this._occupyCell(train, train.prevKey)) return;
+      if (!train.prevKey || !this._advanceOccupied(train, train.prevKey)) return;
       train.toKey = train.prevKey;
       train.nextDesiredKey = null;
       train.prevKey = null;
@@ -318,12 +342,10 @@ const Train = {
     const targetKey = train.fromKey;
     train.fromKey = train.toKey;
     train.toKey = targetKey;
+    train.occupiedCells.reverse();
     train.t = 0;
     train.speed = 0;
     train.state = 'moving';
-    if (train.fromKey && train.toKey) {
-      this._occupyCell(train, train.toKey);
-    }
   },
 
   boardAtStation(train, nodeKey) {

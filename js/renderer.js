@@ -494,7 +494,8 @@ const Renderer = {
       }
 
       for (let c = 0; c < train.carCount; c++) {
-        const targetDist = c * (carW + gap);
+        const carIndex = train.reversed ? train.carCount - 1 - c : c;
+        const targetDist = carIndex * (carW + gap);
         const pos = this.trailPosAt(trail, targetDist);
         if (!pos) break;
 
@@ -561,6 +562,7 @@ const Renderer = {
     let accum = 0;
     for (let i = 1; i < trail.length; i++) {
       const seg = Math.hypot(trail[i - 1].x - trail[i].x, trail[i - 1].y - trail[i].y);
+      if (seg < 0.01) continue;
       accum += seg;
       if (accum >= biasedDist) {
         const overshoot = accum - biasedDist;
@@ -575,7 +577,14 @@ const Renderer = {
         };
       }
     }
-    return trail[trail.length - 1];
+    const last = trail[trail.length - 1];
+    const remaining = biasedDist - accum;
+    const la = last.angle;
+    return {
+      x: last.x - Math.cos(la) * remaining,
+      y: last.y - Math.sin(la) * remaining,
+      angle: la,
+    };
   },
 
   roundRect(ctx, x, y, w, h, r) {
