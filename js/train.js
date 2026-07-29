@@ -250,6 +250,8 @@ const Train = {
       if (!nextKey || !exits.includes(nextKey)) nextKey = exits[0];
     }
 
+    if (nextKey === fromKey) { this.reverseTrain(train); return; }
+
     const plat = Station.platformAtKey(nodeKey);
     const stationId = plat ? plat.stationId : null;
 

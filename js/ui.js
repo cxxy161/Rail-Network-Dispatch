@@ -413,9 +413,6 @@ const Ui = {
 
   confirmReset() {
     deleteSave();
-    resetGame();
-    Renderer.centerCamera();
-    this.startBuild();
-    this.closeSettings();
+    location.reload();
   },
 };

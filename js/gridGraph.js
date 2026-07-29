@@ -98,7 +98,16 @@ const Graph = {
       if (nk === entryKey) continue;
       const [tx, ty] = nk.split(',').map(Number);
       const ndx = tx - cx, ndy = ty - cy;
-      if (this.isValidSwitchTurn(edx, edy, ndx, ndy) || (ndx === edx && ndy === edy)) return nk;
+      if (ndx === edx && ndy === edy) return nk;
+    }
+    for (const nk of neighbors) {
+      if (nk === entryKey) continue;
+      const [tx, ty] = nk.split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (this.isValidSwitchTurn(edx, edy, ndx, ndy)) return nk;
+    }
+    for (const nk of neighbors) {
+      if (nk !== entryKey) return nk;
     }
     return neighbors[0];
   },

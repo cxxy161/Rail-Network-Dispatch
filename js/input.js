@@ -586,8 +586,20 @@ const Input = {
       return;
     }
 
-    if (e.key === '1') { if (G.phase === 'build') this.switchTool('track'); }
-    if (e.key === '2') { if (G.phase === 'build') this.switchTool('platform'); }
+    if (e.key === '1') {
+      if (G.phase === 'build') this.switchTool('track');
+      else if (G.phase === 'operate') {
+        G.operateSubTool = G.operateSubTool === 'stop' ? null : 'stop';
+        Ui.updateOperateToolButtons();
+      }
+    }
+    if (e.key === '2') {
+      if (G.phase === 'build') this.switchTool('platform');
+      else if (G.phase === 'operate') {
+        G.operateSubTool = G.operateSubTool === 'reverse' ? null : 'reverse';
+        Ui.updateOperateToolButtons();
+      }
+    }
     if (e.key === '3') { if (G.phase === 'build') this.switchTool('eraser'); }
 
     if (e.key === 'Escape') {
