@@ -54,7 +54,13 @@ const Graph = {
       const throughSet = new Set();
       for (const [a, b] of pairs) { throughSet.add(a); throughSet.add(b); }
       const ns = this.getNeighbors(key);
-      const hasBranch = ns.some(nk => !throughSet.has(nk));
+      const [sx, sy] = key.split(',').map(Number);
+      const hasBranch = ns.some(nk => {
+        if (throughSet.has(nk)) return false;
+        const [nx, ny] = nk.split(',').map(Number);
+        const ndx = nx - sx, ndy = ny - sy;
+        return Math.abs(ndx) === 1 && Math.abs(ndy) === 1;
+      });
       if (!hasBranch) {
         delete G.activeSwitches[key];
         return;
