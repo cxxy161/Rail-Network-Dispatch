@@ -50,6 +50,15 @@ const Graph = {
   updateSwitches(key) {
     const deg = this.getDegree(key);
     if (deg >= 3) {
+      const pairs = this.getThroughPairs(key);
+      const throughSet = new Set();
+      for (const [a, b] of pairs) { throughSet.add(a); throughSet.add(b); }
+      const ns = this.getNeighbors(key);
+      const hasBranch = ns.some(nk => !throughSet.has(nk));
+      if (!hasBranch) {
+        delete G.activeSwitches[key];
+        return;
+      }
       if (!(key in G.activeSwitches)) {
         G.activeSwitches[key] = 0;
       } else {
