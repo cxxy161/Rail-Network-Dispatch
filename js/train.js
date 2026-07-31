@@ -53,6 +53,7 @@ const Train = {
       reversed: false,
       nextDesiredKey: null,
       prevKey: null,
+      depotExitDir: null,
       _lastBrakeSfx: 0,
     };
   },
@@ -71,6 +72,8 @@ const Train = {
     if (neighbors.length === 0) return false;
 
     const firstKey = neighbors[0];
+    const [fx, fy] = firstKey.split(',').map(Number);
+    train.depotExitDir = { x: Math.sign(fx - G.depotX), y: Math.sign(fy - G.depotY) };
     this._advanceOccupied(train, depotKey);
     if (!this._advanceOccupied(train, firstKey)) {
       train.fromKey = depotKey;
@@ -99,6 +102,7 @@ const Train = {
     }
     train.occupiedCells = [];
     train.nextDesiredKey = null;
+    train.depotExitDir = null;
     const idx = G.activeTrains.indexOf(train);
     if (idx >= 0) {
       G.activeTrains.splice(idx, 1);
@@ -242,6 +246,7 @@ const Train = {
       }
       train.occupiedCells = [];
       train.nextDesiredKey = null;
+      train.depotExitDir = null;
       train.state = 'docked';
       train.dockedTimer = 3;
       train.fromKey = nodeKey;

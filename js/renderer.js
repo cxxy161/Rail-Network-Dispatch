@@ -475,22 +475,32 @@ const Renderer = {
       // Departure clip: hide the portion of a long train still "inside" the depot,
       // so the back cars don't stick out past the depot onto the map.
       let departClip = null;
-      const depotKey = Graph.key(G.depotX, G.depotY);
-      if (train.fromKey === depotKey) {
-        const exitKey = train.toKey || train.nextDesiredKey;
-        if (exitKey) {
-          const [ex, ey] = exitKey.split(',').map(Number);
-          const cs2 = G.CELL_SIZE;
-          const maxX = G.GRID_W * cs2;
-          const maxY = G.GRID_H * cs2;
-          if (ex > G.depotX) {
-            departClip = { x: (G.depotX - 1) * cs2, y: 0, w: maxX - (G.depotX - 1) * cs2, h: maxY };
-          } else if (ex < G.depotX) {
-            departClip = { x: 0, y: 0, w: (G.depotX + 1) * cs2, h: maxY };
-          } else if (ey > G.depotY) {
-            departClip = { x: 0, y: (G.depotY - 1) * cs2, w: maxX, h: maxY - (G.depotY - 1) * cs2 };
-          } else if (ey < G.depotY) {
-            departClip = { x: 0, y: 0, w: maxX, h: (G.depotY + 1) * cs2 };
+      if (train.depotExitDir) {
+        const { x: edx, y: edy } = train.depotExitDir;
+        const cs2 = G.CELL_SIZE;
+        const maxX = G.GRID_W * cs2;
+        const maxY = G.GRID_H * cs2;
+        if (edx > 0) {
+          departClip = { x: (G.depotX - 1) * cs2, y: 0, w: maxX - (G.depotX - 1) * cs2, h: maxY };
+        } else if (edx < 0) {
+          departClip = { x: 0, y: 0, w: (G.depotX + 1) * cs2, h: maxY };
+        } else if (edy > 0) {
+          departClip = { x: 0, y: (G.depotY - 1) * cs2, w: maxX, h: maxY - (G.depotY - 1) * cs2 };
+        } else if (edy < 0) {
+          departClip = { x: 0, y: 0, w: maxX, h: (G.depotY + 1) * cs2 };
+        }
+
+        // Once the rearmost car has fully emerged past the exit mouth, clear the flag.
+        const tail = this.trailPosAt(trail, train.carCount * (carW + gap));
+        if (tail) {
+          let cleared = false;
+          if (edx > 0) cleared = tail.x > (G.depotX + 1) * cs2;
+          else if (edx < 0) cleared = tail.x < (G.depotX - 1) * cs2;
+          else if (edy > 0) cleared = tail.y > (G.depotY + 1) * cs2;
+          else if (edy < 0) cleared = tail.y < (G.depotY - 1) * cs2;
+          if (cleared) {
+            train.depotExitDir = null;
+            departClip = null;
           }
         }
       }
