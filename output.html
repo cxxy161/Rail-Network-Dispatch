@@ -1276,6 +1276,13 @@ function loadGame() {
 
     G.depotTrains = data.depotTrains || [{ id: 1, carCount: 2, passengers: {} }];
     G.activeTrains = (data.activeTrains || []).map(t => ({ ...t }));
+    for (const t of G.activeTrains) {
+      t.state = 'in_depot';
+      t.trail = [];
+      G.depotTrains.push(t);
+    }
+    G.activeTrains = [];
+    G.cellOccupancy = {};
     G.nextTrainId = data.nextTrainId || 2;
     G.passengersDeliveredToday = data.passengersDeliveredToday || 0;
     G.totalPassengersDelivered = data.totalPassengersDelivered || 0;
@@ -1574,75 +1581,76 @@ function importFromBase64(b64) {
 
   // ── BGM ──
   const BGM_CHORDS = [
-    [196.00, 246.94, 293.66, 369.99],   // Gmaj7  G3 B3 D4 F#4
-    [164.81, 196.00, 246.94, 293.66],   // Em7    E3 G3 B3 D4
-    [220.00, 261.63, 329.63, 392.00],   // Am7    A3 C4 E4 G4
-    [146.83, 185.00, 220.00, 261.63],   // D7     D3 F#3 A3 C4
+    [196.00, 246.94, 293.66, 392.00, 493.88],   // G大调  G3 B3 D4 G4 B4
+    [261.63, 329.63, 392.00, 523.25, 659.25],   // C大调  C4 E4 G4 C5 E5
+    [293.66, 369.99, 440.00, 587.33, 739.99],   // D大调  D4 F#4 A4 D5 F#5
+    [196.00, 246.94, 293.66, 392.00, 493.88],   // G大调  回归主和弦
   ];
 
   let _musicPhase = 'none';   // 'none' | 'build' | 'operate'
   let _musicTimer = null;
   let _musicTick = 0;
   let _musicChordIdx = 0;
-  let _droneOsc = null;
-  let _droneGain = null;
+  let _arpeggioIdx = 0;
+  let _arpeggioDir = 1;
+
+  function _nextArpeggioNote(chordLen) {
+    _arpeggioIdx += _arpeggioDir;
+    if (_arpeggioIdx >= chordLen) { _arpeggioIdx = chordLen - 2; _arpeggioDir = -1; }
+    if (_arpeggioIdx < 0) { _arpeggioIdx = 1; _arpeggioDir = 1; }
+    return _arpeggioIdx;
+  }
 
   function _playMusicNote() {
     if (!initialized || !ctx || !musicEnabled || _musicPhase === 'none') return;
     const chord = BGM_CHORDS[_musicChordIdx % BGM_CHORDS.length];
 
     if (_musicPhase === 'build') {
-      if (_musicTick % 3 === 0) {
-        const oct = (_musicTick % 6 === 0) ? 0.5 : 1;
+      const noteIdx = _nextArpeggioNote(chord.length);
+      _synth({
+        wave: 'triangle', frequency: chord[noteIdx], duration: 0.85,
+        attack: 0.02, decay: 0.3, sustain: 0.3, release: 0.35,
+        gain: 0.4, destGain: musicGain,
+      });
+      if (_musicTick % 8 === 0) {
         _synth({
-          wave: 'sine', frequency: chord[0] * oct, duration: 2.4,
-          attack: 1.2, sustain: 0.3, release: 1.4, gain: 0.5, destGain: musicGain,
+          wave: 'sine', frequency: chord[0] / 2, duration: 0.18,
+          attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.06,
+          gain: 0.3, destGain: musicGain,
         });
       }
     } else {
-      if (_musicTick % 2 === 0) {
-        const noteIdx = (_musicTick / 2) % chord.length;
-        const freq = chord[noteIdx] * (noteIdx < 2 ? 1 : 2);
+      for (let k = 0; k < 2; k++) {
+        const noteIdx = _nextArpeggioNote(chord.length);
         _synth({
-          wave: 'triangle', frequency: freq, duration: 1.0,
-          attack: 0.06, decay: 0.3, sustain: 0.35, release: 0.5,
-          gain: 0.45, destGain: musicGain,
+          wave: 'triangle', frequency: chord[noteIdx], duration: 0.6,
+          attack: 0.015, decay: 0.2, sustain: 0.3, release: 0.25,
+          gain: 0.4, destGain: musicGain, when: k * 0.24,
+        });
+      }
+      const bassFreq = (_musicTick % 2 === 0) ? chord[0] / 2 : chord[0] * 0.75;
+      _synth({
+        wave: 'sine', frequency: bassFreq, duration: 0.12,
+        attack: 0.008, decay: 0.06, sustain: 0.2, release: 0.04,
+        gain: 0.3, destGain: musicGain,
+      });
+      if (_musicTick % 2 === 1) {
+        _synthNoise({
+          duration: 0.03, bandpass: 5200, Q: 1,
+          attack: 0.002, release: 0.02, gain: 0.1, destGain: musicGain,
         });
       }
       if (_musicTick % 8 === 4) {
-        _synthNoise({
-          duration: 0.05, bandpass: 3000, Q: 1,
-          attack: 0.002, release: 0.02, gain: 0.12, destGain: musicGain,
+        _synth({
+          wave: 'sine', frequency: chord[4] * 1.5, duration: 0.45,
+          attack: 0.02, decay: 0.2, sustain: 0.2, release: 0.2,
+          gain: 0.12, destGain: musicGain,
         });
       }
     }
 
     if (_musicTick % 16 === 15) _musicChordIdx++;
     _musicTick++;
-  }
-
-  function _startDrone() {
-    if (!ctx || _droneOsc) return;
-    _droneOsc = ctx.createOscillator();
-    _droneOsc.type = 'sine';
-    _droneOsc.frequency.value = 98; // G2
-    _droneGain = ctx.createGain();
-    _droneGain.gain.value = musicVol * 0.15;
-    _droneOsc.connect(_droneGain);
-    _droneGain.connect(musicGain);
-    _droneOsc.start();
-  }
-
-  function _stopDrone() {
-    if (_droneOsc) {
-      try { _droneOsc.stop(); } catch (e) { /* ignore */ }
-      _droneOsc.disconnect();
-      _droneOsc = null;
-    }
-    if (_droneGain) {
-      _droneGain.disconnect();
-      _droneGain = null;
-    }
   }
 
   function _stopTimer() {
@@ -1653,13 +1661,11 @@ function importFromBase64(b64) {
     if (!initialized || !ctx) return;
     if (!masterEnabled || !musicEnabled || _musicPhase === 'none') {
       _stopTimer();
-      _stopDrone();
       return;
     }
     if (ctx.state === 'suspended') ctx.resume();
-    _startDrone();
     if (!_musicTimer) {
-      _musicTimer = setInterval(_playMusicNote, _musicPhase === 'build' ? 1400 : 650);
+      _musicTimer = setInterval(_playMusicNote, _musicPhase === 'build' ? 700 : 480);
     }
   }
 
@@ -1672,8 +1678,9 @@ function importFromBase64(b64) {
     _musicPhase = phase;
     _musicTick = 0;
     _musicChordIdx = 0;
+    _arpeggioIdx = 0;
+    _arpeggioDir = 1;
     _stopTimer();
-    _stopDrone();
     ensureContext();
     _applyMusic();
   }
@@ -1687,7 +1694,6 @@ function importFromBase64(b64) {
   function setMusicVolume(v) {
     musicVol = v;
     if (musicGain) musicGain.gain.value = v;
-    if (_droneGain) _droneGain.gain.value = v * 0.15;
     saveSettings();
   }
 
