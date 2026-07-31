@@ -344,15 +344,37 @@ const Train = {
     return true;
   },
 
+  _trailPosAt(trail, targetDist) {
+    if (!trail || trail.length === 0) return null;
+    if (trail.length < 2) return { x: trail[0].x, y: trail[0].y, angle: trail[0].angle };
+    const biasedDist = Math.max(0, targetDist) + 3;
+    let accum = 0;
+    for (let i = 1; i < trail.length; i++) {
+      const seg = Math.hypot(trail[i - 1].x - trail[i].x, trail[i - 1].y - trail[i].y);
+      if (seg < 0.01) continue;
+      accum += seg;
+      if (accum >= biasedDist) {
+        const overshoot = accum - biasedDist;
+        const t = Math.max(0, Math.min(1, 1 - overshoot / seg));
+        let da = trail[i].angle - trail[i - 1].angle;
+        while (da > Math.PI) da -= 2 * Math.PI;
+        while (da < -Math.PI) da += 2 * Math.PI;
+        return {
+          x: trail[i - 1].x + (trail[i].x - trail[i - 1].x) * t,
+          y: trail[i - 1].y + (trail[i].y - trail[i - 1].y) * t,
+          angle: trail[i - 1].angle + da * t,
+        };
+      }
+    }
+    const last = trail[trail.length - 1];
+    const remaining = biasedDist - accum;
+    const la = last.angle;
+    return { x: last.x - Math.cos(la) * remaining, y: last.y - Math.sin(la) * remaining, angle: la };
+  },
+
   reverseTrain(train) {
     train.lastDockedStationId = null;
-    const tr = train.trail || [];
-    for (let i = 0; i < tr.length; i++) {
-      tr[i].angle += Math.PI;
-      if (tr[i].angle > Math.PI) tr[i].angle -= 2 * Math.PI;
-      if (tr[i].angle < -Math.PI) tr[i].angle += 2 * Math.PI;
-    }
-    train.reversed = !train.reversed;
+
     if (train.toKey === null) {
       if (!train.prevKey || !this._advanceOccupied(train, train.prevKey)) return;
       train.toKey = train.prevKey;
@@ -363,11 +385,82 @@ const Train = {
       train.state = 'moving';
       return;
     }
-    const targetKey = train.fromKey;
-    train.fromKey = train.toKey;
-    train.toKey = targetKey;
-    train.occupiedCells.reverse();
-    train.t = 0;
+
+    const cs = G.CELL_SIZE;
+    const carW = cs * 0.92;
+    const gap = 4;
+    const trainLen = (train.carCount - 1) * (carW + gap);
+    const oldTrail = train.trail || [];
+
+    // New head = old tail position (rearmost car along the old trail).
+    let T = null;
+    if (oldTrail.length >= 2) {
+      T = this._trailPosAt(oldTrail, trainLen);
+    } else {
+      const [fx, fy] = train.fromKey.split(',').map(Number);
+      const hx = fx * cs + cs / 2, hy = fy * cs + cs / 2;
+      let angle = 0;
+      const dirKey = train.nextDesiredKey || train.toKey;
+      if (dirKey) {
+        const [nx, ny] = dirKey.split(',').map(Number);
+        angle = Math.atan2(ny - fy, nx - fx);
+      }
+      T = { x: hx - Math.cos(angle) * trainLen, y: hy - Math.sin(angle) * trainLen, angle: angle };
+    }
+
+    if (train.occupiedCells) train.occupiedCells.reverse();
+
+    let moved = false;
+    if (T) {
+      const newDir = T.angle + Math.PI;
+      const gx = Math.round(Math.cos(newDir));
+      const gy = Math.round(Math.sin(newDir));
+      const cx = Math.floor(T.x / cs);
+      const cy = Math.floor(T.y / cs);
+      const fromKey = Graph.key(cx, cy);
+      const toKey = Graph.key(cx + gx, cy + gy);
+      const neighbors = Graph.getNeighbors(fromKey);
+      if (neighbors.includes(toKey)) {
+        const ax = cx * cs + cs / 2, ay = cy * cs + cs / 2;
+        const [bx, by] = toKey.split(',').map(Number);
+        const bx2 = bx * cs + cs / 2, by2 = by * cs + cs / 2;
+        const len2 = (bx2 - ax) * (bx2 - ax) + (by2 - ay) * (by2 - ay) || 1;
+        const proj = ((T.x - ax) * (bx2 - ax) + (T.y - ay) * (by2 - ay)) / len2;
+        train.fromKey = fromKey;
+        train.toKey = toKey;
+        train.t = Math.max(0, Math.min(1, proj));
+        moved = true;
+      }
+    }
+
+    if (!moved) {
+      const targetKey = train.fromKey;
+      train.fromKey = train.toKey;
+      train.toKey = targetKey;
+      train.t = 0;
+    }
+
+    // Rebuild trail head-first from the new head (old tail), angles flipped +π.
+    const newTrail = [];
+    for (let i = oldTrail.length - 1; i >= 0; i--) {
+      const p = oldTrail[i];
+      let a = p.angle + Math.PI;
+      if (a > Math.PI) a -= 2 * Math.PI;
+      if (a < -Math.PI) a += 2 * Math.PI;
+      newTrail.push({ x: p.x, y: p.y, angle: a });
+    }
+    const [fx2, fy2] = train.fromKey.split(',').map(Number);
+    const [tx2, ty2] = train.toKey.split(',').map(Number);
+    const hx = fx2 * cs + cs / 2 + (tx2 * cs + cs / 2 - (fx2 * cs + cs / 2)) * train.t;
+    const hy = fy2 * cs + cs / 2 + (ty2 * cs + cs / 2 - (fy2 * cs + cs / 2)) * train.t;
+    if (newTrail.length > 0) {
+      newTrail[0] = { x: hx, y: hy, angle: Math.atan2(ty2 - fy2, tx2 - fx2) };
+    } else {
+      newTrail.push({ x: hx, y: hy, angle: Math.atan2(ty2 - fy2, tx2 - fx2) });
+    }
+    train.trail = newTrail;
+
+    train.reversed = false;
     train.speed = 0;
     train.state = 'moving';
   },
