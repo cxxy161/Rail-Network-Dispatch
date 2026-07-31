@@ -73,8 +73,8 @@ const Renderer = {
     this.drawPlatforms(ctx);
     this.drawPreview(ctx);
     this.drawSwitches(ctx);
-    this.drawDepot(ctx);
     this.drawTrains(ctx);
+    this.drawDepot(ctx);
     this.drawPassengerNumbers(ctx);
     this.drawCursorHighlight(ctx);
 
@@ -472,6 +472,35 @@ const Renderer = {
       const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
       const max = Train.maxLoad(train);
 
+      // Departure clip: hide the portion of a long train still "inside" the depot,
+      // so the back cars don't stick out past the depot onto the map.
+      let departClip = null;
+      const depotKey = Graph.key(G.depotX, G.depotY);
+      if (train.fromKey === depotKey) {
+        const exitKey = train.toKey || train.nextDesiredKey;
+        if (exitKey) {
+          const [ex, ey] = exitKey.split(',').map(Number);
+          const cs2 = G.CELL_SIZE;
+          const maxX = G.GRID_W * cs2;
+          const maxY = G.GRID_H * cs2;
+          if (ex > G.depotX) {
+            departClip = { x: (G.depotX - 1) * cs2, y: 0, w: maxX - (G.depotX - 1) * cs2, h: maxY };
+          } else if (ex < G.depotX) {
+            departClip = { x: 0, y: 0, w: (G.depotX + 1) * cs2, h: maxY };
+          } else if (ey > G.depotY) {
+            departClip = { x: 0, y: (G.depotY - 1) * cs2, w: maxX, h: maxY - (G.depotY - 1) * cs2 };
+          } else if (ey < G.depotY) {
+            departClip = { x: 0, y: 0, w: maxX, h: (G.depotY + 1) * cs2 };
+          }
+        }
+      }
+      if (departClip) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(departClip.x, departClip.y, departClip.w, departClip.h);
+        ctx.clip();
+      }
+
       for (let c = 0; c < train.carCount; c++) {
         const carIndex = train.reversed ? train.carCount - 1 - c : c;
         const targetDist = carIndex * (carW + gap);
@@ -555,6 +584,8 @@ const Renderer = {
         ctx.textBaseline = 'middle';
         ctx.fillText(txt, bx, by + 1);
       }
+
+      if (departClip) ctx.restore();
     }
   },
 
