@@ -468,44 +468,92 @@ const Renderer = {
         trail = this._waitingTrail(train);
       }
 
+      const isDocked = train.state === 'docked';
+      const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+      const max = Train.maxLoad(train);
+
       for (let c = 0; c < train.carCount; c++) {
         const carIndex = train.reversed ? train.carCount - 1 - c : c;
         const targetDist = carIndex * (carW + gap);
         const pos = this.trailPosAt(trail, targetDist);
         if (!pos) break;
 
+        const isHead = c === 0;
+        const isTail = c === train.carCount - 1;
+
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.rotate(pos.angle);
 
+        // Car body: single path, fill + stroke
+        ctx.beginPath();
+        this.roundRect(ctx, -carW / 2, -carH / 2, carW, carH, 4);
         ctx.fillStyle = '#E8734A';
-        ctx.beginPath();
-        this.roundRect(ctx, -carW / 2, -carH / 2, carW, carH, 4);
         ctx.fill();
-        ctx.strokeStyle = '#D06040';
+        ctx.strokeStyle = '#C85A35';
         ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        this.roundRect(ctx, -carW / 2, -carH / 2, carW, carH, 4);
         ctx.stroke();
+
+        // Head car: front windshield + headlight
+        if (isHead) {
+          const facing = train.reversed ? -1 : 1;
+          ctx.fillStyle = 'rgba(255,255,255,0.65)';
+          this.roundRect(ctx, facing * carW * 0.5 - facing * carW * 0.16, -carH * 0.32, carW * 0.16, carH * 0.64, 2);
+          ctx.fill();
+          ctx.fillStyle = '#FFF8E0';
+          ctx.beginPath();
+          ctx.arc(facing * carW * 0.5, 0, carH * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Tail car: red taillight
+        if (isTail) {
+          const facing = train.reversed ? -1 : 1;
+          ctx.fillStyle = '#E84A4A';
+          ctx.beginPath();
+          ctx.arc(-facing * carW * 0.5, 0, carH * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Docked glow: soft station-color ring
+        if (isDocked) {
+          const plat = Station.platformAtKey(train.fromKey);
+          const st = plat ? Station.getStationById(plat.stationId) : null;
+          const glowColor = st ? st.color : '#E8734A';
+          ctx.strokeStyle = glowColor;
+          ctx.globalAlpha = 0.5 + 0.3 * Math.sin(performance.now() / 250);
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          this.roundRect(ctx, -carW / 2 - 3, -carH / 2 - 3, carW + 6, carH + 6, 6);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
 
         ctx.restore();
       }
 
+      // Passenger count bubble above the lead car
       if (trail.length > 0) {
         const lead = trail[0];
-        ctx.save();
-        ctx.translate(lead.x, lead.y);
-        ctx.rotate(lead.angle);
+        const bx = lead.x;
+        const by = lead.y - carH * 0.85;
 
-        const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
-        const max = Train.maxLoad(train);
-        ctx.fillStyle = '#FFF';
-        ctx.font = `bold ${G.CELL_SIZE * 0.24}px sans-serif`;
+        const txt = load + '/' + max;
+        ctx.font = `bold ${G.CELL_SIZE * 0.22}px sans-serif`;
+        const tw = ctx.measureText(txt).width;
+
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.strokeStyle = '#C8C0B0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(bx - tw / 2 - 6, by - G.CELL_SIZE * 0.2, tw + 12, G.CELL_SIZE * 0.4, G.CELL_SIZE * 0.2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = load >= max ? '#E84A4A' : '#333';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(load + '/' + max, 0, 1);
-
-        ctx.restore();
+        ctx.fillText(txt, bx, by + 1);
       }
     }
   },

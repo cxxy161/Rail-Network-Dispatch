@@ -227,7 +227,8 @@ const Train = {
     const py = wy1 + (wy2 - wy1) * train.t;
     const angle = Math.atan2(wy2 - wy1, wx2 - wx1);
     train.trail.unshift({ x: px, y: py, angle });
-    if (train.trail.length > 500) train.trail.length = 500;
+    const maxTrail = Math.max(60, train.carCount * 80);
+    if (train.trail.length > maxTrail) train.trail.length = maxTrail;
   },
 
   isPlatformNode(key) {
