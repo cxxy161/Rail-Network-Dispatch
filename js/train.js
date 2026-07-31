@@ -376,6 +376,13 @@ const Train = {
   reverseTrain(train) {
     train.lastDockedStationId = null;
 
+    // At/leaving the depot: fully return the train to the depot (in_depot)
+    // instead of repositioning the head, which would push it off the track.
+    if (train.fromKey === Graph.key(G.depotX, G.depotY)) {
+      this.recall(train);
+      return;
+    }
+
     if (train.toKey === null) {
       if (!train.prevKey || !this._advanceOccupied(train, train.prevKey)) return;
       train.toKey = train.prevKey;
