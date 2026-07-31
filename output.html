@@ -1,0 +1,6082 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Rail Operations</title>
+<style type="text/css">* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #F5F0E8;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  user-select: none;
+}
+
+#top-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 8px 16px;
+  background: #F5F0E8;
+  border-bottom: 1px solid #D8D0C0;
+  font-size: 14px;
+  color: #555;
+  flex-shrink: 0;
+  z-index: 10;
+}
+#top-bar strong { color: #333; }
+
+#btn-settings {
+  width: 28px; height: 28px;
+  border: none; background: none;
+  font-size: 18px; cursor: pointer;
+  color: #888; padding: 0;
+  line-height: 1;
+}
+#btn-settings:hover { color: #333; }
+
+.satisfaction-high { color: #50B86C !important; }
+.satisfaction-mid { color: #E8A840 !important; }
+.satisfaction-low { color: #E84A4A !important; }
+
+.satisfaction-blink { animation: blink 0.5s infinite; }
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+#time-control {
+  margin-left: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+#time-display {
+  font-size: 16px; font-weight: bold; color: #333;
+  cursor: pointer; padding: 2px 6px; user-select: none;
+}
+#time-display:hover { background: #EDE8E0; border-radius: 4px; }
+
+#time-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #FFF;
+  border: 1px solid #D8D0C0;
+  border-radius: 6px;
+  padding: 8px 0;
+  min-width: 100px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 20;
+}
+#time-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 6px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+#time-dropdown button:hover { background: #F5F0E8; }
+.speed-btns { display: flex; border-top: 1px solid #EEE; margin-top: 4px; padding-top: 4px; }
+.speed-btn { flex: 1; text-align: center; padding: 4px 8px; font-size: 12px; }
+.active-speed { color: #E8734A; font-weight: bold; }
+
+#main-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+#sidebar {
+  width: 200px;
+  background: #F5F0E8;
+  border-right: 1px solid #D8D0C0;
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+#shop-panel h3 {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E0D8C8;
+}
+
+#shop-panel { flex: 1; }
+
+.shop-item { margin-bottom: 8px; }
+
+.shop-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 3px 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.shop-row > span:first-child { width: 52px; flex-shrink: 0; }
+.shop-val { min-width: 20px; text-align: right; font-size: 12px; }
+.shop-val strong { color: #333; }
+
+.price-text { font-size: 10px; color: #999; width: 24px; text-align: right; }
+
+.shop-btns { gap: 6px; margin-top: 2px; justify-content: space-between; display: flex; }
+
+.buy-btn {
+  padding: 2px 8px;
+  border: 1px solid #50B86C;
+  border-radius: 3px;
+  background: #FFF;
+  color: #50B86C;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  flex: 1;
+  text-align: center;
+}
+.buy-btn:hover { background: #F0FFF4; }
+.buy-btn:disabled { opacity: 0.3; cursor: default; }
+
+.primary-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 4px;
+  background: #E8734A;
+  color: #FFF;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+.primary-btn:hover { background: #D06040; }
+.primary-btn.secondary { background: #555; }
+.primary-btn.secondary:hover { background: #444; }
+
+.bottom-start-btn {
+  margin-top: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+}
+
+#game-canvas {
+  display: block;
+  cursor: crosshair;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+#bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #F5F0E8;
+  border-top: 1px solid #D8D0C0;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.tool-btn {
+  padding: 6px 16px;
+  border: 1px solid #D8D0C0;
+  border-radius: 4px;
+  background: #FFF;
+  cursor: pointer;
+  font-size: 13px;
+  color: #555;
+}
+.tool-btn:hover { border-color: #bbb; }
+.tool-btn.active { background: #555; color: #FFF; border-color: #555; }
+
+.hidden { display: none !important; }
+
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.panel {
+  background: #FFF;
+  border-radius: 8px;
+  padding: 24px 32px;
+  min-width: 280px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.panel h2 { font-size: 16px; margin-bottom: 12px; color: #333; }
+.panel p { font-size: 13px; color: #555; margin: 4px 0; }
+.panel strong { color: #333; }
+.panel hr { border: none; border-top: 1px solid #EEE; margin: 8px 0; }
+
+.back-btn {
+  display: block;
+  margin-top: 8px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+  width: 100%;
+}
+.back-btn:hover { color: #555; }
+
+#right-panel {
+  position: fixed;
+  right: 12px;
+  bottom: 52px;
+  background: #F5F0E8;
+  color: #555;
+  font-size: 13px;
+  line-height: 18px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 1px solid #D8D0C0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  z-index: 50;
+  width: 20vw;
+  max-width: 260px;
+  height: 50vh;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+.rp-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+.rp-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rp-row .rp-dot {
+  width: 8px;
+  height: 8px;
+  vertical-align: middle;
+  margin-right: 3px;
+}
+.rp-key-stat {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 2px;
+}
+.rp-key-stat strong {
+  color: #333;
+  font-weight: 600;
+}
+.rp-stat {
+  font-size: 12px;
+  color: #888;
+  margin-top: 3px;
+}
+.rp-section-title {
+  font-size: 10px;
+  color: #AAA;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+  margin-top: 2px;
+}
+.rp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+  padding: 2px 0;
+}
+.rp-row strong {
+  color: #333;
+  font-weight: 600;
+}
+.rp-divider {
+  border: none;
+  border-top: 1px solid #E0D8C8;
+  margin: 8px 0;
+}
+.rp-btn {
+  font-size: 11px;
+  padding: 2px 10px;
+  border: 1px solid #D8D0C0;
+  border-radius: 4px;
+  background: #F5F0E8;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rp-btn:hover { border-color: #999; background: #EDE8DE; }
+.rp-btn.primary { background: #E8734A; color: #FFF; border-color: #E8734A; }
+.rp-btn.primary:hover { background: #D06040; }
+.rp-btn.danger { color: #E84A4A; border-color: #E84A4A; }
+.rp-btn.danger:hover { background: #FFF0F0; }
+.rp-form-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+.rp-form-row span { min-width: 24px; text-align: center; font-size: 14px; color: #333; }
+#right-panel button {
+  background: #F5F0E8;
+  border: 1px solid #D8D0C0;
+  border-radius: 4px;
+  color: #555;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 8px;
+  margin: 1px 2px;
+}
+#right-panel button:hover {
+  border-color: #999;
+  background: #EDE8DE;
+}
+
+.settings-panel {
+  background: #FFF;
+  border-radius: 8px;
+  padding: 20px 24px;
+  min-width: 360px;
+  max-width: 420px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.settings-panel h2 { font-size: 16px; margin-bottom: 14px; color: #333; }
+
+.settings-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid #D8D0C0;
+  margin-bottom: 16px;
+}
+.settings-tab {
+  padding: 6px 18px;
+  border: none; background: none;
+  cursor: pointer; font-size: 13px;
+  color: #888;
+  border-bottom: 2px solid transparent;
+}
+.settings-tab.active { color: #333; border-bottom-color: #E8734A; font-weight: bold; }
+.settings-tab:hover { color: #555; }
+
+.settings-content label { font-size: 12px; color: #888; display: block; margin-top: 8px; margin-bottom: 4px; }
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: #555;
+  padding: 6px 0;
+}
+.settings-row > span:first-child {
+  min-width: 40px;
+  flex-shrink: 0;
+}
+.settings-row input[type="range"] {
+  flex: 1;
+  accent-color: #E8734A;
+  cursor: pointer;
+}
+.settings-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #E8734A;
+  cursor: pointer;
+}
+.settings-row span:last-child {
+  min-width: 42px;
+  text-align: right;
+  color: #888;
+  font-size: 12px;
+}
+.settings-section { margin-bottom: 6px; }
+.settings-ta {
+  width: 100%; min-height: 60px;
+  border: 1px solid #D8D0C0;
+  border-radius: 4px; padding: 6px 8px;
+  font-size: 11px; font-family: monospace;
+  resize: vertical; box-sizing: border-box;
+  color: #555;
+}
+
+.settings-btn {
+  display: inline-block;
+  margin: 4px 4px 4px 0;
+  padding: 5px 14px;
+  border: 1px solid #D8D0C0;
+  border-radius: 4px;
+  background: #FFF;
+  cursor: pointer;
+  font-size: 12px;
+  color: #555;
+}
+.settings-btn:hover { background: #F5F0E8; }
+.settings-btn.danger { color: #E84A4A; border-color: #E84A4A; }
+.settings-btn.danger:hover { background: #FFF0F0; }
+.settings-content hr { border: none; border-top: 1px solid #EEE; margin: 10px 0; }
+
+/* ── 主菜单 ── */
+.menu-overlay {
+  position: fixed; inset: 0;
+  background: #F9F8F4;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 12%;
+  transition: opacity 0.4s;
+}
+.menu-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+.menu-content { text-align: left; }
+
+.menu-title-box {
+  border: 1px solid #DDD8CE;
+  border-radius: 2px;
+  padding: 28px 56px;
+  margin-bottom: 72px;
+  display: inline-block;
+}
+.menu-title-en1 {
+  font-size: 36px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: #1A1A1A;
+  line-height: 1.2;
+}
+.menu-title-en2 {
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  color: #555;
+  line-height: 1.3;
+}
+.menu-title-cn {
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 0.4em;
+  color: #999;
+  margin-top: 10px;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 26px;
+  margin-top: 8px;
+}
+.menu-btn {
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.25em;
+  color: #B0ADA5;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+.menu-btn:hover  { color: #2D2D2D; }
+.menu-btn:active { color: #E8734A; }
+
+#menu-canvas {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 500px;
+  height: 380px;
+  pointer-events: none;
+  z-index: 201;
+}
+
+.menu-version {
+  position: fixed;
+  bottom: 20px;
+  left: 24px;
+  font-size: 12px;
+  font-weight: 300;
+  color: #D0CCC0;
+  letter-spacing: 0.1em;
+}
+
+/* ── 新游戏确认弹窗 ── */
+.confirm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.08);
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-panel {
+  background: #FFF;
+  border-radius: 4px;
+  padding: 28px 36px 20px;
+  max-width: 320px;
+  text-align: center;
+}
+.confirm-panel p {
+  font-size: 14px;
+  font-weight: 300;
+  color: #555;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.confirm-btns {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+}
+
+/* ── 地图设置面板 ── */
+.map-config {
+  margin-top: 0;
+}
+.config-header {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: #2D2D2D;
+  margin-bottom: 56px;
+}
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 20px 0;
+  font-size: 16px;
+  font-weight: 300;
+  color: #555;
+}
+.config-row > span:first-child {
+  width: 40px;
+  text-align: left;
+  flex-shrink: 0;
+}
+.config-row input[type="range"] {
+  width: 260px;
+  accent-color: #E8734A;
+  cursor: pointer;
+}
+.config-row input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  background: #DDD8CE;
+  border-radius: 1px;
+}
+.config-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #E8734A;
+  margin-top: -6px;
+  cursor: pointer;
+}
+.config-future {
+  margin-top: 24px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #CCC;
+  letter-spacing: 0.15em;
+  justify-content: center;
+}
+.config-btns {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 40px;
+}
+.config-btns .menu-btn {
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: #B0ADA5;
+}
+
+#tutorial-spotlight {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 15;
+  pointer-events: none;
+}
+
+@keyframes tutSpotGreen {
+  0%   { background: rgba(80, 184, 108, 0.35); }
+  100% { background: transparent; }
+}
+
+#tutorial-bubble {
+  position: fixed;
+  z-index: 18;
+  pointer-events: none;
+  max-width: 340px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 16px 20px 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.tut-bubble-enter {
+  animation: tutBubbleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tutBubbleIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#tutorial-bubble .tut-hl {
+  color: #D4830A;
+  font-weight: 600;
+}
+
+#tutorial-text { margin-bottom: 8px; }
+
+#tutorial-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.tdot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #D8D0C0;
+  display: inline-block;
+}
+.tdot.done    { background: #A0A090; }
+.tdot.current { background: #C8960C; box-shadow: 0 0 6px rgba(200,150,12,0.5); animation: tdotPulse 1.2s ease-in-out infinite; }
+
+@keyframes tdotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.35); opacity: 0.6; }
+}
+
+#tutorial-bubble.arrow-top::after,
+#tutorial-bubble.arrow-bottom::after,
+#tutorial-bubble.arrow-left::after,
+#tutorial-bubble.arrow-right::after {
+  content: '';
+  position: absolute;
+  width: 0; height: 0;
+}
+
+#tutorial-bubble.arrow-top::after {
+  top: -8px;
+  left: 50%;
+  margin-left: -8px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid rgba(255,255,255,0.94);
+}
+
+#tutorial-bubble.arrow-bottom::after {
+  bottom: -8px;
+  left: 50%;
+  margin-left: -8px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(255,255,255,0.94);
+}
+
+#tutorial-bubble.arrow-left::after {
+  left: -8px;
+  top: 50%;
+  margin-top: -8px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid rgba(255,255,255,0.94);
+}
+
+#tutorial-bubble.arrow-right::after {
+  right: -8px;
+  top: 50%;
+  margin-top: -8px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 8px solid rgba(255,255,255,0.94);
+}
+
+#tutorial-skip {
+  position: fixed;
+  top: 50px;
+  right: 16px;
+  z-index: 25;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  font-family: inherit;
+  transition: color 0.2s;
+}
+#tutorial-skip:hover { color: #FFF; }
+
+#tutorial-complete {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tc-panel {
+  background: #F5F0E8;
+  border-radius: 12px;
+  padding: 40px 48px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  animation: tutBubbleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tc-panel h2 {
+  font-size: 24px;
+  font-weight: 300;
+  color: #333;
+  letter-spacing: 0.15em;
+  margin-bottom: 20px;
+}
+#tc-lines {
+  font-size: 15px;
+  color: #555;
+  line-height: 2;
+  margin-bottom: 32px;
+}
+.tc-btns {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+.tc-btns .menu-btn {
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+}
+</style><body>
+
+<div id="main-menu" class="menu-overlay">
+  <canvas id="menu-canvas"></canvas>
+  <div class="menu-content">
+    <div class="menu-title-box">
+      <div class="menu-title-en1">Mini-Rail</div>
+      <div class="menu-title-en2">Network Dispatch</div>
+      <div class="menu-title-cn">铁路调度运营</div>
+    </div>
+    <div class="menu-buttons">
+      <button id="menu-new-game" class="menu-btn">&#x2023; 新 游 戏</button>
+      <button id="menu-continue" class="menu-btn hidden">继 续 游 戏</button>
+      <button id="menu-tutorial" class="menu-btn">教 程</button>
+      <button id="menu-settings" class="menu-btn">关 于</button>
+    </div>
+    <div id="map-config" class="map-config hidden">
+      <div class="config-header">新 游 戏</div>
+      <div class="config-row">
+        <span>山地</span>
+        <input type="range" id="cfg-mountain" min="0" max="50" value="20">
+        <span id="cfg-mountain-val">20%</span>
+      </div>
+      <div class="config-row">
+        <span>河流</span>
+        <input type="range" id="cfg-river" min="0" max="50" value="20">
+        <span id="cfg-river-val">20%</span>
+      </div>
+      <div class="config-row">
+        <span>平原</span>
+        <span id="cfg-plain-val">60%</span>
+      </div>
+      <div class="config-row config-future config-section-label">
+        ─── 高级选项 ───
+      </div>
+      <div class="config-row">
+        <span>车站</span>
+        <input type="range" id="cfg-stations" min="3" max="8" value="4" step="1"
+          oninput="cfgStationsVal()">
+        <span id="cfg-stations-val">4 个</span>
+      </div>
+      <div class="config-row">
+        <span>地图</span>
+        <input type="range" id="cfg-mapscale" min="2" max="10" value="3" step="1"
+          oninput="cfgMapscaleVal()">
+        <span id="cfg-mapscale-val">57×43</span>
+      </div>
+      <div class="config-btns">
+        <button id="cfg-start" class="menu-btn">开 始 游 戏</button>
+        <button id="cfg-back" class="menu-btn">返 回</button>
+      </div>
+    </div>
+    <div class="menu-version">v0.1</div>
+  </div>
+  <div id="confirm-newgame" class="confirm-overlay hidden">
+    <div class="confirm-panel">
+      <p>已有存档，开始新游戏将覆盖进度，是否继续？</p>
+      <div class="confirm-btns">
+        <button id="confirm-yes" class="menu-btn">确 定</button>
+        <button id="confirm-no" class="menu-btn">取 消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="top-bar">
+  <button id="btn-settings" title="设置">⚙</button>
+  <span id="gold-label">资金: <strong id="gold-val">￥100</strong></span>
+  <span id="satisfaction-label" style="color:#50B86C">🙂 <strong id="satisfaction-val">100%</strong></span>
+  <span id="delivered-label">今日: <strong id="delivered-val">0</strong> 人</span>
+  <span id="day-label">周期: <strong id="day-val">1</strong></span>
+  <div id="time-control">
+    <span id="time-display">⏱ --:-- ▾</span>
+    <div id="time-dropdown" class="hidden">
+      <button id="btn-pause">暂停</button>
+      <div class="speed-btns">
+        <button id="btn-speed1" class="speed-btn active-speed">1x</button>
+        <button id="btn-speed2" class="speed-btn">2x</button>
+        <button id="btn-speed3" class="speed-btn">3x</button>
+        <button id="btn-speed5" class="speed-btn">5x</button>
+        <button id="btn-speed10" class="speed-btn">10x</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="main-area">
+  <div id="sidebar">
+    <div id="shop-panel">
+      <h3>商店</h3>
+      <div class="shop-item">
+        <div class="shop-row">
+          <span>轨道组件</span>
+          <span class="shop-val"><strong id="res-track">50</strong></span>
+          <span class="price-text">￥10</span>
+        </div>
+        <div class="shop-row shop-btns">
+          <button class="buy-btn" data-resource="trackFragment" data-count="1">1</button>
+          <button class="buy-btn" data-resource="trackFragment" data-count="5">5</button>
+          <button class="buy-btn" data-resource="trackFragment" data-count="10">10</button>
+        </div>
+      </div>
+      <div class="shop-item">
+        <div class="shop-row">
+          <span>站台组件</span>
+          <span class="shop-val"><strong id="res-platform">4</strong></span>
+          <span class="price-text">￥30</span>
+        </div>
+        <div class="shop-row shop-btns">
+          <button class="buy-btn" data-resource="platformComponent" data-count="1">1</button>
+          <button class="buy-btn" data-resource="platformComponent" data-count="5">5</button>
+          <button class="buy-btn" data-resource="platformComponent" data-count="10">10</button>
+        </div>
+      </div>
+      <div class="shop-item">
+        <div class="shop-row">
+          <span>车厢库存</span>
+          <span class="shop-val"><strong id="res-wagon">2</strong></span>
+          <span class="price-text">￥50</span>
+        </div>
+        <div class="shop-row shop-btns">
+          <button class="buy-btn" data-resource="wagon" data-count="1">1</button>
+          <button class="buy-btn" data-resource="wagon" data-count="5">5</button>
+          <button class="buy-btn" data-resource="wagon" data-count="10">10</button>
+        </div>
+      </div>
+      <div class="shop-row">
+        <span>当前资金</span>
+        <span class="shop-val"><strong id="sidebar-gold">￥100</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+<div id="right-panel" class="hidden"></div>
+</div>
+
+<canvas id="tutorial-spotlight" class="hidden"></canvas>
+<div id="tutorial-bubble" class="hidden">
+  <div id="tutorial-text"></div>
+  <div id="tutorial-dots"></div>
+</div>
+<button id="tutorial-skip" class="hidden">跳过教程 →</button>
+
+<div id="tutorial-complete" class="hidden">
+  <div class="tc-panel">
+    <h2>教程完成！</h2>
+    <div id="tc-lines"></div>
+    <div class="tc-btns">
+      <button id="tc-menu" class="menu-btn">返回主菜单</button>
+      <button id="tc-freeplay" class="menu-btn">自由模式</button>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-bar">
+  <button id="tool-track" class="tool-btn build-only active">铺轨</button>
+  <button id="tool-platform" class="tool-btn build-only">站台</button>
+  <button id="tool-eraser" class="tool-btn build-only">拆除</button>
+  <span id="operate-tools" class="hidden">
+    <button id="btn-operate-stop" class="tool-btn">启停</button>
+    <button id="btn-operate-reverse" class="tool-btn">调头</button>
+  </span>
+  <button id="btn-start-day" class="primary-btn bottom-start-btn build-only" style="margin-left:auto">开始运营 ▸</button>
+</div>
+
+<div id="overlay" class="overlay hidden">
+
+  <div id="settlement-panel" class="panel hidden">
+    <h2>结算</h2>
+    <p>今日运送: <strong id="settle-delivered">0</strong> 人</p>
+    <p>收入: <strong id="settle-income">￥0</strong></p>
+    <p>维护费: <strong id="settle-maintenance">￥30</strong></p>
+    <p>当前资金: <strong id="settle-gold">￥100</strong></p>
+    <p>满意度: <strong id="settle-satisfaction">100%</strong></p>
+    <hr>
+    <button id="btn-settle-continue" class="primary-btn">下一周期 ▸</button>
+  </div>
+
+  <div id="gameover-panel" class="panel hidden">
+    <h2>破产！</h2>
+    <p>总运送: <strong id="gameover-total">0</strong> 人</p>
+    <p>存活周期: <strong id="gameover-days">1</strong></p>
+    <button id="btn-restart" class="primary-btn secondary">重新开始</button>
+  </div>
+</div>
+
+<div id="settings-overlay" class="overlay hidden">
+  <div id="settings-panel" class="settings-panel">
+    <h2>⚙ 设置</h2>
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="tab-save">存档</button>
+      <button class="settings-tab" data-tab="tab-game">游戏</button>
+      <button class="settings-tab" data-tab="tab-ui">界面</button>
+    </div>
+    <div id="tab-save" class="settings-content">
+      <button id="btn-manual-save" class="settings-btn">💾 手动保存</button>
+      <hr>
+      <label>导出存档</label>
+      <textarea id="ta-export" class="settings-ta" readonly></textarea>
+      <button id="btn-copy-export" class="settings-btn">📋 一键复制</button>
+      <hr>
+      <label>导入存档</label>
+      <textarea id="ta-import" class="settings-ta" placeholder="在此粘贴 Base64 存档文本..."></textarea>
+      <button id="btn-confirm-import" class="settings-btn">确认导入</button>
+      <hr>
+      <button id="btn-delete-save" class="settings-btn danger">删除存档</button>
+      <button id="btn-reset-game" class="settings-btn danger">重置游戏</button>
+    </div>
+    <div id="tab-game" class="settings-content hidden">
+      <div class="settings-section">
+        <label>🔊 音效</label>
+        <div class="settings-row">
+          <span>启用</span>
+          <input type="checkbox" id="aud-sfx-enabled">
+        </div>
+        <div class="settings-row">
+          <span>音量</span>
+          <input type="range" id="aud-sfx-vol" min="0" max="100" value="70">
+          <span id="aud-sfx-vol-val">70%</span>
+        </div>
+        <hr>
+        <label>🎵 音乐</label>
+        <div class="settings-row">
+          <span>启用</span>
+          <input type="checkbox" id="aud-music-enabled">
+        </div>
+        <div class="settings-row">
+          <span>音量</span>
+          <input type="range" id="aud-music-vol" min="0" max="100" value="20">
+          <span id="aud-music-vol-val">20%</span>
+        </div>
+        <hr>
+        <button id="aud-master-mute" class="settings-btn">🔇 总静音</button>
+      </div>
+    </div>
+    <div id="tab-ui" class="settings-content hidden">暂未开放</div>
+    <br>
+    <button id="btn-settings-close" class="settings-btn">关闭</button>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+<script>const G = {
+  GRID_W: 192,
+  GRID_H: 144,
+  CELL_SIZE: 64,
+
+  zoom: 0.11,
+  offsetX: 0,
+  offsetY: 0,
+
+  phase: 'build',
+  dayTime: 300,
+  paused: false,
+  speedMultiplier: 1,
+  dayNumber: 1,
+
+  gold: 100,
+  maintenanceCost: 30,
+  passengerPrice: 2,
+  passengersDeliveredToday: 0,
+  totalPassengersDelivered: 0,
+
+  trackFragments: 50,
+  platformComponents: 4,
+  wagons: 2,
+
+  shopPrices: {
+    trackFragment: 10,
+    platformComponent: 30,
+    wagon: 50,
+  },
+
+  terrain: null,
+  mapSeed: 0,
+  connectionMap: {},
+  activeSwitches: {},
+
+  platforms: [],
+
+  stations: [],
+
+  depotX: 0,
+  depotY: 0,
+
+  depotTrains: [],
+  activeTrains: [],
+  nextTrainId: 1,
+
+  stationQueues: {},
+  cellOccupancy: {},
+
+  selectedTool: 'track',
+  mouseGridX: -1,
+  mouseGridY: -1,
+
+  isPanning: false,
+  panStartX: 0,
+  panStartY: 0,
+  panOffsetStartX: 0,
+  panOffsetStartY: 0,
+
+  trackDrag: { active: false, startX: -1, startY: -1 },
+  platDrag: { active: false, startX: -1, startY: -1, dir: null },
+
+  selectedItem: null,
+  undoStack: [],
+  eraserDragging: false,
+  eraserLastGX: -1,
+  eraserLastGY: -1,
+
+  operateSubTool: null,
+  _passengerAccum: {},
+  infoTarget: null,
+  _dirty: false,
+  satisfaction: 100,
+  lowSatisfactionDays: 0,
+  totalGeneratedToday: 0,
+  lastDeductHour: 6,
+  _stationGroupsCache: null,
+  _stationGroupsDirty: true,
+  _edgeRenderCache: null,
+  _graphCachesDirty: true,
+  _switchMeta: {},
+
+  tutorialId: null,
+  tutorialStep: 0,
+};
+
+function resetGame(opts) {
+  G.zoom = 0.11;
+  G.offsetX = 0;
+  G.offsetY = 0;
+  G.phase = 'build';
+  G.dayTime = 300;
+  G.paused = false;
+  G.speedMultiplier = 1;
+  G.dayNumber = 1;
+  G.gold = 100;
+  G.passengersDeliveredToday = 0;
+  G.totalPassengersDelivered = 0;
+  G.trackFragments = 50;
+  G.platformComponents = 4;
+  G.wagons = 4;
+  G.connectionMap = {};
+  G._switchMeta = {};
+  G._graphCachesDirty = true;
+  G.activeSwitches = {};
+  G.cellOccupancy = {};
+  G.platforms = [];
+  G.selectedTool = 'track';
+  G.mouseGridX = -1;
+  G.mouseGridY = -1;
+  G.isPanning = false;
+  G.trackDrag = { active: false, startX: -1, startY: -1 };
+  G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
+  G.selectedItem = null;
+  G.undoStack = [];
+  G.eraserDragging = false;
+  G.eraserLastGX = -1;
+  G.eraserLastGY = -1;
+  G.operateSubTool = null;
+  G._passengerAccum = {};
+  G.infoTarget = null;
+  G.tutorialId = null;
+  G.tutorialStep = 0;
+  G._stationGroupsCache = null;
+  G._stationGroupsDirty = true;
+
+  const mapScale = opts.mapScale || 0.5;
+  G.GRID_W = Math.floor(192 * mapScale);
+  G.GRID_H = Math.floor(144 * mapScale);
+  G.zoom = 0.11 / mapScale;
+
+  Terrain.generateMap(opts || {});
+}
+
+function terrainAt(gx, gy) {
+  if (!G.terrain) return TERRAIN.PLAIN;
+  return G.terrain[gy * G.GRID_W + gx];
+}
+
+function worldToScreen(wx, wy) {
+  return { x: wx * G.zoom + G.offsetX, y: wy * G.zoom + G.offsetY };
+}
+
+function screenToWorld(sx, sy) {
+  return { x: (sx - G.offsetX) / G.zoom, y: (sy - G.offsetY) / G.zoom };
+}
+
+function gridToWorld(gx, gy) {
+  return { x: gx * G.CELL_SIZE, y: gy * G.CELL_SIZE };
+}
+
+function screenToGrid(sx, sy) {
+  const w = screenToWorld(sx, sy);
+  return { x: Math.floor(w.x / G.CELL_SIZE), y: Math.floor(w.y / G.CELL_SIZE) };
+}
+
+function clampGrid(gx, gy) {
+  return {
+    x: Math.max(0, Math.min(G.GRID_W - 1, gx)),
+    y: Math.max(0, Math.min(G.GRID_H - 1, gy)),
+  };
+}
+
+function dayTimeToClock() {
+  const progress = 1 - (G.dayTime / 600);
+  const totalMin = 6 * 60 + progress * 18 * 60;
+  const h = Math.floor(totalMin / 60);
+  const m = Math.floor(totalMin % 60);
+  return { h, m };
+}
+
+const SAVE_KEY = 'mini_rail_ops_save';
+
+function saveGame() {
+  const data = {
+    gold: G.gold, dayNumber: G.dayNumber, dayTime: G.dayTime,
+    trackFragments: G.trackFragments, platformComponents: G.platformComponents, wagons: G.wagons,
+    connectionMap: G.connectionMap, activeSwitches: G.activeSwitches, cellOccupancy: G.cellOccupancy,
+    platforms: G.platforms, stationQueues: G.stationQueues,
+    stations: G.stations, depotX: G.depotX, depotY: G.depotY, mapSeed: G.mapSeed,
+    terrain: G.terrain ? Array.from(G.terrain) : null,
+    GRID_W: G.GRID_W, GRID_H: G.GRID_H, zoom: G.zoom,
+    depotTrains: G.depotTrains, activeTrains: G.activeTrains, nextTrainId: G.nextTrainId,
+    passengersDeliveredToday: G.passengersDeliveredToday, totalPassengersDelivered: G.totalPassengersDelivered,
+    satisfaction: G.satisfaction, totalGeneratedToday: G.totalGeneratedToday,
+    offsetX: G.offsetX, offsetY: G.offsetY,
+    undoStack: G.undoStack.map(a => a.type === 'add_edges' || a.type === 'remove_edges' ? { ...a } :
+      a.type === 'batch' ? { ...a, items: a.items.map(i => ({ ...i })) } : { ...a }),
+  };
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  G._dirty = false;
+}
+
+function loadGame() {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    G.gold = data.gold || 500;
+    G.dayNumber = data.dayNumber || 1;
+    G.dayTime = data.dayTime || 300;
+    G.trackFragments = data.trackFragments || 30;
+    G.platformComponents = data.platformComponents || 5;
+    G.wagons = data.wagons || 4;
+    G.connectionMap = data.connectionMap || {};
+    G.activeSwitches = data.activeSwitches || {};
+    G.cellOccupancy = data.cellOccupancy || {};
+    G.platforms = data.platforms || [];
+    G.stationQueues = data.stationQueues || {};
+    G.mapSeed = data.mapSeed || 0;
+
+    if (data.GRID_W) { G.GRID_W = data.GRID_W; G.GRID_H = data.GRID_H; }
+    if (data.zoom !== undefined) { G.zoom = data.zoom; G.offsetX = data.offsetX || 0; G.offsetY = data.offsetY || 0; }
+
+    if (data.terrain) {
+      G.terrain = new Uint8Array(data.terrain);
+    } else {
+      G.terrain = null;
+    }
+
+    if (data.stations && data.stations.length > 0) {
+      G.stations = data.stations;
+    } else {
+      G.stations = [
+        { id: 'A', x: 6, y: 12, color: '#E84A4A' },
+        { id: 'B', x: 16, y: 4, color: '#4A90D9' },
+        { id: 'C', x: 16, y: 12, color: '#50B86C' },
+      ];
+    }
+    G.depotX = data.depotX != null ? data.depotX : 31;
+    G.depotY = data.depotY != null ? data.depotY : 12;
+
+    G.depotTrains = data.depotTrains || [{ id: 1, carCount: 2, passengers: {} }];
+    G.activeTrains = (data.activeTrains || []).map(t => ({ ...t }));
+    G.nextTrainId = data.nextTrainId || 2;
+    G.passengersDeliveredToday = data.passengersDeliveredToday || 0;
+    G.totalPassengersDelivered = data.totalPassengersDelivered || 0;
+    G.satisfaction = data.satisfaction != null ? data.satisfaction : 100;
+    G.totalGeneratedToday = data.totalGeneratedToday || 0;
+    G.undoStack = data.undoStack || [];
+    G._passengerAccum = {};
+    G._dirty = false;
+    G.phase = 'build';
+    G.paused = false;
+    G.speedMultiplier = 1;
+  G.infoTarget = null;
+  G.satisfaction = 100;
+  G.lowSatisfactionDays = 0;
+  G.totalGeneratedToday = 0;
+  G.lastDeductHour = 6;
+    G.trackDrag = { active: false, startX: -1, startY: -1 };
+    G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
+    G.selectedTool = 'track';
+    G.mouseGridX = -1; G.mouseGridY = -1;
+    G.lowSatisfactionDays = 0;
+    G.lastDeductHour = 6;
+    G._stationGroupsCache = null;
+    G._stationGroupsDirty = true;
+    G._graphCachesDirty = true;
+    G._switchMeta = {};
+    return true;
+  } catch (e) { return false; }
+}
+
+function saveExists() { return !!localStorage.getItem(SAVE_KEY); }
+
+function deleteSave() { localStorage.removeItem(SAVE_KEY); G._dirty = true; }
+
+function exportToBase64() {
+  saveGame();
+  const raw = localStorage.getItem(SAVE_KEY);
+  return raw ? btoa(raw) : '';
+}
+
+function importFromBase64(b64) {
+  try {
+    const raw = atob(b64.trim());
+    JSON.parse(raw);
+    localStorage.setItem(SAVE_KEY, raw);
+    return true;
+  } catch (e) { return false; }
+}
+</script>
+
+<script>const AudioMgr = (() => {
+  let ctx = null;
+  let masterGain = null;
+  let sfxGain = null;
+  let musicGain = null;
+  let initialized = false;
+
+  let masterEnabled = true;
+  let sfxEnabled = true;
+  let musicEnabled = true;
+  let sfxVol = 0.7;
+  let musicVol = 0.2;
+
+  const SETTINGS_KEY = 'mini_rail_audio';
+
+  function loadSettings() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      masterEnabled = s.masterEnabled !== false;
+      sfxEnabled = s.sfxEnabled !== false;
+      musicEnabled = s.musicEnabled !== false;
+      sfxVol = s.sfxVol != null ? s.sfxVol : 0.7;
+      musicVol = s.musicVol != null ? s.musicVol : 0.2;
+    } catch (e) { /* ignore */ }
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        masterEnabled, sfxEnabled, musicEnabled, sfxVol, musicVol,
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  function ensureContext() {
+    if (ctx) return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    ctx = new AudioCtx();
+
+    masterGain = ctx.createGain();
+    masterGain.gain.value = masterEnabled ? 1 : 0;
+    masterGain.connect(ctx.destination);
+
+    sfxGain = ctx.createGain();
+    sfxGain.gain.value = sfxVol;
+    sfxGain.connect(masterGain);
+
+    musicGain = ctx.createGain();
+    musicGain.gain.value = musicVol;
+    musicGain.connect(masterGain);
+
+    initialized = true;
+  }
+
+  function resume() {
+    ensureContext();
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+  }
+
+  function suspend() {
+    if (ctx && ctx.state === 'running') ctx.suspend();
+  }
+
+  function _synth(cfg) {
+    if (!ctx || !initialized) return;
+    const {
+      wave = 'sine', frequency = 440, duration = 0.1,
+      attack = 0.01, decay = 0, sustain = 1, release = 0.05,
+      filterFreq = 0, Q = 1, gain = 1, destGain = sfxGain, when = 0,
+    } = cfg;
+
+    const osc = ctx.createOscillator();
+    osc.type = wave;
+    osc.frequency.value = frequency;
+
+    let node = osc;
+    let filter = null;
+    if (filterFreq > 0) {
+      filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = filterFreq;
+      filter.Q.value = Q;
+      osc.connect(filter);
+      node = filter;
+    }
+
+    const envGain = ctx.createGain();
+    const now = ctx.currentTime + when;
+    const peak = gain;
+    envGain.gain.setValueAtTime(0, now);
+    envGain.gain.linearRampToValueAtTime(peak, now + attack);
+    if (decay > 0) envGain.gain.linearRampToValueAtTime(peak * sustain, now + attack + decay);
+    envGain.gain.setValueAtTime(peak * sustain, now + Math.max(attack + decay, duration - release));
+    envGain.gain.linearRampToValueAtTime(0, now + duration);
+
+    node.connect(envGain);
+    envGain.connect(destGain);
+
+    osc.start(now);
+    osc.stop(now + duration + 0.1);
+    const total = (duration + 0.2) * 1000 + when * 1000;
+    setTimeout(() => {
+      osc.disconnect();
+      if (filter) filter.disconnect();
+      envGain.disconnect();
+    }, total);
+  }
+
+  function _synthNoise(cfg) {
+    if (!ctx || !initialized) return;
+    const {
+      duration = 0.1, attack = 0.01, release = 0.05,
+      bandpass = 0, Q = 1, gain = 1, destGain = sfxGain, when = 0,
+    } = cfg;
+
+    const len = Math.max(1, Math.floor(ctx.sampleRate * duration));
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+
+    let node = src;
+    let filter = null;
+    if (bandpass > 0) {
+      filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = bandpass;
+      filter.Q.value = Q;
+      src.connect(filter);
+      node = filter;
+    }
+
+    const envGain = ctx.createGain();
+    const now = ctx.currentTime + when;
+    envGain.gain.setValueAtTime(0, now);
+    envGain.gain.linearRampToValueAtTime(gain, now + attack);
+    envGain.gain.setValueAtTime(gain, now + duration - release);
+    envGain.gain.linearRampToValueAtTime(0, now + duration);
+
+    node.connect(envGain);
+    envGain.connect(destGain);
+
+    src.start(now);
+    const total = (duration + 0.2) * 1000 + when * 1000;
+    setTimeout(() => {
+      src.disconnect();
+      if (filter) filter.disconnect();
+      envGain.disconnect();
+    }, total);
+  }
+
+  function play(name) {
+    if (!masterEnabled || !sfxEnabled) return;
+    ensureContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    const vol = sfxVol;
+
+    switch (name) {
+      case 'track_place':
+        _synthNoise({ duration: 0.04, bandpass: 1400, Q: 1.2, attack: 0.002, release: 0.02, gain: 0.5 * vol });
+        break;
+      case 'platform_place':
+        _synth({ wave: 'sine', frequency: 150, duration: 0.12, attack: 0.005, decay: 0.03, sustain: 0.4, release: 0.06, gain: 0.7 * vol });
+        break;
+      case 'eraser':
+        _synthNoise({ duration: 0.1, bandpass: 450, Q: 0.8, attack: 0.01, release: 0.05, gain: 0.35 * vol });
+        break;
+      case 'undo':
+        _synth({ wave: 'triangle', frequency: 440, duration: 0.07, attack: 0.004, release: 0.03, gain: 0.4 * vol });
+        _synth({ wave: 'triangle', frequency: 330, duration: 0.09, attack: 0.004, release: 0.04, gain: 0.4 * vol, when: 0.06 });
+        break;
+      case 'buy_success':
+        _synth({ wave: 'sine', frequency: 880, duration: 0.22, attack: 0.008, decay: 0.05, sustain: 0.35, release: 0.1, gain: 0.5 * vol });
+        _synth({ wave: 'sine', frequency: 1318.5, duration: 0.3, attack: 0.008, decay: 0.08, sustain: 0.3, release: 0.12, gain: 0.5 * vol, when: 0.09 });
+        break;
+      case 'buy_fail':
+        _synth({ wave: 'sawtooth', frequency: 80, duration: 0.28, attack: 0.02, release: 0.1, filterFreq: 260, Q: 2, gain: 0.5 * vol });
+        break;
+      case 'train_departure':
+        if (ctx) {
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(440, now + 0.3);
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.35 * vol, now + 0.05);
+          g.gain.linearRampToValueAtTime(0.001, now + 0.55);
+          osc.connect(g);
+          g.connect(sfxGain);
+          osc.start(now);
+          osc.stop(now + 0.6);
+          setTimeout(() => { osc.disconnect(); g.disconnect(); }, 700);
+        }
+        break;
+      case 'train_arrive':
+        _synth({ wave: 'sine', frequency: 880, duration: 0.32, attack: 0.005, decay: 0.12, sustain: 0.4, release: 0.12, gain: 0.4 * vol });
+        _synth({ wave: 'sine', frequency: 1318.5, duration: 0.35, attack: 0.005, decay: 0.14, sustain: 0.35, release: 0.12, gain: 0.35 * vol, when: 0.08 });
+        break;
+      case 'train_board':
+        _synthNoise({ duration: 0.18, bandpass: 500, Q: 0.7, attack: 0.03, release: 0.06, gain: 0.25 * vol });
+        _synth({ wave: 'sine', frequency: 392, duration: 0.12, attack: 0.01, decay: 0.04, sustain: 0.5, release: 0.05, gain: 0.2 * vol });
+        break;
+      case 'switch_clack':
+        _synthNoise({ duration: 0.03, bandpass: 2400, Q: 2, attack: 0.001, release: 0.008, gain: 0.6 * vol });
+        _synth({ wave: 'square', frequency: 900, duration: 0.02, attack: 0.001, release: 0.008, gain: 0.2 * vol });
+        break;
+      case 'emergency_brake':
+        _synth({ wave: 'sawtooth', frequency: 200, duration: 0.5, attack: 0.01, decay: 0.15, sustain: 0.4, release: 0.15, filterFreq: 400, Q: 1.5, gain: 0.5 * vol });
+        _synthNoise({ duration: 0.35, bandpass: 800, Q: 1, attack: 0.02, release: 0.1, gain: 0.3 * vol });
+        break;
+      case 'day_start':
+        _synth({ wave: 'sine', frequency: 440, duration: 0.9, attack: 0.08, decay: 0.2, sustain: 0.5, release: 0.3, gain: 0.45 * vol });
+        _synth({ wave: 'sine', frequency: 554.37, duration: 0.9, attack: 0.08, decay: 0.2, sustain: 0.5, release: 0.3, gain: 0.45 * vol, when: 0.18 });
+        _synth({ wave: 'sine', frequency: 659.25, duration: 1.1, attack: 0.08, decay: 0.2, sustain: 0.5, release: 0.35, gain: 0.45 * vol, when: 0.36 });
+        break;
+      case 'pause':
+        _synth({ wave: 'sine', frequency: 660, duration: 0.09, attack: 0.004, release: 0.03, gain: 0.35 * vol });
+        break;
+      case 'settlement':
+        _synth({ wave: 'sine', frequency: 523.25, duration: 0.6, attack: 0.04, decay: 0.15, sustain: 0.5, release: 0.2, gain: 0.45 * vol });
+        _synth({ wave: 'sine', frequency: 659.25, duration: 0.6, attack: 0.04, decay: 0.15, sustain: 0.5, release: 0.2, gain: 0.45 * vol, when: 0.16 });
+        _synth({ wave: 'sine', frequency: 783.99, duration: 0.9, attack: 0.04, decay: 0.15, sustain: 0.5, release: 0.35, gain: 0.45 * vol, when: 0.32 });
+        break;
+      case 'gameover':
+        _synth({ wave: 'triangle', frequency: 440, duration: 0.7, attack: 0.06, decay: 0.1, sustain: 0.5, release: 0.25, gain: 0.5 * vol });
+        _synth({ wave: 'triangle', frequency: 349.23, duration: 0.8, attack: 0.06, decay: 0.1, sustain: 0.5, release: 0.3, gain: 0.5 * vol, when: 0.35 });
+        _synth({ wave: 'triangle', frequency: 261.63, duration: 1.2, attack: 0.06, decay: 0.1, sustain: 0.5, release: 0.5, gain: 0.5 * vol, when: 0.7 });
+        break;
+      case 'congestion_warning':
+        _synth({ wave: 'triangle', frequency: 440, duration: 0.14, attack: 0.008, release: 0.05, gain: 0.4 * vol });
+        _synth({ wave: 'triangle', frequency: 440, duration: 0.14, attack: 0.008, release: 0.05, gain: 0.4 * vol, when: 0.25 });
+        break;
+      case 'flash':
+        _synth({ wave: 'sine', frequency: 620, duration: 0.08, attack: 0.004, release: 0.025, gain: 0.3 * vol });
+        break;
+      default:
+        break;
+    }
+  }
+
+  // ── BGM ──
+  const BGM_CHORDS = [
+    [196.00, 246.94, 293.66, 369.99],   // Gmaj7  G3 B3 D4 F#4
+    [164.81, 196.00, 246.94, 293.66],   // Em7    E3 G3 B3 D4
+    [220.00, 261.63, 329.63, 392.00],   // Am7    A3 C4 E4 G4
+    [146.83, 185.00, 220.00, 261.63],   // D7     D3 F#3 A3 C4
+  ];
+
+  let _musicPhase = 'none';   // 'none' | 'build' | 'operate'
+  let _musicTimer = null;
+  let _musicTick = 0;
+  let _musicChordIdx = 0;
+  let _droneOsc = null;
+  let _droneGain = null;
+
+  function _playMusicNote() {
+    if (!initialized || !ctx || !musicEnabled || _musicPhase === 'none') return;
+    const chord = BGM_CHORDS[_musicChordIdx % BGM_CHORDS.length];
+
+    if (_musicPhase === 'build') {
+      if (_musicTick % 3 === 0) {
+        const oct = (_musicTick % 6 === 0) ? 0.5 : 1;
+        _synth({
+          wave: 'sine', frequency: chord[0] * oct, duration: 2.4,
+          attack: 1.2, sustain: 0.3, release: 1.4, gain: 0.5, destGain: musicGain,
+        });
+      }
+    } else {
+      if (_musicTick % 2 === 0) {
+        const noteIdx = (_musicTick / 2) % chord.length;
+        const freq = chord[noteIdx] * (noteIdx < 2 ? 1 : 2);
+        _synth({
+          wave: 'triangle', frequency: freq, duration: 1.0,
+          attack: 0.06, decay: 0.3, sustain: 0.35, release: 0.5,
+          gain: 0.45, destGain: musicGain,
+        });
+      }
+      if (_musicTick % 8 === 4) {
+        _synthNoise({
+          duration: 0.05, bandpass: 3000, Q: 1,
+          attack: 0.002, release: 0.02, gain: 0.12, destGain: musicGain,
+        });
+      }
+    }
+
+    if (_musicTick % 16 === 15) _musicChordIdx++;
+    _musicTick++;
+  }
+
+  function _startDrone() {
+    if (!ctx || _droneOsc) return;
+    _droneOsc = ctx.createOscillator();
+    _droneOsc.type = 'sine';
+    _droneOsc.frequency.value = 98; // G2
+    _droneGain = ctx.createGain();
+    _droneGain.gain.value = musicVol * 0.15;
+    _droneOsc.connect(_droneGain);
+    _droneGain.connect(musicGain);
+    _droneOsc.start();
+  }
+
+  function _stopDrone() {
+    if (_droneOsc) {
+      try { _droneOsc.stop(); } catch (e) { /* ignore */ }
+      _droneOsc.disconnect();
+      _droneOsc = null;
+    }
+    if (_droneGain) {
+      _droneGain.disconnect();
+      _droneGain = null;
+    }
+  }
+
+  function _stopTimer() {
+    if (_musicTimer) { clearInterval(_musicTimer); _musicTimer = null; }
+  }
+
+  function _applyMusic() {
+    if (!initialized || !ctx) return;
+    if (!masterEnabled || !musicEnabled || _musicPhase === 'none') {
+      _stopTimer();
+      _stopDrone();
+      return;
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    _startDrone();
+    if (!_musicTimer) {
+      _musicTimer = setInterval(_playMusicNote, _musicPhase === 'build' ? 1400 : 650);
+    }
+  }
+
+  function startMusic(phase) { setMusicPhase(phase); }
+
+  function stopMusic() { setMusicPhase('none'); }
+
+  function setMusicPhase(phase) {
+    if (_musicPhase === phase && _musicTimer) return;
+    _musicPhase = phase;
+    _musicTick = 0;
+    _musicChordIdx = 0;
+    _stopTimer();
+    _stopDrone();
+    ensureContext();
+    _applyMusic();
+  }
+
+  function setSfxVolume(v) {
+    sfxVol = v;
+    if (sfxGain) sfxGain.gain.value = v;
+    saveSettings();
+  }
+
+  function setMusicVolume(v) {
+    musicVol = v;
+    if (musicGain) musicGain.gain.value = v;
+    if (_droneGain) _droneGain.gain.value = v * 0.15;
+    saveSettings();
+  }
+
+  function setSfxEnabled(v) {
+    sfxEnabled = !!v;
+    saveSettings();
+  }
+
+  function setMusicEnabled(v) {
+    musicEnabled = !!v;
+    _applyMusic();
+    saveSettings();
+  }
+
+  function setMasterEnabled(v) {
+    masterEnabled = !!v;
+    if (masterGain) masterGain.gain.value = masterEnabled ? 1 : 0;
+    _applyMusic();
+    saveSettings();
+  }
+
+  loadSettings();
+
+  return {
+    resume,
+    suspend,
+    play,
+    startMusic,
+    stopMusic,
+    setMusicPhase,
+    setSfxVolume,
+    setMusicVolume,
+    setSfxEnabled,
+    setMusicEnabled,
+    setMasterEnabled,
+    get masterEnabled() { return masterEnabled; },
+    get sfxEnabled() { return sfxEnabled; },
+    get musicEnabled() { return musicEnabled; },
+    get sfxVol() { return sfxVol; },
+    get musicVol() { return musicVol; },
+    get initialized() { return initialized; },
+  };
+})();
+</script>
+
+<script>const TERRAIN = { PLAIN: 0, RIVER: 1, MOUNTAIN: 2 };
+const STATION_COLORS = ['#E84A4A', '#4A90D9', '#50B86C', '#E8A44A', '#A44AE8', '#4AE8C8'];
+
+const Terrain = {
+  _hash(x, y, seed) {
+    const n = Math.sin(x * 12.9898 + y * 78.233 + seed * 437.585) * 43758.545;
+    return n - Math.floor(n);
+  },
+
+  _rand(seed) {
+    let s = seed | 0;
+    s = (s ^ 61) ^ (s >>> 16);
+    s = s + (s << 3);
+    s = s ^ (s >>> 4);
+    s = s * 0x27d4eb2d;
+    s = s ^ (s >>> 15);
+    return (s >>> 0) / 4294967296;
+  },
+
+  _randBetween(lo, hi, seed) {
+    return lo + Math.floor(this._rand(seed) * (hi - lo));
+  },
+
+  _createArray() {
+    return new Uint8Array(G.GRID_W * G.GRID_H);
+  },
+
+  _set(arr, x, y, val) {
+    arr[y * G.GRID_W + x] = val;
+  },
+
+  _get(arr, x, y) {
+    return arr[y * G.GRID_W + x];
+  },
+
+  _inBounds(x, y) {
+    return x >= 0 && x < G.GRID_W && y >= 0 && y < G.GRID_H;
+  },
+
+  _lerp(a, b, t) {
+    return a + (b - a) * t;
+  },
+
+  _smoothstep(t) {
+    return t * t * (3 - 2 * t);
+  },
+
+  _valueNoise(x, y, seed) {
+    const ix = Math.floor(x);
+    const iy = Math.floor(y);
+    const fx = this._smoothstep(x - ix);
+    const fy = this._smoothstep(y - iy);
+
+    const v00 = this._hash(ix,     iy,     seed);
+    const v10 = this._hash(ix + 1, iy,     seed);
+    const v01 = this._hash(ix,     iy + 1, seed);
+    const v11 = this._hash(ix + 1, iy + 1, seed);
+
+    const a = this._lerp(v00, v10, fx);
+    const b = this._lerp(v01, v11, fx);
+    return this._lerp(a, b, fy);
+  },
+
+  _fbm(x, y, seed, octaves) {
+    let value = 0;
+    let amplitude = 1;
+    let frequency = 1;
+    let maxValue = 0;
+
+    for (let i = 0; i < octaves; i++) {
+      value += this._valueNoise(x * frequency, y * frequency, seed + i * 7919) * amplitude;
+      maxValue += amplitude;
+      amplitude *= 0.5;
+      frequency *= 2;
+    }
+
+    return value / maxValue;
+  },
+
+  _smoothMountains(terrain) {
+    for (let iter = 0; iter < 2; iter++) {
+      const copy = new Uint8Array(terrain);
+      for (let y = 0; y < G.GRID_H; y++) {
+        for (let x = 0; x < G.GRID_W; x++) {
+          let nbr = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nx = x + dx, ny = y + dy;
+              if (this._inBounds(nx, ny) && this._get(copy, nx, ny) === TERRAIN.MOUNTAIN) {
+                nbr++;
+              }
+            }
+          }
+          const t = this._get(copy, x, y);
+          if (t === TERRAIN.MOUNTAIN && nbr <= 1) {
+            this._set(terrain, x, y, TERRAIN.PLAIN);
+          } else if (t === TERRAIN.PLAIN && nbr >= 6) {
+            this._set(terrain, x, y, TERRAIN.MOUNTAIN);
+          }
+        }
+      }
+    }
+  },
+
+  _pruneIsolated(terrain, type) {
+    const copy = new Uint8Array(terrain);
+    const W = G.GRID_W;
+    const H = G.GRID_H;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const i = y * W + x;
+        if (copy[i] !== type) continue;
+        let n = 0;
+        if (y > 0 && copy[i - W] === type) n++;
+        if (y < H - 1 && copy[i + W] === type) n++;
+        if (x > 0 && copy[i - 1] === type) n++;
+        if (x < W - 1 && copy[i + 1] === type) n++;
+        if (n === 0) terrain[i] = TERRAIN.PLAIN;
+      }
+    }
+  },
+
+  _getWarpedNoise(x, y, seed) {
+    const noiseScale = 0.012;
+    const warpScale = 0.02;
+    const warpStrength = 25.0;
+
+    const dx = this._fbm(x * warpScale, y * warpScale, seed + 100, 2);
+    const dy = this._fbm(x * warpScale, y * warpScale, seed + 200, 2);
+
+    const qx = x + (dx - 0.5) * warpStrength * 2.0;
+    const qy = y + (dy - 0.5) * warpStrength * 2.0;
+
+    return this._valueNoise(qx * noiseScale, qy * noiseScale, seed);
+  },
+
+  _generateTerrain(terrain, riverRatio, mountainRatio, seed) {
+    const W = G.GRID_W;
+    const H = G.GRID_H;
+    const maxRiverHalfWidth = 1.0 + riverRatio * 6.0;
+    const maskThreshold = 0.6 - riverRatio * 1.0;
+    const mountainScale = 14;
+
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const idx = y * W + x;
+
+        if (riverRatio > 0) {
+          const n = this._getWarpedNoise(x, y, seed);
+          const nx = this._getWarpedNoise(x + 1, y, seed);
+          const nx_m1 = this._getWarpedNoise(x - 1, y, seed);
+          const ny = this._getWarpedNoise(x, y + 1, seed);
+          const ny_m1 = this._getWarpedNoise(x, y - 1, seed);
+
+          const gx = (nx - nx_m1) / 2;
+          const gy = (ny - ny_m1) / 2;
+          const gradLen = Math.sqrt(gx * gx + gy * gy) + 0.0001;
+          const baseDist = Math.abs(n - 0.5) / gradLen;
+
+          const macroMask = this._valueNoise(x * 0.005, y * 0.005, seed + 888);
+          let fade = (macroMask - maskThreshold) * 3.0;
+          fade = Math.max(0.0, Math.min(1.0, fade));
+
+          const actualHalfWidth = maxRiverHalfWidth * fade;
+
+          if (baseDist < actualHalfWidth) {
+            terrain[idx] = TERRAIN.RIVER;
+            continue;
+          }
+        }
+
+        if (mountainRatio > 0) {
+          const mNoise = this._fbm(x / mountainScale, y / mountainScale, seed + 5000, 4);
+          const mountainThreshold = 0.80 - mountainRatio * 0.55;
+
+          if (mNoise > mountainThreshold) {
+            terrain[idx] = TERRAIN.MOUNTAIN;
+            continue;
+          }
+        }
+
+        terrain[idx] = TERRAIN.PLAIN;
+      }
+    }
+
+    this._pruneIsolated(terrain, TERRAIN.RIVER);
+    this._smoothMountains(terrain);
+  },
+
+  _placeStations(terrain, seed, count) {
+    const rng = (n) => this._rand(seed + 500 + n * 3571);
+    count = count || this._randBetween(3, 7, rng(0));
+    let s = 1;
+
+    const candidates = [];
+    for (let y = 3; y < G.GRID_H - 3; y++) {
+      for (let x = 3; x < G.GRID_W - 3; x++) {
+        let allPlain = true;
+        for (let dy = -3; dy <= 3 && allPlain; dy++) {
+          for (let dx = -3; dx <= 3 && allPlain; dx++) {
+            if (this._get(terrain, x + dx, y + dy) !== TERRAIN.PLAIN) {
+              allPlain = false;
+              break;
+            }
+          }
+        }
+        if (allPlain) candidates.push({ x, y });
+      }
+    }
+
+    if (candidates.length < count) {
+      const result = [];
+      for (let i = 0; i < Math.min(candidates.length, count); i++) {
+        const pt = candidates[Math.floor(rng(++s) * candidates.length)];
+        result.push(pt);
+      }
+      return this._makeStationObjects(result, rng, s);
+    }
+
+    const placed = [];
+    for (let i = 0; i < count; i++) {
+      let attempts = 0;
+      let best = null;
+      while (attempts < 50) {
+        attempts++;
+        const pt = candidates[Math.floor(rng(++s) * candidates.length)];
+        if (placed.every(p => Math.abs(p.x - pt.x) + Math.abs(p.y - pt.y) >= 16)) {
+          best = pt;
+          break;
+        }
+      }
+      if (best) placed.push(best);
+    }
+
+    return this._makeStationObjects(placed, rng, s);
+  },
+
+  _makeStationObjects(points, rng, s) {
+    const ids = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const arr = points.map((pt, i) => ({
+      id: ids[i] || 'S' + i,
+      x: pt.x,
+      y: pt.y,
+      color: STATION_COLORS[i % STATION_COLORS.length],
+      flowLevel: 0,
+    }));
+
+    for (let i = 0; i < arr.length; i++) {
+      arr[i].flowLevel = this._randBetween(10, 101, rng(++s * 100 + i));
+    }
+
+    const minF = Math.min(...arr.map(a => a.flowLevel));
+    const maxF = Math.max(...arr.map(a => a.flowLevel));
+    if (maxF / minF < 3 && arr.length >= 2) {
+      const scaleTo = minF * (3 + rng(++s) * 4);
+      const idx = arr.findIndex(a => a.flowLevel === maxF);
+      arr[idx].flowLevel = Math.min(100, Math.round(scaleTo));
+    }
+
+    return arr;
+  },
+
+  _placeDepot(terrain, seed) {
+    const rng = (n) => this._rand(seed + 600 + n * 8387);
+
+    for (let attempts = 0; attempts < 30; attempts++) {
+      const x = this._randBetween(G.GRID_W - 10, G.GRID_W - 1, rng(attempts));
+      const y = this._randBetween(2, G.GRID_H - 3, rng(attempts + 100));
+
+      let allPlain = true;
+      for (let dy = -1; dy <= 1 && allPlain; dy++) {
+        for (let dx = -1; dx <= 0; dx++) {
+          if (!this._inBounds(x + dx, y + dy) ||
+              this._get(terrain, x + dx, y + dy) !== TERRAIN.PLAIN) {
+            allPlain = false;
+            break;
+          }
+        }
+      }
+      if (allPlain) return { x, y };
+    }
+
+    for (let x = G.GRID_W - 2; x >= G.GRID_W - 10; x--) {
+      for (let y = 2; y < G.GRID_H - 2; y++) {
+        let allPlain = true;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 0; dx++) {
+            if (!this._inBounds(x + dx, y + dy) ||
+                this._get(terrain, x + dx, y + dy) !== TERRAIN.PLAIN) {
+              allPlain = false;
+              break;
+            }
+          }
+        }
+        if (allPlain) return { x, y };
+      }
+    }
+
+    return { x: G.GRID_W - 2, y: Math.floor(G.GRID_H / 2) };
+  },
+
+  generateMap(opts) {
+    opts = opts || {};
+    const mountainRatio = opts.mountainRatio != null ? opts.mountainRatio : 0.2;
+    const riverRatio = opts.riverRatio != null ? opts.riverRatio : 0.2;
+    const seed = opts.seed || Date.now();
+
+    G.mapSeed = seed;
+
+    G.terrain = this._createArray();
+    const terrain = G.terrain;
+
+    this._generateTerrain(terrain, riverRatio, mountainRatio, seed);
+
+    G.stations = this._placeStations(terrain, seed, opts.stationCount);
+    const dp = this._placeDepot(terrain, seed);
+    G.depotX = dp.x;
+    G.depotY = dp.y;
+
+    G.platforms = [];
+    G._stationGroupsCache = null;
+    G._stationGroupsDirty = true;
+    G.stationQueues = {};
+    G.connectionMap = {};
+    G.activeSwitches = {};
+    G._switchMeta = {};
+    G._graphCachesDirty = true;
+    G.activeTrains = [];
+    G.depotTrains = [{ id: 1, carCount: 2, passengers: {} }];
+    G.nextTrainId = 2;
+    G.undoStack = [];
+    G._passengerAccum = {};
+    G._dirty = true;
+
+    deleteSave();
+  },
+};
+
+function terrainTypeAt(gx, gy) {
+  if (!G.terrain) return TERRAIN.PLAIN;
+  return G.terrain[gy * G.GRID_W + gx];
+}
+</script>
+
+<script>const MenuDecor = {
+  canvas: null,
+  ctx: null,
+  animId: null,
+  trainT: 0,
+  trainDir: 1,
+  pulseT: 0,
+  depotImg: null,
+
+  stations: [
+    { x: 70,  y: 260, color: '#E84A4A' },
+    { x: 360, y: 60,  color: '#4A90D9' },
+    { x: 360, y: 200, color: '#50B86C' },
+  ],
+  depot: { x: 430, y: 320 },
+  path: [
+    { x: 70,  y: 260 },
+    { x: 215, y: 260 },
+    { x: 265, y: 200 },
+    { x: 360, y: 60  },
+    { x: 265, y: 200 },
+    { x: 360, y: 200 },
+    { x: 430, y: 320 },
+  ],
+
+  init() {
+    this.canvas = document.getElementById('menu-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.canvas.width = 500;
+    this.canvas.height = 380;
+    this._loadDepotImg();
+    this.loop();
+  },
+
+  _loadDepotImg() {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 76" width="100" height="76">' +
+      '<rect x="2" y="3" width="96" height="72" rx="4" fill="#C8C0B4" opacity="0.7"/>' +
+      '<rect x="0" y="0" width="96" height="72" rx="4" fill="#4A4A45"/>' +
+      '<polygon points="0,0 96,0 96,18 0,18" fill="#555550"/>' +
+      '<polygon points="0,0 96,0 90,18 6,18" fill="#40403C"/>' +
+      '<line x1="6" y1="18" x2="90" y2="18" stroke="#333330" stroke-width="1.5"/>' +
+      '<rect x="6" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="23" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="40" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="57" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="74" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '</svg>';
+    this.depotImg = new Image();
+    this.depotImg.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
+  },
+
+  stop() {
+    if (this.animId) cancelAnimationFrame(this.animId);
+    this.animId = null;
+  },
+
+  loop() {
+    this.trainT += 0.0005 * this.trainDir;
+    if (this.trainT >= 1) { this.trainT = 1; this.trainDir = -1; }
+    if (this.trainT <= 0) { this.trainT = 0; this.trainDir = +1; }
+    this.pulseT += 0.025;
+    this.draw();
+    this.animId = requestAnimationFrame(() => this.loop());
+  },
+
+  pointOnPath(t) {
+    const idx = t * (this.path.length - 1);
+    const i = Math.floor(idx);
+    const f = idx - i;
+    if (i >= this.path.length - 1) return { ...this.path[this.path.length - 1] };
+    const a = this.path[i];
+    const b = this.path[i + 1];
+    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
+  },
+
+  draw() {
+    const ctx = this.ctx;
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = '#DDD8CE';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(this.path[0].x, this.path[0].y);
+    for (let i = 1; i < this.path.length; i++) {
+      ctx.lineTo(this.path[i].x, this.path[i].y);
+    }
+    ctx.stroke();
+
+    const s = 1 + Math.sin(this.pulseT) * 0.06;
+    for (const st of this.stations) {
+      ctx.fillStyle = st.color;
+      ctx.beginPath();
+      ctx.arc(st.x, st.y, 7 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ── 车辆段 ──
+    const dx = this.depot.x, dy = this.depot.y;
+    if (this.depotImg.complete) {
+      ctx.drawImage(this.depotImg, dx - 17, dy - 13, 34, 26);
+    } else {
+      ctx.fillStyle = '#8B5CF6';
+      ctx.fillRect(dx - 7, dy - 7, 14, 14);
+    }
+
+    const p = this.pointOnPath(this.trainT);
+    ctx.fillStyle = '#E8734A';
+    ctx.beginPath();
+    this.roundRect(ctx, p.x - 14, p.y - 6, 28, 12, 4);
+    ctx.fill();
+
+    const passengers = [
+      { sx: 70, sy: 240, c: '#E84A4A', phase: 0 },
+      { sx: 360, sy: 180, c: '#50B86C', phase: 1.5 },
+    ];
+    for (const px of passengers) {
+      const alpha = 0.3 + Math.abs(Math.sin(this.pulseT + px.phase)) * 0.5;
+      ctx.fillStyle = px.c;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.arc(px.sx, px.sy, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  },
+
+  roundRect(ctx, x, y, w, h, r) {
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+  },
+};
+</script>
+
+<script>const Graph = {
+  key(x, y) {
+    return x + ',' + y;
+  },
+
+  addEdge(k1, k2) {
+    if (k1 === k2) return false;
+    if (!G.connectionMap[k1]) G.connectionMap[k1] = [];
+    if (!G.connectionMap[k2]) G.connectionMap[k2] = [];
+    if (G.connectionMap[k1].includes(k2)) return false;
+    G.connectionMap[k1].push(k2);
+    G.connectionMap[k2].push(k1);
+    this.updateSwitches(k1);
+    this.updateSwitches(k2);
+    G._graphCachesDirty = true;
+    return true;
+  },
+
+  removeEdge(k1, k2) {
+    if (!G.connectionMap[k1] || !G.connectionMap[k2]) return;
+    G.connectionMap[k1] = G.connectionMap[k1].filter(k => k !== k2);
+    G.connectionMap[k2] = G.connectionMap[k2].filter(k => k !== k1);
+    this.updateSwitches(k1);
+    this.updateSwitches(k2);
+    G._graphCachesDirty = true;
+  },
+
+  hasEdge(k1, k2) {
+    if (!G.connectionMap[k1]) return false;
+    return G.connectionMap[k1].includes(k2);
+  },
+
+  getNeighbors(key) {
+    return G.connectionMap[key] || [];
+  },
+
+  getDegree(key) {
+    return (G.connectionMap[key] || []).length;
+  },
+
+  removeNode(key) {
+    if (!G.connectionMap[key]) return;
+    const neighbors = [...G.connectionMap[key]];
+    for (const nk of neighbors) {
+      G.connectionMap[nk] = G.connectionMap[nk].filter(k => k !== key);
+      this.updateSwitches(nk);
+    }
+    delete G.connectionMap[key];
+    delete G.activeSwitches[key];
+    G._graphCachesDirty = true;
+  },
+
+  updateSwitches(key) {
+    const deg = this.getDegree(key);
+    if (deg >= 3) {
+      const pairs = this.getThroughPairs(key);
+      const throughSet = new Set();
+      for (const [a, b] of pairs) { throughSet.add(a); throughSet.add(b); }
+      const ns = this.getNeighbors(key);
+      const [sx, sy] = key.split(',').map(Number);
+      const hasBranch = ns.some(nk => {
+        if (throughSet.has(nk)) return false;
+        const [nx, ny] = nk.split(',').map(Number);
+        const ndx = nx - sx, ndy = ny - sy;
+        return Math.abs(ndx) === 1 && Math.abs(ndy) === 1;
+      });
+      if (!hasBranch) {
+        delete G.activeSwitches[key];
+        return;
+      }
+      if (!(key in G.activeSwitches)) {
+        G.activeSwitches[key] = 0;
+      } else {
+        G.activeSwitches[key] = Math.min(G.activeSwitches[key], deg - 1);
+      }
+    } else {
+      delete G.activeSwitches[key];
+    }
+  },
+
+  isValidSwitchTurn(dx, dy, ndx, ndy) {
+    if (dx === ndx && dy === ndy) return true;
+    if (dx === 0 && dy === 0) return true;
+    const rdx = Math.sign(ndx), rdy = Math.sign(ndy);
+    if (Math.sign(dx) === -rdx && Math.sign(dy) === -rdy) return false;
+    if ((dx !== 0 && ndx !== 0 && Math.sign(dx) === Math.sign(ndx)) ||
+        (dy !== 0 && ndy !== 0 && Math.sign(dy) === Math.sign(ndy))) return true;
+    return false;
+  },
+
+  getSwitchExit(key, entryKey) {
+    const neighbors = this.getNeighbors(key);
+    if (neighbors.length === 0) return null;
+    const [cx, cy] = key.split(',').map(Number);
+    const [fx, fy] = entryKey ? entryKey.split(',').map(Number) : [cx, cy];
+    const edx = cx - fx, edy = cy - fy;
+
+    let idx = G.activeSwitches[key] || 0;
+    for (let i = 0; i < neighbors.length; i++) {
+      const nk = neighbors[(idx + i) % neighbors.length];
+      if (nk === entryKey) continue;
+      const [tx, ty] = nk.split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (this.isValidSwitchTurn(edx, edy, ndx, ndy)) return nk;
+    }
+    for (const nk of neighbors) {
+      if (nk === entryKey) continue;
+      const [tx, ty] = nk.split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (ndx === edx && ndy === edy) return nk;
+    }
+    for (const nk of neighbors) {
+      if (nk === entryKey) continue;
+      const [tx, ty] = nk.split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (this.isValidSwitchTurn(edx, edy, ndx, ndy)) return nk;
+    }
+    for (const nk of neighbors) {
+      if (nk !== entryKey) return nk;
+    }
+    return neighbors[0];
+  },
+
+  getSwitchExitDirection(key) {
+    const deg = this.getDegree(key);
+    if (deg < 3) return null;
+    const idx = G.activeSwitches[key] || 0;
+    const neighbors = this.getNeighbors(key);
+    const [cx, cy] = key.split(',').map(Number);
+    for (let i = 0; i < neighbors.length; i++) {
+      const nk = neighbors[(idx + i) % neighbors.length];
+      const [tx, ty] = nk.split(',').map(Number);
+      const ndx = tx - cx, ndy = ty - cy;
+      if (this.isValidSwitchTurn(0, 0, ndx, ndy)) {
+        return { x: ndx, y: ndy };
+      }
+    }
+    return null;
+  },
+
+  getThroughPairs(key) {
+    const ns = this.getNeighbors(key);
+    const pairs = [];
+    const [sx, sy] = key.split(',').map(Number);
+    for (let i = 0; i < ns.length; i++) {
+      const [ax, ay] = ns[i].split(',').map(Number);
+      const adx = ax - sx, ady = ay - sy;
+      for (let j = i + 1; j < ns.length; j++) {
+        const [bx, by] = ns[j].split(',').map(Number);
+        const bdx = bx - sx, bdy = by - sy;
+        if (adx === -bdx && ady === -bdy) {
+          pairs.push([ns[i], ns[j]]);
+        }
+      }
+    }
+    return pairs;
+  },
+
+  countBranchesNear(key, refDx, refDy, excludeKey) {
+    const ns = this.getNeighbors(key);
+    const [sx, sy] = key.split(',').map(Number);
+    let count = 0;
+    for (const nk of ns) {
+      if (nk === excludeKey) continue;
+      const [nx, ny] = nk.split(',').map(Number);
+      const ndx = nx - sx, ndy = ny - sy;
+      if ((refDx !== 0 && Math.sign(refDx) === Math.sign(ndx)) ||
+          (refDy !== 0 && Math.sign(refDy) === Math.sign(ndy))) count++;
+    }
+    return count;
+  },
+
+  findMinAnglePair(key) {
+    const ns = this.getNeighbors(key);
+    const [sx, sy] = key.split(',').map(Number);
+    let bestAngle = Infinity, bestPair = null;
+    for (let i = 0; i < ns.length; i++) {
+      const [ax, ay] = ns[i].split(',').map(Number);
+      const adx = ax - sx, ady = ay - sy;
+      for (let j = i + 1; j < ns.length; j++) {
+        const [bx, by] = ns[j].split(',').map(Number);
+        const bdx = bx - sx, bdy = by - sy;
+        const dot = adx * bdx + ady * bdy;
+        const la = Math.hypot(adx, ady), lb = Math.hypot(bdx, bdy);
+        const angle = Math.acos(Math.max(-1, Math.min(1, dot / (la * lb))));
+        if (angle < bestAngle) { bestAngle = angle; bestPair = [ns[i], ns[j]]; }
+      }
+    }
+    return bestPair;
+  },
+
+  cycleSwitch(key) {
+    const deg = this.getDegree(key);
+    if (deg < 3) return;
+    this.ensureCaches();
+    const meta = G._switchMeta[key];
+    if (!meta || meta.candidates.length === 0) return;
+    const old = G.activeSwitches[key] || 0;
+    const ns = this.getNeighbors(key);
+    const currentCandidate = ns[old % deg];
+    let curIdx = meta.candidates.indexOf(currentCandidate);
+    if (curIdx < 0) curIdx = 0;
+    const nextIdx = (curIdx + 1) % meta.candidates.length;
+    G.activeSwitches[key] = ns.indexOf(meta.candidates[nextIdx]);
+  },
+
+  ensureCaches() {
+    if (!G._graphCachesDirty) return;
+    G._graphCachesDirty = false;
+
+    const cs = G.CELL_SIZE;
+    const edges = [];
+    const drawn = new Set();
+
+    for (const [key, neighbors] of Object.entries(G.connectionMap)) {
+      for (const nKey of neighbors) {
+        const pairKey = key < nKey ? key + '|' + nKey : nKey + '|' + key;
+        if (drawn.has(pairKey)) continue;
+        drawn.add(pairKey);
+        const [x1, y1] = key.split(',').map(Number);
+        const [x2, y2] = nKey.split(',').map(Number);
+        edges.push({ x1, y1, x2, y2, hasS1: G.activeSwitches[key] !== undefined, hasS2: G.activeSwitches[nKey] !== undefined });
+      }
+    }
+
+    G._switchMeta = {};
+    for (const key of Object.keys(G.activeSwitches)) {
+      const [sx, sy] = key.split(',').map(Number);
+      const ns = this.getNeighbors(key);
+      const pairs = this.getThroughPairs(key);
+      const fixedSet = new Set();
+
+      if (pairs.length > 0) {
+        for (const [a, b] of pairs) {
+          const [ax, ay] = a.split(',').map(Number);
+          const [bx, by] = b.split(',').map(Number);
+          const adx = ax - sx, ady = ay - sy;
+          const bdx = bx - sx, bdy = by - sy;
+          const cntA = this.countBranchesNear(key, adx, ady, b);
+          const cntB = this.countBranchesNear(key, bdx, bdy, a);
+          const fixedA = (cntA < cntB) || (cntA === cntB && (adx > 0 || (adx === 0 && ady < 0)));
+          if (fixedA) { fixedSet.add(a); } else { fixedSet.add(b); }
+        }
+      } else {
+        const mp = this.findMinAnglePair(key);
+        if (mp) {
+          for (const nk of ns) {
+            if (nk !== mp[0] && nk !== mp[1]) fixedSet.add(nk);
+          }
+        }
+      }
+
+      const candidates = ns.filter(nk => !fixedSet.has(nk));
+      G._switchMeta[key] = { pairs, fixedSet, candidates };
+    }
+
+    G._edgeRenderCache = edges;
+  },
+};
+</script>
+
+<script>const Station = {
+  getStationById(id) {
+    return G.stations.find(s => s.id === id) || null;
+  },
+
+  isInStationArea(gx, gy, station) {
+    return Math.abs(gx - station.x) <= 3 && Math.abs(gy - station.y) <= 3;
+  },
+
+  findStationForGrid(gx, gy) {
+    return G.stations.find(s => this.isInStationArea(gx, gy, s));
+  },
+
+  getPlatformAt(gx, gy) {
+    return G.platforms.find(p => p.x === gx && p.y === gy) || null;
+  },
+
+  getPlatformAdjacent(gx, gy) {
+    for (const plat of G.platforms) {
+      if (plat.dir === 'h' && plat.x === gx && (plat.y === gy + 1 || plat.y === gy - 1)) return plat;
+      if (plat.dir === 'v' && plat.y === gy && (plat.x === gx + 1 || plat.x === gx - 1)) return plat;
+    }
+    return null;
+  },
+
+  platformAtKey(key) {
+    const [x, y] = key.split(',').map(Number);
+    return this.getPlatformAdjacent(x, y);
+  },
+
+  addPlatform(gx, gy, dir) {
+    const station = this.findStationForGrid(gx, gy);
+    if (!station) return 'err_not_in_area';
+    if (this.getPlatformAt(gx, gy)) return 'err_dup';
+    if (G.platformComponents <= 0) return 'err_no_comp';
+
+    G.platforms.push({ x: gx, y: gy, dir: dir, stationId: station.id });
+    G._stationGroupsDirty = true;
+    G.platformComponents--;
+    AudioMgr.play('platform_place');
+    return { type: 'add_platform', x: gx, y: gy, dir: dir, stationId: station.id };
+  },
+
+  removePlatform(gx, gy) {
+    const idx = G.platforms.findIndex(p => p.x === gx && p.y === gy);
+    if (idx < 0) return null;
+    const removed = G.platforms.splice(idx, 1)[0];
+    G._stationGroupsDirty = true;
+    G.platformComponents++;
+    return removed;
+  },
+
+  hasTrackConnection(plat) {
+    if (plat.dir === 'h') {
+      const uk = Graph.key(plat.x, plat.y - 1);
+      const dk = Graph.key(plat.x, plat.y + 1);
+      return (G.connectionMap[uk] && Graph.getDegree(uk) > 0) ||
+             (G.connectionMap[dk] && Graph.getDegree(dk) > 0);
+    }
+    if (plat.dir === 'v') {
+      const lk = Graph.key(plat.x - 1, plat.y);
+      const rk = Graph.key(plat.x + 1, plat.y);
+      return (G.connectionMap[lk] && Graph.getDegree(lk) > 0) ||
+             (G.connectionMap[rk] && Graph.getDegree(rk) > 0);
+    }
+    return false;
+  },
+
+  stationHasTrackConnection(stationId) {
+    const plats = G.platforms.filter(p => p.stationId === stationId);
+    return plats.some(p => this.hasTrackConnection(p));
+  },
+
+  getStationGroups() {
+    if (!G._stationGroupsDirty && G._stationGroupsCache) return G._stationGroupsCache;
+    G._stationGroupsDirty = false;
+    const groups = {};
+    for (const plat of G.platforms) {
+      if (!groups[plat.stationId]) {
+        const st = G.stations.find(s => s.id === plat.stationId);
+        groups[plat.stationId] = { stationId: plat.stationId, platforms: [], color: st ? st.color : '#999' };
+      }
+      groups[plat.stationId].platforms.push(plat);
+    }
+    for (const [sid, grp] of Object.entries(groups)) {
+      const xs = grp.platforms.map(p => p.x);
+      const ys = grp.platforms.map(p => p.y);
+      grp.bounds = {
+        minX: Math.min(...xs),
+        maxX: Math.max(...xs),
+        minY: Math.min(...ys),
+        maxY: Math.max(...ys),
+      };
+      grp.cx = (grp.bounds.minX + grp.bounds.maxX) / 2;
+      grp.cy = (grp.bounds.minY + grp.bounds.maxY) / 2;
+    }
+    G._stationGroupsCache = groups;
+    return groups;
+  },
+
+  generatePassengers() {},
+
+  tickPassengers(dt) {
+    const RATE = 1.0;
+    for (const st of G.stations) {
+      if (!this.stationHasTrackConnection(st.id)) continue;
+      if (st.id in G._passengerAccum === false) G._passengerAccum[st.id] = 0;
+      G._passengerAccum[st.id] += RATE * (G.satisfaction / 100) * dt;
+      while (G._passengerAccum[st.id] >= 1) {
+        G._passengerAccum[st.id] -= 1;
+        G.totalGeneratedToday++;
+        const others = G.stations.filter(s => s.id !== st.id && this.stationHasTrackConnection(s.id));
+        if (others.length === 0) continue;
+        const dest = others[Math.floor(Math.random() * others.length)];
+        if (!G.stationQueues[st.id]) G.stationQueues[st.id] = {};
+        G.stationQueues[st.id][dest.id] = (G.stationQueues[st.id][dest.id] || 0) + 1;
+      }
+    }
+  },
+
+  boardPassengers(stationId, trainDestIds) {
+    if (!G.stationQueues[stationId]) return {};
+    const boarded = {};
+    for (const destId of Object.keys(G.stationQueues[stationId])) {
+      if (G.stationQueues[stationId][destId] === 0) continue;
+      if (trainDestIds.includes(destId)) {
+        boarded[destId] = G.stationQueues[stationId][destId];
+        G.stationQueues[stationId][destId] = 0;
+      }
+    }
+    for (const destId of Object.keys(boarded)) {
+      delete G.stationQueues[stationId][destId];
+    }
+    if (Object.keys(G.stationQueues[stationId]).length === 0) {
+      delete G.stationQueues[stationId];
+    }
+    return boarded;
+  },
+
+  alightPassengers(train, stationId) {
+    let count = 0;
+    if (train.passengers[stationId]) {
+      count = train.passengers[stationId];
+      delete train.passengers[stationId];
+    }
+    return count;
+  },
+};
+</script>
+
+<script>const Train = {
+  SPEED: 1.0,
+  ACCEL: 1.5,
+  DECEL: 1.2,
+
+  edgeDistance(k1, k2) {
+    const [x1, y1] = k1.split(',').map(Number);
+    const [x2, y2] = k2.split(',').map(Number);
+    return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  },
+
+  _advanceOccupied(train, key) {
+    if (G.cellOccupancy[key] && G.cellOccupancy[key] !== train.id) return false;
+    G.cellOccupancy[key] = train.id;
+    if (!train.occupiedCells) train.occupiedCells = [];
+    if (train.occupiedCells[0] !== key) {
+      train.occupiedCells.unshift(key);
+      const limit = train.carCount + 1;
+      while (train.occupiedCells.length > limit) {
+        const old = train.occupiedCells.pop();
+        this._releaseCell(train, old);
+      }
+    }
+    return true;
+  },
+
+  _releaseCell(train, key) {
+    if (G.cellOccupancy[key] === train.id) delete G.cellOccupancy[key];
+  },
+
+  maxLoad(train) {
+    return train.carCount * 20;
+  },
+
+  reachableStationIds(train) {
+    return G.stations.map(s => s.id).filter(() => true);
+  },
+
+  create(carCount) {
+    return {
+      id: G.nextTrainId++,
+      carCount: carCount,
+      fromKey: null,
+      toKey: null,
+      t: 0,
+      speed: 0,
+      state: 'in_depot',
+      dockedTimer: 0,
+      passengers: {},
+      lastDockedStationId: null,
+      trail: [],
+      occupiedCells: [],
+      reversed: false,
+      nextDesiredKey: null,
+      prevKey: null,
+      _lastBrakeSfx: 0,
+    };
+  },
+
+  _playBrakeSound(train) {
+    const now = performance.now();
+    if (now - (train._lastBrakeSfx || 0) > 2000) {
+      train._lastBrakeSfx = now;
+      AudioMgr.play('emergency_brake');
+    }
+  },
+
+  dispatch(train) {
+    const depotKey = Graph.key(G.depotX, G.depotY);
+    const neighbors = Graph.getNeighbors(depotKey);
+    if (neighbors.length === 0) return false;
+
+    const firstKey = neighbors[0];
+    this._advanceOccupied(train, depotKey);
+    if (!this._advanceOccupied(train, firstKey)) {
+      train.fromKey = depotKey;
+      train.toKey = null;
+      train.nextDesiredKey = firstKey;
+      train.state = 'waiting';
+    } else {
+      train.fromKey = depotKey;
+      train.toKey = firstKey;
+      train.state = 'moving';
+      train.nextDesiredKey = null;
+    }
+    train.t = 0;
+    train.speed = 0;
+    train.dockedTimer = 0;
+    train.passengers = {};
+    train.lastDockedStationId = null;
+    G.activeTrains.push(train);
+    AudioMgr.play('train_departure');
+    return true;
+  },
+
+  recall(train) {
+    for (const cell of (train.occupiedCells || [])) {
+      this._releaseCell(train, cell);
+    }
+    train.occupiedCells = [];
+    train.nextDesiredKey = null;
+    const idx = G.activeTrains.indexOf(train);
+    if (idx >= 0) {
+      G.activeTrains.splice(idx, 1);
+      G.depotTrains.push(train);
+      train.state = 'in_depot';
+    }
+  },
+
+  update(train, dt) {
+    if (train.state === 'docked') {
+      train.dockedTimer -= dt;
+      if (train.dockedTimer <= 0) {
+        train.dockedTimer = 0;
+        if (!this._advanceOccupied(train, train.toKey)) {
+          train.nextDesiredKey = train.toKey;
+          train.toKey = null;
+          train.state = 'waiting';
+        } else {
+          train.state = 'moving';
+        }
+        train.t = 0;
+        train.speed = 0;
+      }
+      return;
+    }
+
+    if (train.state === 'waiting') {
+      if (!train.nextDesiredKey) return;
+      if (this._advanceOccupied(train, train.nextDesiredKey)) {
+        train.toKey = train.nextDesiredKey;
+        train.nextDesiredKey = null;
+        train.t = 0;
+        train.speed = 0;
+        train.state = 'moving';
+        this.recordTrail(train);
+      }
+      return;
+    }
+
+    if (train.state !== 'moving') return;
+
+    const dist = this.edgeDistance(train.fromKey, train.toKey);
+    const travelLeft = (1 - train.t) * dist;
+
+    let needStop = false;
+    if (G.cellOccupancy[train.toKey] && G.cellOccupancy[train.toKey] !== train.id) {
+      needStop = true;
+    }
+    if (travelLeft < 2) {
+      const nextKey = train.toKey;
+      const exits = Graph.getNeighbors(nextKey).filter(nk => nk !== train.fromKey);
+      if (exits.length === 0) {
+        needStop = true;
+      } else if (this.isPlatformNode(nextKey)) {
+        const plat = Station.platformAtKey(nextKey);
+        if (plat && plat.stationId !== train.lastDockedStationId) {
+          const hasFurther = exits.some(k => {
+            const np = Station.platformAtKey(k);
+            return np && np.stationId === plat.stationId;
+          });
+          if (!hasFurther) needStop = true;
+        }
+      }
+      if (!needStop) {
+        let aheadExit = null;
+        if (exits.length === 1) {
+          aheadExit = exits[0];
+        } else if (exits.length >= 2) {
+          aheadExit = Graph.getSwitchExit(nextKey, train.fromKey);
+          if (!aheadExit) aheadExit = exits[0];
+        }
+        if (aheadExit) {
+          if (G.cellOccupancy[aheadExit] && G.cellOccupancy[aheadExit] !== train.id) {
+            needStop = true;
+          }
+        }
+      }
+    }
+
+    const DECEL_START = 0.7, DECEL_END = 0.06, MIN_SPEED = 0.04;
+    let targetSpeed;
+    if (!needStop || travelLeft > DECEL_START) {
+      targetSpeed = this.SPEED;
+    } else {
+      if (travelLeft <= DECEL_END) {
+        if (G.cellOccupancy[train.toKey] && G.cellOccupancy[train.toKey] !== train.id) {
+          this._playBrakeSound(train);
+          train.speed = 0; return;
+        }
+        this.arriveNode(train, train.toKey, train.fromKey); return;
+      }
+      const frac = (travelLeft - DECEL_END) / (DECEL_START - DECEL_END);
+      targetSpeed = MIN_SPEED + frac * (this.SPEED - MIN_SPEED);
+    }
+
+    if (train.speed > targetSpeed)
+      train.speed = Math.max(targetSpeed, train.speed - this.DECEL * dt);
+    else if (train.speed < targetSpeed)
+      train.speed = Math.min(targetSpeed, train.speed + this.ACCEL * dt);
+
+    train.t += (train.speed * dt) / dist;
+    if (train.t >= 1) {
+      train.t = 1;
+      if (G.cellOccupancy[train.toKey] && G.cellOccupancy[train.toKey] !== train.id) {
+        this._playBrakeSound(train);
+        train.speed = 0; return;
+      }
+      this.arriveNode(train, train.toKey, train.fromKey);
+    }
+
+    if (train.state === 'moving') {
+      this.recordTrail(train);
+    }
+  },
+
+  recordTrail(train) {
+    if (!train.trail) train.trail = [];
+    if (!train.fromKey || !train.toKey) return;
+    const [x1, y1] = train.fromKey.split(',').map(Number);
+    const [x2, y2] = train.toKey.split(',').map(Number);
+    const wx1 = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const wy1 = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const wx2 = x2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const wy2 = y2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const px = wx1 + (wx2 - wx1) * train.t;
+    const py = wy1 + (wy2 - wy1) * train.t;
+    const angle = Math.atan2(wy2 - wy1, wx2 - wx1);
+    train.trail.unshift({ x: px, y: py, angle });
+    if (train.trail.length > 500) train.trail.length = 500;
+  },
+
+  isPlatformNode(key) {
+    return !!Station.platformAtKey(key);
+  },
+
+  arriveNode(train, nodeKey, fromKey) {
+    if (nodeKey === Graph.key(G.depotX, G.depotY)) {
+      for (const cell of (train.occupiedCells || [])) {
+        this._releaseCell(train, cell);
+      }
+      train.occupiedCells = [];
+      train.nextDesiredKey = null;
+      train.state = 'docked';
+      train.dockedTimer = 3;
+      train.fromKey = nodeKey;
+      train.toKey = fromKey;
+      train.t = 0;
+      train.speed = 0;
+      train.lastDockedStationId = null;
+      train.trail = [];
+      return;
+    }
+
+    const neighbors = Graph.getNeighbors(nodeKey);
+    const exits = neighbors.filter(nk => nk !== fromKey);
+    let nextKey = null;
+    if (exits.length === 1) {
+      nextKey = exits[0];
+    } else if (exits.length >= 2) {
+      nextKey = Graph.getSwitchExit(nodeKey, fromKey);
+      if (!nextKey || !exits.includes(nextKey)) nextKey = exits[0];
+    }
+
+    if (nextKey === fromKey) { this.reverseTrain(train); return; }
+
+    const plat = Station.platformAtKey(nodeKey);
+    const stationId = plat ? plat.stationId : null;
+
+    if (plat) {
+      if (stationId !== train.lastDockedStationId) {
+        const nextPlat = nextKey ? Station.platformAtKey(nextKey) : null;
+        if (nextPlat && nextPlat.stationId === stationId && nextKey) {
+          this._tryEnterCell(train, nodeKey, nextKey, fromKey);
+        } else {
+          train.lastDockedStationId = stationId;
+          const alighted = Station.alightPassengers(train, stationId);
+          G.passengersDeliveredToday += alighted;
+          G.totalPassengersDelivered += alighted;
+
+          const capacity = this.maxLoad(train);
+          const currentLoad = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+          const canBoard = capacity > currentLoad;
+          const queue = G.stationQueues[stationId] || {};
+          const hasMatch = Object.keys(queue).some(destId => queue[destId] > 0);
+
+          if (canBoard && hasMatch) {
+            this._advanceOccupied(train, nextKey || fromKey);
+            train.fromKey = nodeKey;
+            train.toKey = nextKey || fromKey;
+            const platformCells = G.platforms.filter(p => p.stationId === stationId).length;
+            const penalty = train.carCount > platformCells ? 1.7 : 1;
+            train.dockedTimer = train.carCount * 2.5 * penalty;
+            train.t = 0;
+            train.speed = 0;
+            train.state = 'docked';
+            AudioMgr.play('train_arrive');
+            AudioMgr.play('train_board');
+            this.boardAtStation(train, nodeKey);
+          } else if (nextKey) {
+            this._tryEnterCell(train, nodeKey, nextKey, fromKey);
+          } else {
+            this.reverseTrain(train);
+          }
+        }
+      } else if (nextKey) {
+        this._tryEnterCell(train, nodeKey, nextKey, fromKey);
+      } else {
+        this.reverseTrain(train);
+      }
+    } else if (nextKey) {
+      this._tryEnterCell(train, nodeKey, nextKey, fromKey);
+    } else {
+      train.lastDockedStationId = null;
+      this.reverseTrain(train);
+    }
+  },
+
+  _tryEnterCell(train, nodeKey, nextKey, prevKey) {
+    if (!this._advanceOccupied(train, nextKey)) {
+      if (train.occupiedCells.length > 0) {
+        const old = train.occupiedCells.pop();
+        this._releaseCell(train, old);
+      }
+      train.state = 'waiting';
+      train.fromKey = nodeKey;
+      train.toKey = null;
+      train.nextDesiredKey = nextKey;
+      train.prevKey = prevKey || null;
+      train.t = 0;
+      train.speed = 0;
+      return false;
+    }
+    train.state = 'moving';
+    train.fromKey = nodeKey;
+    train.toKey = nextKey;
+    train.t = 0;
+    return true;
+  },
+
+  reverseTrain(train) {
+    train.lastDockedStationId = null;
+    const tr = train.trail || [];
+    for (let i = 0; i < tr.length; i++) {
+      tr[i].angle += Math.PI;
+      if (tr[i].angle > Math.PI) tr[i].angle -= 2 * Math.PI;
+      if (tr[i].angle < -Math.PI) tr[i].angle += 2 * Math.PI;
+    }
+    train.reversed = !train.reversed;
+    if (train.toKey === null) {
+      if (!train.prevKey || !this._advanceOccupied(train, train.prevKey)) return;
+      train.toKey = train.prevKey;
+      train.nextDesiredKey = null;
+      train.prevKey = null;
+      train.t = 0;
+      train.speed = 0;
+      train.state = 'moving';
+      return;
+    }
+    const targetKey = train.fromKey;
+    train.fromKey = train.toKey;
+    train.toKey = targetKey;
+    train.occupiedCells.reverse();
+    train.t = 0;
+    train.speed = 0;
+    train.state = 'moving';
+  },
+
+  boardAtStation(train, nodeKey) {
+    const plat = Station.platformAtKey(nodeKey);
+    if (!plat) return 0;
+    const stationId = plat.stationId;
+    if (!G.stationQueues[stationId]) return 0;
+
+    const capacity = this.maxLoad(train);
+    const currentLoad = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+    const remaining = capacity - currentLoad;
+    if (remaining <= 0) return 0;
+
+    const reach = this.reachableStationIds(train);
+    const boarded = Station.boardPassengers(stationId, reach);
+    let total = 0;
+    for (const [destId, count] of Object.entries(boarded)) {
+      const take = Math.min(count, remaining - total);
+      if (take > 0) {
+        train.passengers[destId] = (train.passengers[destId] || 0) + take;
+        total += take;
+        if (count > take) {
+          if (!G.stationQueues[stationId]) G.stationQueues[stationId] = {};
+          G.stationQueues[stationId][destId] = (G.stationQueues[stationId][destId] || 0) + (count - take);
+        }
+      }
+    }
+    return total;
+  },
+};
+</script>
+
+<script>const Renderer = {
+  canvas: null,
+  ctx: null,
+  depotImg: null,
+  _congestionWarn: {},
+
+  init(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this._loadDepotImg();
+  },
+
+  _loadDepotImg() {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 76" width="100" height="76">' +
+      '<rect x="2" y="3" width="96" height="72" rx="4" fill="#C8C0B4" opacity="0.7"/>' +
+      '<rect x="0" y="0" width="96" height="72" rx="4" fill="#4A4A45"/>' +
+      '<polygon points="0,0 96,0 96,18 0,18" fill="#555550"/>' +
+      '<polygon points="0,0 96,0 90,18 6,18" fill="#40403C"/>' +
+      '<line x1="6" y1="18" x2="90" y2="18" stroke="#333330" stroke-width="1.5"/>' +
+      '<rect x="6" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="23" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="40" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="57" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '<rect x="74" y="50" width="14" height="18" rx="2" fill="#E8734A"/>' +
+      '</svg>';
+    this.depotImg = new Image();
+    this.depotImg.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
+  },
+
+  resize() {
+    const topBar = document.getElementById('top-bar');
+    const bottomBar = document.getElementById('bottom-bar');
+    const sidebar = document.getElementById('sidebar');
+    const sbW = sidebar.classList.contains('hidden') ? 0 : sidebar.offsetWidth;
+    const w = document.body.clientWidth - sbW;
+    const h = document.body.clientHeight - topBar.offsetHeight - bottomBar.offsetHeight;
+    this.canvas.width = w;
+    this.canvas.height = h;
+    this.canvas.style.width = w + 'px';
+    this.canvas.style.height = h + 'px';
+    this.canvas.style.left = sbW + 'px';
+    if (G.offsetX === 0) {
+      this.centerCamera();
+    }
+  },
+
+  centerCamera() {
+    const worldCX = G.CELL_SIZE * G.GRID_W / 2;
+    const worldCY = G.CELL_SIZE * G.GRID_H / 2;
+    G.offsetX = this.canvas.width / 2 - worldCX * G.zoom;
+    G.offsetY = this.canvas.height / 2 - worldCY * G.zoom;
+  },
+
+  render() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.translate(G.offsetX, G.offsetY);
+    ctx.scale(G.zoom, G.zoom);
+
+    this.drawTerrain(ctx);
+    this.drawGrid(ctx);
+    this.drawStationGroups(ctx);
+    this.drawStationAreas(ctx);
+    this.drawTracks(ctx);
+    this.drawSwitchConnections(ctx);
+    this.drawPlatforms(ctx);
+    this.drawPreview(ctx);
+    this.drawSwitches(ctx);
+    this.drawDepot(ctx);
+    this.drawTrains(ctx);
+    this.drawPassengerNumbers(ctx);
+    this.drawCursorHighlight(ctx);
+
+    ctx.restore();
+  },
+
+  drawTerrain(ctx) {
+    if (!G.terrain) return;
+    const cs = G.CELL_SIZE;
+    const invZ = 1 / G.zoom;
+    const visLeft = (-G.offsetX) * invZ - cs;
+    const visTop = (-G.offsetY) * invZ - cs;
+    const visRight = (this.canvas.width - G.offsetX) * invZ + cs;
+    const visBottom = (this.canvas.height - G.offsetY) * invZ + cs;
+
+    const startX = Math.max(0, Math.floor(visLeft / cs));
+    const startY = Math.max(0, Math.floor(visTop / cs));
+    const endX = Math.min(G.GRID_W - 1, Math.ceil(visRight / cs));
+    const endY = Math.min(G.GRID_H - 1, Math.ceil(visBottom / cs));
+
+    for (let gy = startY; gy <= endY; gy++) {
+      for (let gx = startX; gx <= endX; gx++) {
+        const t = G.terrain[gy * G.GRID_W + gx];
+        if (t === TERRAIN.RIVER) {
+          ctx.fillStyle = '#8CB8D8';
+          ctx.globalAlpha = 0.60;
+          ctx.fillRect(gx * cs, gy * cs, cs, cs);
+          ctx.globalAlpha = 1;
+        } else if (t === TERRAIN.MOUNTAIN) {
+          ctx.fillStyle = '#7DA050';
+          ctx.globalAlpha = 0.65;
+          ctx.fillRect(gx * cs, gy * cs, cs, cs);
+
+          const cx = gx * cs + cs / 2;
+          const cy = gy * cs + cs / 2;
+          const hs = cs * 0.28;
+          ctx.fillStyle = '#5C7838';
+          ctx.globalAlpha = 0.75;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - hs);
+          ctx.lineTo(cx + hs * 0.9, cy + hs * 0.55);
+          ctx.lineTo(cx - hs * 0.9, cy + hs * 0.55);
+          ctx.closePath();
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+  },
+
+  drawGrid(ctx) {
+      ctx.strokeStyle = '#B8A898';
+      ctx.lineWidth = 0.7;
+    const cs = G.CELL_SIZE;
+    const invZ = 1 / G.zoom;
+
+    const visLeft = (-G.offsetX) * invZ - cs;
+    const visRight = (this.canvas.width - G.offsetX) * invZ + cs;
+    const visTop = (-G.offsetY) * invZ - cs;
+    const visBottom = (this.canvas.height - G.offsetY) * invZ + cs;
+
+    const startX = Math.max(0, Math.floor(visLeft / cs) * cs);
+    const startY = Math.max(0, Math.floor(visTop / cs) * cs);
+    const endX = Math.min(G.GRID_W * cs, Math.ceil(visRight / cs) * cs);
+    const endY = Math.min(G.GRID_H * cs, Math.ceil(visBottom / cs) * cs);
+
+    ctx.beginPath();
+    for (let x = startX; x <= endX; x += cs) {
+      ctx.moveTo(x, startY);
+      ctx.lineTo(x, endY);
+    }
+    for (let y = startY; y <= endY; y += cs) {
+      ctx.moveTo(startX, y);
+      ctx.lineTo(endX, y);
+    }
+    ctx.stroke();
+  },
+
+  drawStationGroups(ctx) {
+    const groups = Station.getStationGroups();
+    const cs = G.CELL_SIZE;
+
+    for (const [sid, grp] of Object.entries(groups)) {
+      if (grp.platforms.length === 0) continue;
+      const color = grp.color;
+
+      const grid = {};
+      for (const p of grp.platforms) grid[p.x + ',' + p.y] = p;
+
+      const visited = new Set();
+
+      for (const plat of grp.platforms) {
+        const key = plat.x + ',' + plat.y;
+        if (visited.has(key)) continue;
+
+        const comp = [];
+        const q = [plat];
+        visited.add(key);
+        while (q.length) {
+          const p = q.shift();
+          comp.push(p);
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nk = (p.x + dx) + ',' + (p.y + dy);
+            if (visited.has(nk)) continue;
+            if (grid[nk]) { visited.add(nk); q.push(grid[nk]); }
+          }
+        }
+
+        const xs = comp.map(p => p.x);
+        const ys = comp.map(p => p.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        const dir = comp[0].dir;
+        const sameDir = comp.every(p => p.dir === dir) && comp.length > 1;
+
+        if (dir === 'h' && sameDir && comp.every(p => p.y === minY)) {
+          const x = minX * cs + cs * 0.03;
+          const y = minY * cs + cs * 0.30;
+          const w = (maxX - minX + 1) * cs * 0.94;
+          const h = cs * 0.40;
+          this._drawPlatBlock(ctx, x, y, w, h, color, 'h');
+        } else if (dir === 'v' && sameDir && comp.every(p => p.x === minX)) {
+          const x = minX * cs + cs * 0.30;
+          const y = minY * cs + cs * 0.03;
+          const w = cs * 0.40;
+          const h = (maxY - minY + 1) * cs * 0.94;
+          this._drawPlatBlock(ctx, x, y, w, h, color, 'v');
+        } else {
+          for (const p of comp) {
+            if (p.dir === 'h') {
+              const x = p.x * cs + cs * 0.03;
+              const y = p.y * cs + cs * 0.30;
+              this._drawPlatBlock(ctx, x, y, cs * 0.94, cs * 0.40, color, 'h');
+            } else {
+              const x = p.x * cs + cs * 0.30;
+              const y = p.y * cs + cs * 0.03;
+              this._drawPlatBlock(ctx, x, y, cs * 0.40, cs * 0.94, color, 'v');
+            }
+          }
+        }
+      }
+    }
+  },
+
+  _drawPlatBlock(ctx, x, y, w, h, color, orientation) {
+    ctx.fillStyle = '#A8A090';
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 3);
+    ctx.fill();
+
+    ctx.strokeStyle = '#787068';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 3);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#E8C820';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (orientation === 'h') {
+      ctx.moveTo(x + 4, y + 3);
+      ctx.lineTo(x + w - 4, y + 3);
+      ctx.moveTo(x + 4, y + h - 3);
+      ctx.lineTo(x + w - 4, y + h - 3);
+    } else {
+      ctx.moveTo(x + 3, y + 4);
+      ctx.lineTo(x + 3, y + h - 4);
+      ctx.moveTo(x + w - 3, y + 4);
+      ctx.lineTo(x + w - 3, y + h - 4);
+    }
+    ctx.stroke();
+  },
+
+  drawTracks(ctx) {
+    Graph.ensureCaches();
+    const edges = G._edgeRenderCache;
+    if (!edges || edges.length === 0) return;
+
+    ctx.strokeStyle = '#555555';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    const cs = G.CELL_SIZE;
+
+    ctx.beginPath();
+    for (const e of edges) {
+      let ax = e.x1 * cs + cs / 2, ay = e.y1 * cs + cs / 2;
+      let bx = e.x2 * cs + cs / 2, by = e.y2 * cs + cs / 2;
+
+      if (e.hasS1) {
+        const gap = cs * 0.33;
+        const d = Math.hypot(bx - ax, by - ay);
+        if (d > 0.001) { ax += (bx - ax) / d * gap; ay += (by - ay) / d * gap; }
+      }
+      if (e.hasS2) {
+        const gap = cs * 0.33;
+        const d = Math.hypot(ax - bx, ay - by);
+        if (d > 0.001) { bx += (ax - bx) / d * gap; by += (ay - by) / d * gap; }
+      }
+
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
+    }
+    ctx.stroke();
+
+    if (G.selectedItem && G.selectedItem.type === 'edge') {
+      const [x1, y1] = G.selectedItem.k1.split(',').map(Number);
+      const [x2, y2] = G.selectedItem.k2.split(',').map(Number);
+      ctx.strokeStyle = '#E8734A';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(x1 * cs + cs / 2, y1 * cs + cs / 2);
+      ctx.lineTo(x2 * cs + cs / 2, y2 * cs + cs / 2);
+      ctx.stroke();
+    }
+  },
+
+  drawPreview(ctx) {
+    this.drawTrackPreview(ctx);
+    this.drawPlatformPreview(ctx);
+  },
+
+  drawTrackPreview(ctx) {
+    if (G.selectedTool !== 'track') return;
+    if (!G.trackDrag.active) return;
+    if (G.mouseGridX < 0 || G.mouseGridY < 0) return;
+
+    const sx = G.trackDrag.startX, sy = G.trackDrag.startY;
+    const ex = G.mouseGridX, ey = G.mouseGridY;
+    if (sx < 0 || sy < 0) return;
+    if (sx === ex && sy === ey) return;
+
+    const dx = ex - sx, dy = ey - sy;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    const diag = Math.min(adx, ady);
+    const straight = Math.max(adx, ady) - diag;
+    const sdx = Math.sign(dx), sdy = Math.sign(dy);
+    const cs = G.CELL_SIZE;
+
+    ctx.strokeStyle = '#999999';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sx * cs + cs / 2, sy * cs + cs / 2);
+
+    let cx = sx, cy = sy;
+    for (let i = 0; i < diag; i++) {
+      cx += sdx; cy += sdy;
+      ctx.lineTo(cx * cs + cs / 2, cy * cs + cs / 2);
+    }
+    let ddx = 0, ddy = 0;
+    if (adx > ady) ddx = sdx;
+    else if (ady > adx) ddy = sdy;
+    for (let i = 0; i < straight; i++) {
+      cx += ddx; cy += ddy;
+      ctx.lineTo(cx * cs + cs / 2, cy * cs + cs / 2);
+    }
+    ctx.stroke();
+  },
+
+  drawPlatformPreview(ctx) {
+    if (G.selectedTool !== 'platform') return;
+    if (!G.platDrag.active) return;
+    if (G.mouseGridX < 0 || G.mouseGridY < 0) return;
+
+    const gx = G.mouseGridX, gy = G.mouseGridY;
+    const dir = G.platDrag.dir || 'h';
+    const cx = gx * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const cy = gy * G.CELL_SIZE + G.CELL_SIZE / 2;
+
+    const station = Station.findStationForGrid(gx, gy);
+    const hasPlat = !!Station.getPlatformAt(gx, gy);
+
+    if (!station || hasPlat || G.platformComponents <= 0) {
+      ctx.fillStyle = 'rgba(232,74,74,0.4)';
+      ctx.strokeStyle = '#E84A4A';
+    } else {
+      ctx.fillStyle = station.color + '40';
+      ctx.strokeStyle = station.color;
+    }
+
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    const hw = dir === 'h' ? G.CELL_SIZE * 0.35 : G.CELL_SIZE * 0.15;
+    const hh = dir === 'h' ? G.CELL_SIZE * 0.15 : G.CELL_SIZE * 0.35;
+    ctx.beginPath();
+    ctx.roundRect(cx - hw, cy - hh, hw * 2, hh * 2, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+  },
+
+  drawSwitches(ctx) {
+    const cs = G.CELL_SIZE;
+    for (const key of Object.keys(G.activeSwitches)) {
+      const [x, y] = key.split(',').map(Number);
+      const cx = x * cs + cs / 2;
+      const cy = y * cs + cs / 2;
+
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  },
+
+  drawSwitchConnections(ctx) {
+    Graph.ensureCaches();
+    const cs = G.CELL_SIZE;
+    ctx.strokeStyle = '#555555';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+
+    for (const key of Object.keys(G.activeSwitches)) {
+      const [sx, sy] = key.split(',').map(Number);
+      const cx = sx * cs + cs / 2;
+      const cy = sy * cs + cs / 2;
+      const dir = Graph.getSwitchExitDirection(key);
+      const len = cs * 0.36;
+
+      const meta = G._switchMeta[key];
+      if (!meta) continue;
+      const neighbors = Graph.getNeighbors(key);
+
+      for (const nk of neighbors) {
+        const [nx, ny] = nk.split(',').map(Number);
+        const ndx = nx - sx, ndy = ny - sy;
+        const isFixed = meta.fixedSet.has(nk);
+        const isSelected = dir && ndx === dir.x && ndy === dir.y;
+
+        if (isFixed || isSelected) {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + ndx * len, cy + ndy * len);
+          ctx.stroke();
+        }
+      }
+    }
+  },
+
+  drawStationAreas(ctx) {
+    for (const st of G.stations) {
+      const cs = G.CELL_SIZE;
+      const x0 = (st.x - 3) * cs;
+      const y0 = (st.y - 3) * cs;
+      const size = 6 * cs;
+
+      ctx.fillStyle = st.color + '18';
+      ctx.fillRect(x0, y0, size, size);
+
+      ctx.strokeStyle = st.color + '50';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(x0 + 1, y0 + 1, size - 2, size - 2);
+      ctx.setLineDash([]);
+    }
+  },
+
+  drawPlatforms(ctx) {
+    for (const plat of G.platforms) {
+      if (Station.hasTrackConnection(plat)) continue;
+      const cx = plat.x * G.CELL_SIZE + G.CELL_SIZE / 2;
+      const cy = plat.y * G.CELL_SIZE + G.CELL_SIZE / 2;
+      ctx.fillStyle = '#E84A4A';
+      ctx.font = `bold ${G.CELL_SIZE * 0.22}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('无轨道', cx, cy + G.CELL_SIZE * 0.3);
+    }
+  },
+
+  drawDepot(ctx) {
+    const cs = G.CELL_SIZE;
+    const x0 = (G.depotX - 1) * cs, y0 = (G.depotY - 1) * cs;
+    const size = cs * 2;
+    ctx.drawImage(this.depotImg, x0 + cs * 0.04, y0 + cs * 0.06, size * 0.92, size * 0.88);
+  },
+
+  drawTrains(ctx) {
+    for (const train of G.activeTrains) {
+      if (!train.fromKey) continue;
+
+      const carW = G.CELL_SIZE * 0.92;
+      const carH = G.CELL_SIZE * 0.45;
+      const gap = 4;
+
+      let trail = train.trail || [];
+      if (trail.length < 2) {
+        trail = this._waitingTrail(train);
+      }
+
+      for (let c = 0; c < train.carCount; c++) {
+        const carIndex = train.reversed ? train.carCount - 1 - c : c;
+        const targetDist = carIndex * (carW + gap);
+        const pos = this.trailPosAt(trail, targetDist);
+        if (!pos) break;
+
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate(pos.angle);
+
+        ctx.fillStyle = '#E8734A';
+        ctx.beginPath();
+        this.roundRect(ctx, -carW / 2, -carH / 2, carW, carH, 4);
+        ctx.fill();
+        ctx.strokeStyle = '#D06040';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        this.roundRect(ctx, -carW / 2, -carH / 2, carW, carH, 4);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      if (trail.length > 0) {
+        const lead = trail[0];
+        ctx.save();
+        ctx.translate(lead.x, lead.y);
+        ctx.rotate(lead.angle);
+
+        const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+        const max = Train.maxLoad(train);
+        ctx.fillStyle = '#FFF';
+        ctx.font = `bold ${G.CELL_SIZE * 0.24}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(load + '/' + max, 0, 1);
+
+        ctx.restore();
+      }
+    }
+  },
+
+  _waitingTrail(train) {
+    const [fx, fy] = train.fromKey.split(',').map(Number);
+    const cs = G.CELL_SIZE;
+    const hx = fx * cs + cs / 2;
+    const hy = fy * cs + cs / 2;
+    let angle = 0;
+    const dirKey = train.nextDesiredKey || train.toKey;
+    if (dirKey) {
+      const [nx, ny] = dirKey.split(',').map(Number);
+      angle = Math.atan2(ny - fy, nx - fx);
+    }
+    const head = { x: hx, y: hy, angle: angle };
+    const carLen = cs * 0.92 + 4;
+    const tail = {
+      x: hx - Math.cos(angle) * carLen * train.carCount,
+      y: hy - Math.sin(angle) * carLen * train.carCount,
+      angle: angle,
+    };
+    return [head, tail];
+  },
+
+  trailPosAt(trail, targetDist) {
+    if (trail.length < 2) return trail[0] || null;
+    const biasedDist = targetDist + 3;
+    let accum = 0;
+    for (let i = 1; i < trail.length; i++) {
+      const seg = Math.hypot(trail[i - 1].x - trail[i].x, trail[i - 1].y - trail[i].y);
+      if (seg < 0.01) continue;
+      accum += seg;
+      if (accum >= biasedDist) {
+        const overshoot = accum - biasedDist;
+        const t = Math.max(0, Math.min(1, seg > 0 ? 1 - overshoot / seg : 0));
+        let da = trail[i].angle - trail[i - 1].angle;
+        while (da > Math.PI) da -= 2 * Math.PI;
+        while (da < -Math.PI) da += 2 * Math.PI;
+        return {
+          x: trail[i - 1].x + (trail[i].x - trail[i - 1].x) * t,
+          y: trail[i - 1].y + (trail[i].y - trail[i - 1].y) * t,
+          angle: trail[i - 1].angle + da * t,
+        };
+      }
+    }
+    const last = trail[trail.length - 1];
+    const remaining = biasedDist - accum;
+    const la = last.angle;
+    return {
+      x: last.x - Math.cos(la) * remaining,
+      y: last.y - Math.sin(la) * remaining,
+      angle: la,
+    };
+  },
+
+  roundRect(ctx, x, y, w, h, r) {
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  },
+
+  drawPassengerNumbers(ctx) {
+    const groups = Station.getStationGroups();
+    for (const [sid, grp] of Object.entries(groups)) {
+      if (!grp.bounds) continue;
+      const dests = G.stationQueues[sid] || {};
+      const total = Object.values(dests).reduce((a, b) => a + b, 0);
+      if (total <= 0) continue;
+
+      const cx = (grp.bounds.minX + grp.bounds.maxX + 1) * G.CELL_SIZE / 2;
+      const cy = grp.bounds.minY * G.CELL_SIZE + G.CELL_SIZE / 2 - 10;
+      const platformCells = Math.max(1, G.platforms.filter(p => p.stationId === sid).length);
+      const avg = total / platformCells;
+
+      const blink = avg >= 100 && Math.floor(Date.now() / 500) % 2 === 1;
+      if (blink) continue;
+
+      const color = avg >= 50 ? '#E84A4A' : avg >= 40 ? '#D09000' : '#333';
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(cx, cy, G.CELL_SIZE * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = color;
+      ctx.font = `bold ${G.CELL_SIZE * 0.32}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(total + '', cx, cy + 1);
+
+      if (avg >= 100) {
+        ctx.fillStyle = color;
+        ctx.font = `bold ${G.CELL_SIZE * 0.18}px sans-serif`;
+        ctx.fillText('⚠', cx, cy - G.CELL_SIZE * 0.3);
+      }
+
+      if (avg >= 100) {
+        if (!this._congestionWarn[sid]) {
+          this._congestionWarn[sid] = true;
+          AudioMgr.play('congestion_warning');
+        }
+      } else if (this._congestionWarn[sid]) {
+        delete this._congestionWarn[sid];
+      }
+    }
+  },
+
+  drawCursorHighlight(ctx) {
+    const gx = G.mouseGridX;
+    const gy = G.mouseGridY;
+    if (gx < 0 || gy < 0) return;
+    const cx = gx * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const cy = gy * G.CELL_SIZE + G.CELL_SIZE / 2;
+
+    if (G.selectedTool === 'eraser') {
+      ctx.strokeStyle = '#E84A4A';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(cx - G.CELL_SIZE * 0.5, cy - G.CELL_SIZE * 0.5, G.CELL_SIZE, G.CELL_SIZE);
+      ctx.setLineDash([]);
+    }
+  },
+
+  nodeAtScreen(sx, sy) {
+    const grid = screenToGrid(sx, sy);
+    return { x: grid.x, y: grid.y, key: Graph.key(grid.x, grid.y) };
+  },
+
+  switchAtScreen(sx, sy) {
+    const grid = screenToGrid(sx, sy);
+    const key = Graph.key(grid.x, grid.y);
+    if (G.activeSwitches[key] !== undefined) {
+      return { x: grid.x, y: grid.y, key };
+    }
+    return null;
+  },
+
+  edgeAtScreen(sx, sy) {
+    const world = screenToWorld(sx, sy);
+    const wx = world.x, wy = world.y;
+    const threshold = 12 / G.zoom;
+
+    const drawn = new Set();
+    for (const [key, neighbors] of Object.entries(G.connectionMap)) {
+      const [x1, y1] = key.split(',').map(Number);
+      for (const nKey of neighbors) {
+        const pairKey = key < nKey ? key + '|' + nKey : nKey + '|' + key;
+        if (drawn.has(pairKey)) continue;
+        drawn.add(pairKey);
+        const [x2, y2] = nKey.split(',').map(Number);
+        const ax = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const ay = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const bx = x2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const by = y2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        if (pointToSegDist(wx, wy, ax, ay, bx, by) < threshold) {
+          return { k1: key, k2: nKey, x1, y1, x2, y2 };
+        }
+      }
+    }
+    return null;
+  },
+};
+
+function pointToSegDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return Math.hypot(px - ax, py - ay);
+  let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+</script>
+
+<script>const Input = {
+  canvas: null,
+  dragBatchEdges: [],
+  dragBatchPlats: [],
+  _depotTrackClick: false,
+
+  init(canvas) {
+    this.canvas = canvas;
+
+    canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+    canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+    canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+    canvas.addEventListener('wheel', (e) => this.onWheel(e));
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvas.addEventListener('mouseleave', () => {
+      G.mouseGridX = -1;
+      G.mouseGridY = -1;
+    });
+
+    document.addEventListener('keydown', (e) => this.onKeyDown(e));
+  },
+
+  getCanvasPos(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  },
+
+  // ── Undo ──
+  pushUndo(action) {
+    if (G.undoStack.length > 50) G.undoStack.shift();
+    G.undoStack.push(action);
+  },
+
+  undoLast() {
+    if (G.undoStack.length === 0) return null;
+    const action = G.undoStack.pop();
+    AudioMgr.play('undo');
+
+    if (action.type === 'add_edges') {
+      for (const pair of action.pairs) {
+        Graph.removeEdge(pair[0], pair[1]);
+        G.trackFragments++;
+      }
+      return true;
+    }
+    if (action.type === 'remove_edges') {
+      for (const pair of action.pairs) {
+        Graph.addEdge(pair[0], pair[1]);
+        G.trackFragments--;
+      }
+      return true;
+    }
+    if (action.type === 'add_platform') {
+      G.platforms.pop();
+      G._stationGroupsDirty = true;
+      G.platformComponents++;
+      return true;
+    }
+    if (action.type === 'remove_platform') {
+      G.platforms.push(action.platform);
+      G._stationGroupsDirty = true;
+      G.platformComponents--;
+      return true;
+    }
+    if (action.type === 'remove_platforms') {
+      for (const item of action.items) {
+        G.platforms.push(item.platform);
+        G.platformComponents--;
+      }
+      G._stationGroupsDirty = true;
+      return true;
+    }
+    if (action.type === 'batch') {
+      for (let i = action.items.length - 1; i >= 0; i--) {
+        this.undoItem(action.items[i]);
+      }
+      return true;
+    }
+    return false;
+  },
+
+  undoItem(item) {
+    if (item.type === 'add_edge') {
+      Graph.removeEdge(item.k1, item.k2);
+      G.trackFragments++;
+    } else if (item.type === 'remove_edge') {
+      Graph.addEdge(item.k1, item.k2);
+      G.trackFragments--;
+    } else if (item.type === 'add_platform') {
+      G.platforms.pop();
+      G._stationGroupsDirty = true;
+      G.platformComponents++;
+    } else if (item.type === 'remove_platform') {
+      G.platforms.push(item.platform);
+      G._stationGroupsDirty = true;
+      G.platformComponents--;
+    }
+  },
+
+  // ── Mouse down ──
+  onMouseDown(e) {
+    const pos = this.getCanvasPos(e);
+
+    if (e.button === 1 || e.button === 2) {
+      G.isPanning = true;
+      G.panStartX = e.clientX;
+      G.panStartY = e.clientY;
+      G.panOffsetStartX = G.offsetX;
+      G.panOffsetStartY = G.offsetY;
+      return;
+    }
+
+    if (e.button === 0) {
+      if (G.phase === 'operate') {
+        this.operateClick(screenToGrid(pos.x, pos.y), e);
+        return;
+      }
+      if (G.phase !== 'build') return;
+
+      const grid = screenToGrid(pos.x, pos.y);
+      const clamped = clampGrid(grid.x, grid.y);
+
+      if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
+          G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
+        if (G.selectedTool === 'track' && Tutorial.isActionAllowed('drag_track')) {
+          this._depotTrackClick = true;
+        } else {
+          if (Tutorial.gateAction('click_depot')) {
+            this.showDepotBuildPopup(e);
+          }
+          return;
+        }
+      }
+
+      this.dragBatchEdges = [];
+      this.dragBatchPlats = [];
+
+      if (G.selectedTool === 'track') {
+        if (!Tutorial.gateAction('drag_track')) return;
+        this.trackDown(clamped.x, clamped.y);
+      } else if (G.selectedTool === 'platform') {
+        if (!Tutorial.gateAction('drag_platform')) return;
+        this.platformDown(clamped.x, clamped.y);
+      } else if (G.selectedTool === 'eraser') {
+        if (!Tutorial.gateAction('drag_track')) return;
+        G.eraserDragging = true;
+        G.eraserLastGX = clamped.x;
+        G.eraserLastGY = clamped.y;
+        this.eraserAt(clamped.x, clamped.y);
+      }
+    }
+  },
+
+  // ── Track drag ──
+  trackDown(gx, gy) {
+    G.trackDrag.active = true;
+    G.trackDrag.startX = gx;
+    G.trackDrag.startY = gy;
+  },
+
+  trackUp(gx, gy) {
+    if (!G.trackDrag.active) return;
+    G.trackDrag.active = false;
+
+    const sx = G.trackDrag.startX, sy = G.trackDrag.startY;
+    if (sx === gx && sy === gy) return;
+
+    const path = computeOptimalPath(sx, sy, gx, gy);
+    let prevX = sx, prevY = sy;
+    const edges = [];
+
+    for (const p of path) {
+      if (Station.getPlatformAt(p.x, p.y)) {
+        prevX = p.x; prevY = p.y;
+        continue;
+      }
+      if (G.trackFragments <= 0) {
+        Ui.flashMessage('轨道碎片不足！');
+        break;
+      }
+      const k1 = Graph.key(prevX, prevY), k2 = Graph.key(p.x, p.y);
+      if (!Graph.hasEdge(k1, k2) && k1 !== k2) {
+        Graph.addEdge(k1, k2);
+        G.trackFragments--;
+        edges.push({ type: 'add_edge', k1, k2 });
+      }
+      prevX = p.x; prevY = p.y;
+    }
+
+    if (edges.length > 0) {
+      this.pushUndo({ type: 'add_edges', pairs: edges.map(e => [e.k1, e.k2]) });
+      G._dirty = true;
+      const n = Math.min(edges.length, 14);
+      for (let i = 0; i < n; i++) {
+        setTimeout(() => AudioMgr.play('track_place'), i * 28);
+      }
+    }
+
+    G.trackDrag.startX = -1;
+    G.trackDrag.startY = -1;
+  },
+
+  // ── Platform drag ──
+  platformDown(gx, gy) {
+    G.platDrag.active = true;
+    G.platDrag.startX = gx;
+    G.platDrag.startY = gy;
+    G.platDrag.lastGX = gx;
+    G.platDrag.lastGY = gy;
+    G.platDrag.dir = null;
+    G.platDrag.locked = false;
+    G.platDrag.firstPlaced = false;
+  },
+
+  platformDragTo(startGX, startGY, gx, gy) {
+    if (!G.platDrag.active) return;
+
+    const dx = Math.abs(gx - startGX);
+    const dy = Math.abs(gy - startGY);
+
+    if (!G.platDrag.locked && (dx > 0 || dy > 0)) {
+      G.platDrag.dir = dx >= dy ? 'h' : 'v';
+      G.platDrag.locked = true;
+    }
+    if (!G.platDrag.dir) return;
+
+    if (!G.platDrag.firstPlaced) {
+      G.platDrag.firstPlaced = true;
+      if (G.platformComponents > 0) {
+        const result = Station.addPlatform(startGX, startGY, G.platDrag.dir);
+        if (result && typeof result !== 'string') this.dragBatchPlats.push({ type: 'add_platform', platform: result });
+        else if (typeof result === 'string') { G.platDrag.active = false; return; }
+      }
+    }
+
+    let lgx = G.platDrag.lastGX;
+    let lgy = G.platDrag.lastGY;
+
+    while (true) {
+      if (G.platDrag.dir === 'h' && lgx === gx) break;
+      if (G.platDrag.dir === 'v' && lgy === gy) break;
+
+      const sx = Math.sign(gx - lgx);
+      const sy = Math.sign(gy - lgy);
+
+      const nx = G.platDrag.dir === 'h' ? lgx + sx : startGX;
+      const ny = G.platDrag.dir === 'v' ? lgy + sy : startGY;
+
+      if ((G.platDrag.dir === 'h' && sx === 0) || (G.platDrag.dir === 'v' && sy === 0)) break;
+
+      if (G.platformComponents <= 0) {
+        G.platDrag.active = false;
+        Ui.flashMessage('站台组件不足！');
+        break;
+      }
+
+      const result = Station.addPlatform(nx, ny, G.platDrag.dir);
+      if (typeof result === 'string') break;
+      if (result) this.dragBatchPlats.push({ type: 'add_platform', platform: result });
+
+      G.platDrag.lastGX = nx;
+      G.platDrag.lastGY = ny;
+      lgx = nx;
+      lgy = ny;
+    }
+  },
+
+  platformUp(gx, gy) {
+    G.platDrag.active = false;
+    G.platDrag.dir = null;
+    G.platDrag.locked = false;
+    G.platDrag.lastGX = -1;
+    G.platDrag.lastGY = -1;
+
+    if (this.dragBatchPlats.length > 0) {
+      const plats = [...this.dragBatchPlats];
+      this.dragBatchPlats = [];
+      this.pushUndo({
+        type: 'remove_platforms',
+        items: plats,
+      });
+      G._dirty = true;
+    }
+  },
+
+  // ── Eraser ──
+  eraserAt(gx, gy) {
+    const key = Graph.key(gx, gy);
+
+    const plat = Station.getPlatformAt(gx, gy);
+    if (plat) {
+      const removed = Station.removePlatform(gx, gy);
+      if (removed) {
+        this.dragBatchPlats.push({ type: 'remove_platform', platform: removed });
+        AudioMgr.play('eraser');
+      }
+      return;
+    }
+
+    if (G.connectionMap[key]) {
+      const neighbors = [...Graph.getNeighbors(key)];
+      for (const nk of neighbors) {
+        Graph.removeEdge(key, nk);
+        G.trackFragments++;
+        this.dragBatchEdges.push({ type: 'remove_edge', k1: key, k2: nk });
+      }
+      if (neighbors.length > 0) AudioMgr.play('eraser');
+      return;
+    }
+  },
+
+  eraserUp() {
+    if (!G.eraserDragging) return;
+    G.eraserDragging = false;
+    G.eraserLastGX = -1;
+    G.eraserLastGY = -1;
+
+    const items = [...this.dragBatchPlats, ...this.dragBatchEdges];
+    this.dragBatchPlats = [];
+    this.dragBatchEdges = [];
+    if (items.length > 0) {
+      this.pushUndo({ type: 'batch', items });
+      G._dirty = true;
+    }
+  },
+
+  // ── Operate ──
+  showDepotPopup(e) {
+    let html = '<div class="rp-header">🏭 车辆段</div>';
+    if (G.depotTrains.length === 0) {
+      html += '<div class="rp-stat">暂无停放列车</div>';
+    } else {
+      html += `<div class="rp-key-stat">待发列车: <strong>${G.depotTrains.length}</strong></div>`;
+      html += '<hr class="rp-divider">';
+      for (const train of G.depotTrains) {
+        html += `<div class="rp-row"><span>列车 #${train.id} · ${train.carCount}节</span><button class="rp-btn primary depot-dispatch-btn" data-id="${train.id}">发车</button></div>`;
+      }
+    }
+    updateRightPanel(html);
+    setTimeout(() => {
+      for (const btn of document.querySelectorAll('.depot-dispatch-btn')) {
+        btn.onclick = (ev) => {
+          ev.stopPropagation();
+          const tid = parseInt(btn.dataset.id);
+          const idx = G.depotTrains.findIndex(t => t.id === tid);
+          if (idx >= 0) {
+            const train = G.depotTrains.splice(idx, 1)[0];
+            if (Train.dispatch(train)) {
+              G._dirty = true;
+              Input.showDepotPopup();
+            } else {
+              G.depotTrains.push(train);
+              Ui.flashMessage('车辆段未连接到铁路网！');
+              Input.showDepotPopup();
+            }
+          }
+        };
+      }
+    }, 0);
+  },
+
+  showDepotBuildPopup(e) {
+    let html = '<div class="rp-header">🏭 车辆段</div>';
+    html += `<div class="rp-key-stat">可用车厢: <strong>${G.wagons}</strong> 节</div>`;
+    html += '<hr class="rp-divider">';
+    html += '<div class="rp-section-title">新编组</div>';
+    html += '<div class="rp-form-row">';
+    html += '<button class="rp-btn" onclick="Input._depotChange(-1)">−</button>';
+    html += '<span id="form-count">2</span>';
+    html += '<button class="rp-btn" onclick="Input._depotChange(1)">+</button>';
+    html += '<button class="rp-btn primary" onclick="Input._depotCreate()">创建</button>';
+    html += '</div>';
+    html += '<hr class="rp-divider">';
+    html += '<div class="rp-section-title">现有列车</div>';
+    if (G.depotTrains.length === 0) {
+      html += '<div class="rp-stat">暂无</div>';
+    } else {
+      for (const train of G.depotTrains) {
+        html += `<div class="rp-row"><span>#${train.id} · ${train.carCount}节</span><button class="rp-btn danger" onclick="Input._depotDelete(${train.id})">删除</button></div>`;
+      }
+    }
+    Input._depotFormCount = 2;
+    updateRightPanel(html);
+  },
+
+  _depotChange(d) {
+    Input._depotFormCount = Math.max(1, Math.min(G.wagons, Input._depotFormCount + d));
+    const el = document.getElementById('form-count');
+    if (el) el.textContent = Input._depotFormCount;
+  },
+
+  _depotDelete(tid) {
+    const idx = G.depotTrains.findIndex(t => t.id === tid);
+    if (idx >= 0) {
+      G.wagons += G.depotTrains[idx].carCount;
+      G.depotTrains.splice(idx, 1);
+      G._dirty = true;
+      Ui.updateShopDisplay();
+      Input.showDepotBuildPopup();
+    }
+  },
+
+  _depotCreate() {
+    const n = Input._depotFormCount;
+    if (G.wagons < n) {
+      Ui.flashMessage('车厢不足！');
+      return;
+    }
+    G.wagons -= n;
+    G.depotTrains.push(Train.create(n));
+    G._dirty = true;
+    Ui.updateShopDisplay();
+    Input.showDepotBuildPopup();
+  },
+
+  operateClick(grid, e) {
+    const clamped = clampGrid(grid.x, grid.y);
+    const key = Graph.key(clamped.x, clamped.y);
+
+    if (G.depotX - 1 <= clamped.x && clamped.x <= G.depotX &&
+        G.depotY - 1 <= clamped.y && clamped.y <= G.depotY) {
+      if (Tutorial.gateAction('click_depot')) {
+        this.showDepotPopup(e);
+      }
+      return;
+    }
+
+    if (G.operateSubTool === 'stop') {
+      if (!Tutorial.gateAction('click_train')) return;
+      const train = this.findTrainAt(clamped.x, clamped.y);
+      if (train) {
+        if (train.state === 'moving') {
+          train.state = 'stopped';
+          Tutorial.flags.usedStop = true;
+        } else if (train.state === 'stopped') {
+          train.state = 'moving';
+          train.speed = 0;
+          Tutorial.flags.usedStop = true;
+        }
+      }
+      return;
+    }
+
+    if (G.operateSubTool === 'reverse') {
+      if (!Tutorial.gateAction('click_train')) return;
+      const train = this.findTrainAt(clamped.x, clamped.y);
+      if (train) {
+        Train.reverseTrain(train);
+        Tutorial.flags.usedReverse = true;
+      }
+      return;
+    }
+
+    if (G.activeSwitches[key] !== undefined) {
+      if (Tutorial.gateAction('click_switch')) {
+        Graph.cycleSwitch(key);
+        AudioMgr.play('switch_clack');
+        Tutorial.flags.switchToggled = true;
+      }
+      return;
+    }
+
+    const train = this.findTrainAt(clamped.x, clamped.y);
+    if (train) {
+      if (Tutorial.gateAction('click_train')) {
+        G.infoTarget = { type: 'train', id: train.id };
+        updateRightPanel();
+      }
+      return;
+    }
+
+    const plat = Station.getPlatformAdjacent(clamped.x, clamped.y) || Station.getPlatformAt(clamped.x, clamped.y);
+    if (plat) {
+      G.infoTarget = { type: 'station', id: plat.stationId };
+      updateRightPanel();
+      return;
+    }
+
+    G.infoTarget = null;
+    hideRightPanel();
+  },
+
+  findTrainAt(gx, gy) {
+    const cw = gx * G.CELL_SIZE + G.CELL_SIZE / 2;
+    const ch = gy * G.CELL_SIZE + G.CELL_SIZE / 2;
+    for (const train of G.activeTrains) {
+      if (!train.fromKey) continue;
+      let px, py;
+      if (train.toKey) {
+        const [x1, y1] = train.fromKey.split(',').map(Number);
+        const [x2, y2] = train.toKey.split(',').map(Number);
+        const wx1 = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const wy1 = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const wx2 = x2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        const wy2 = y2 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        px = wx1 + (wx2 - wx1) * train.t;
+        py = wy1 + (wy2 - wy1) * train.t;
+      } else {
+        const [x1, y1] = train.fromKey.split(',').map(Number);
+        px = x1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+        py = y1 * G.CELL_SIZE + G.CELL_SIZE / 2;
+      }
+      if (Math.hypot(cw - px, ch - py) < G.CELL_SIZE) return train;
+    }
+    return null;
+  },
+
+  // ── Mouse move ──
+  onMouseMove(e) {
+    const pos = this.getCanvasPos(e);
+
+    if (G.isPanning) {
+      G.offsetX = G.panOffsetStartX + (e.clientX - G.panStartX);
+      G.offsetY = G.panOffsetStartY + (e.clientY - G.panStartY);
+      return;
+    }
+
+    const grid = screenToGrid(pos.x, pos.y);
+    const clamped = clampGrid(grid.x, grid.y);
+    G.mouseGridX = clamped.x;
+    G.mouseGridY = clamped.y;
+
+    if (G.selectedTool === 'track' && G.trackDrag.active) {
+    } else if (G.selectedTool === 'platform' && G.platDrag.active) {
+      this.platformDragTo(G.platDrag.startX, G.platDrag.startY, clamped.x, clamped.y);
+    } else if (G.selectedTool === 'eraser' && G.eraserDragging) {
+      if (clamped.x !== G.eraserLastGX || clamped.y !== G.eraserLastGY) {
+        G.eraserLastGX = clamped.x;
+        G.eraserLastGY = clamped.y;
+        this.eraserAt(clamped.x, clamped.y);
+      }
+    }
+  },
+
+  onMouseUp(e) {
+    if (e.button === 1 || e.button === 2) {
+      G.isPanning = false;
+      return;
+    }
+
+    const pos = this.getCanvasPos(e);
+    const grid = screenToGrid(pos.x, pos.y);
+    const clamped = clampGrid(grid.x, grid.y);
+
+    if (G.selectedTool === 'track' && G.trackDrag.active) {
+      if (this._depotTrackClick &&
+          G.trackDrag.startX === clamped.x && G.trackDrag.startY === clamped.y) {
+        G.trackDrag.active = false;
+        this._depotTrackClick = false;
+        if (Tutorial.gateAction('click_depot')) {
+          this.showDepotBuildPopup(e);
+        }
+      } else {
+        this._depotTrackClick = false;
+        this.trackUp(clamped.x, clamped.y);
+      }
+    } else if (G.selectedTool === 'platform' && G.platDrag.active) {
+      this.platformUp(clamped.x, clamped.y);
+    } else if (G.selectedTool === 'eraser') {
+      this.eraserUp();
+    }
+  },
+
+  onWheel(e) {
+    e.preventDefault();
+    const pos = this.getCanvasPos(e);
+    const world = screenToWorld(pos.x, pos.y);
+    const newZoom = Math.max(0.05, Math.min(2.0, G.zoom * (e.deltaY < 0 ? 1.1 : 0.9)));
+    G.offsetX = pos.x - world.x * newZoom;
+    G.offsetY = pos.y - world.y * newZoom;
+    G.zoom = newZoom;
+  },
+
+  switchTool(tool) {
+    G.trackDrag.active = false;
+    G.trackDrag.startX = -1;
+    G.trackDrag.startY = -1;
+    G.platDrag.active = false;
+    G.platDrag.dir = null;
+    G.eraserDragging = false;
+    G.selectedTool = tool;
+    hideRightPanel();
+    Ui.updateToolButtons();
+  },
+
+  onKeyDown(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      e.preventDefault();
+      this.undoLast();
+      return;
+    }
+
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      if (G.phase === 'operate') {
+        G.paused = !G.paused;
+        AudioMgr.play('pause');
+        Ui.updatePauseButton();
+      }
+      return;
+    }
+
+    if (e.key === '1') {
+      if (G.phase === 'build') this.switchTool('track');
+      else if (G.phase === 'operate') {
+        G.operateSubTool = G.operateSubTool === 'stop' ? null : 'stop';
+        Ui.updateOperateToolButtons();
+      }
+    }
+    if (e.key === '2') {
+      if (G.phase === 'build') this.switchTool('platform');
+      else if (G.phase === 'operate') {
+        G.operateSubTool = G.operateSubTool === 'reverse' ? null : 'reverse';
+        Ui.updateOperateToolButtons();
+      }
+    }
+    if (e.key === '3') { if (G.phase === 'build') this.switchTool('eraser'); }
+
+    if (e.key === 'Escape') {
+      G.trackDrag.active = false;
+      G.platDrag.active = false;
+      G.platDrag.dir = null;
+      G.eraserDragging = false;
+      G.selectedItem = null;
+      hideRightPanel();
+    }
+  },
+};
+
+function computeOptimalPath(sx, sy, ex, ey) {
+  const dx = ex - sx, dy = ey - sy;
+  const adx = Math.abs(dx), ady = Math.abs(dy);
+  const diag = Math.min(adx, ady);
+  const straight = Math.max(adx, ady) - diag;
+  const sdx = Math.sign(dx), sdy = Math.sign(dy);
+  const path = [];
+  let cx = sx, cy = sy;
+  for (let i = 0; i < diag; i++) { cx += sdx; cy += sdy; path.push({ x: cx, y: cy }); }
+  let ddx = 0, ddy = 0;
+  if (adx > ady) { ddx = sdx; } else if (ady > adx) { ddy = sdy; }
+  for (let i = 0; i < straight; i++) { cx += ddx; cy += ddy; path.push({ x: cx, y: cy }); }
+  return path;
+}
+
+function updateRightPanel(html) {
+  const el = document.getElementById('right-panel');
+  if (html !== undefined) el.innerHTML = html;
+  if (el.innerHTML) el.classList.remove('hidden');
+}
+
+function hideRightPanel() {
+  G.infoTarget = null;
+  const el = document.getElementById('right-panel');
+  el.classList.add('hidden');
+  el.innerHTML = '';
+}
+
+function updateInfoPopup() {
+  if (!G.infoTarget) { hideRightPanel(); return; }
+  let html = '';
+
+  if (G.infoTarget.type === 'train') {
+    const train = G.activeTrains.find(t => t.id === G.infoTarget.id);
+    if (!train) { hideRightPanel(); return; }
+    const load = Object.values(train.passengers).reduce((a, b) => a + b, 0);
+    const maxLoad = Train.maxLoad(train);
+
+    const status = train.docked ? '停靠中' : (train.speed > 0 ? `运行中 (${train.speed.toFixed(1)} 格/秒)` : '待发');
+
+    html += `<div class="rp-header">列车 #${train.id} (${train.carCount}节)</div>`;
+    html += `<div class="rp-key-stat">载客: <strong>${load} / ${maxLoad}</strong></div>`;
+    html += `<div class="rp-stat">状态: ${status}</div>`;
+
+    const dests = Object.entries(train.passengers).filter(([, cnt]) => cnt > 0);
+    if (dests.length > 0) {
+      html += '<hr class="rp-divider">';
+      html += '<div class="rp-section-title">目的地</div>';
+      for (const [dest, cnt] of dests) {
+        const st = Station.getStationById(dest);
+        const color = st ? st.color : '#999';
+        html += `<div class="rp-row"><span><span class="rp-dot" style="display:inline-block;background:${color}"></span> ${dest}站</span><strong>${cnt}人</strong></div>`;
+      }
+    }
+  } else if (G.infoTarget.type === 'station') {
+    const sid = G.infoTarget.id;
+    const st = Station.getStationById(sid);
+    const color = st ? st.color : '#999';
+    const queue = G.stationQueues[sid] || {};
+    const total = Object.values(queue).reduce((a, b) => a + b, 0);
+
+    html += `<div class="rp-header"><span class="rp-dot" style="background:${color}"></span> ${sid}站</div>`;
+    html += `<div class="rp-key-stat">待乘: <strong>${total} 人</strong></div>`;
+    if (st && st.flowLevel) html += `<div class="rp-stat">客流等级: ${st.flowLevel}</div>`;
+
+    const dests = Object.entries(queue).filter(([, cnt]) => cnt > 0);
+    if (dests.length > 0) {
+      html += '<hr class="rp-divider">';
+      html += '<div class="rp-section-title">目的地</div>';
+      for (const [dest, cnt] of dests) {
+        const dt = Station.getStationById(dest);
+        const dcolor = dt ? dt.color : '#999';
+        html += `<div class="rp-row"><span><span class="rp-dot" style="display:inline-block;background:${dcolor}"></span> ${dest}站</span><strong>${cnt}人</strong></div>`;
+      }
+    }
+  }
+
+  document.getElementById('right-panel').innerHTML = html;
+  document.getElementById('right-panel').classList.remove('hidden');
+}
+</script>
+
+<script>const Ui = {
+  flashTimer: null,
+  _satWarnTimer: 0,
+
+  init() {
+    document.getElementById('tool-track').addEventListener('click', () => Input.switchTool('track'));
+    document.getElementById('tool-platform').addEventListener('click', () => Input.switchTool('platform'));
+    document.getElementById('tool-eraser').addEventListener('click', () => Input.switchTool('eraser'));
+
+    document.getElementById('btn-operate-stop').addEventListener('click', () => {
+      G.operateSubTool = G.operateSubTool === 'stop' ? null : 'stop';
+      hideRightPanel();
+      this.updateOperateToolButtons();
+    });
+    document.getElementById('btn-operate-reverse').addEventListener('click', () => {
+      G.operateSubTool = G.operateSubTool === 'reverse' ? null : 'reverse';
+      hideRightPanel();
+      this.updateOperateToolButtons();
+    });
+
+    document.getElementById('time-display').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dd = document.getElementById('time-dropdown');
+      dd.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', () => {
+      document.getElementById('time-dropdown').classList.add('hidden');
+    });
+
+    document.getElementById('btn-pause').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (G.phase === 'operate') {
+        G.paused = !G.paused;
+        AudioMgr.play('pause');
+        this.updatePauseButton();
+      }
+    });
+    document.getElementById('btn-speed1').addEventListener('click', (e) => {
+      e.stopPropagation();
+      G.speedMultiplier = 1;
+      this.updateSpeedButtons();
+    });
+    document.getElementById('btn-speed2').addEventListener('click', (e) => {
+      e.stopPropagation();
+      G.speedMultiplier = 2;
+      this.updateSpeedButtons();
+    });
+    document.getElementById('btn-speed3').addEventListener('click', (e) => {
+      e.stopPropagation();
+      G.speedMultiplier = 3;
+      this.updateSpeedButtons();
+    });
+    document.getElementById('btn-speed5').addEventListener('click', (e) => {
+      e.stopPropagation();
+      G.speedMultiplier = 5;
+      this.updateSpeedButtons();
+    });
+    document.getElementById('btn-speed10').addEventListener('click', (e) => {
+      e.stopPropagation();
+      G.speedMultiplier = 10;
+      this.updateSpeedButtons();
+    });
+
+    document.getElementById('btn-start-day').addEventListener('click', () => this.startDay());
+    document.getElementById('btn-settle-continue').addEventListener('click', () => this.nextCycle());
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      resetGame();
+      Renderer.centerCamera();
+      this.startBuild();
+    });
+
+    document.getElementById('btn-settings').addEventListener('click', () => this.openSettings());
+    document.getElementById('btn-settings-close').addEventListener('click', () => this.closeSettings());
+    document.getElementById('btn-manual-save').addEventListener('click', () => { saveGame(); this.flashMessage('已保存'); });
+    document.getElementById('btn-copy-export').addEventListener('click', () => this.copyExport());
+    document.getElementById('btn-confirm-import').addEventListener('click', () => this.confirmImport());
+    document.getElementById('btn-delete-save').addEventListener('click', () => this.confirmDeleteSave());
+    document.getElementById('btn-reset-game').addEventListener('click', () => this.confirmReset());
+
+    for (const tabBtn of document.querySelectorAll('.settings-tab')) {
+      tabBtn.addEventListener('click', () => this.switchSettingsTab(tabBtn.dataset.tab));
+    }
+
+    this.initAudioSettings();
+
+    window.addEventListener('beforeunload', (e) => {
+      if (G._dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    for (const btn of document.querySelectorAll('.buy-btn')) {
+      btn.addEventListener('click', () => {
+        const resource = btn.dataset.resource;
+        const count = parseInt(btn.dataset.count) || 1;
+        this.batchBuy(resource, count);
+      });
+    }
+
+    document.getElementById('time-dropdown').classList.add('hidden');
+  },
+
+  updateToolButtons() {
+    document.getElementById('tool-track').classList.toggle('active', G.selectedTool === 'track');
+    document.getElementById('tool-platform').classList.toggle('active', G.selectedTool === 'platform');
+    document.getElementById('tool-eraser').classList.toggle('active', G.selectedTool === 'eraser');
+  },
+
+  initAudioSettings() {
+    const sfxBox = document.getElementById('aud-sfx-enabled');
+    const musicBox = document.getElementById('aud-music-enabled');
+    const sfxVol = document.getElementById('aud-sfx-vol');
+    const musicVol = document.getElementById('aud-music-vol');
+    if (!sfxBox || !musicBox || !sfxVol || !musicVol) return;
+
+    sfxBox.checked = AudioMgr.sfxEnabled;
+    musicBox.checked = AudioMgr.musicEnabled;
+    sfxVol.value = Math.round(AudioMgr.sfxVol * 100);
+    musicVol.value = Math.round(AudioMgr.musicVol * 100);
+    document.getElementById('aud-sfx-vol-val').textContent = sfxVol.value + '%';
+    document.getElementById('aud-music-vol-val').textContent = musicVol.value + '%';
+
+    sfxBox.addEventListener('change', () => AudioMgr.setSfxEnabled(sfxBox.checked));
+    musicBox.addEventListener('change', () => AudioMgr.setMusicEnabled(musicBox.checked));
+    sfxVol.addEventListener('input', () => {
+      const v = sfxVol.value / 100;
+      AudioMgr.setSfxVolume(v);
+      document.getElementById('aud-sfx-vol-val').textContent = sfxVol.value + '%';
+    });
+    musicVol.addEventListener('input', () => {
+      const v = musicVol.value / 100;
+      AudioMgr.setMusicVolume(v);
+      document.getElementById('aud-music-vol-val').textContent = musicVol.value + '%';
+    });
+
+    const muteBtn = document.getElementById('aud-master-mute');
+    if (muteBtn) {
+      muteBtn.addEventListener('click', () => {
+        AudioMgr.setMasterEnabled(!AudioMgr.masterEnabled);
+        muteBtn.textContent = AudioMgr.masterEnabled ? '🔇 总静音' : '🔊 取消静音';
+      });
+    }
+  },
+
+  updateOperateToolButtons() {
+    const stopBtn = document.getElementById('btn-operate-stop');
+    const revBtn = document.getElementById('btn-operate-reverse');
+    if (stopBtn) stopBtn.classList.toggle('active', G.operateSubTool === 'stop');
+    if (revBtn) revBtn.classList.toggle('active', G.operateSubTool === 'reverse');
+  },
+
+  updateTopBar() {
+    document.getElementById('gold-val').textContent = '￥' + G.gold;
+    document.getElementById('delivered-val').textContent = G.passengersDeliveredToday;
+    document.getElementById('day-val').textContent = G.dayNumber;
+    document.getElementById('sidebar-gold').textContent = '￥' + G.gold;
+    document.getElementById('satisfaction-val').textContent = Math.round(G.satisfaction) + '%';
+    const sl = document.getElementById('satisfaction-label');
+    sl.className = G.satisfaction > 70 ? 'satisfaction-high' : G.satisfaction > 30 ? 'satisfaction-mid' : 'satisfaction-low';
+
+    if (G.phase === 'operate' && G.satisfaction <= 30) {
+      const now = performance.now();
+      if (now - this._satWarnTimer > 15000) {
+        this._satWarnTimer = now;
+        AudioMgr.play('congestion_warning');
+      }
+    }
+
+    if (G.phase === 'operate') {
+      const clk = dayTimeToClock();
+      document.getElementById('time-display').textContent =
+        '⏱ ' + String(clk.h).padStart(2, '0') + ':' + String(clk.m).padStart(2, '0') + ' ×' + G.speedMultiplier + ' ▾';
+    } else {
+      document.getElementById('time-display').textContent = '⏱ --:--';
+    }
+  },
+
+  updatePauseButton() {
+    document.getElementById('btn-pause').textContent = G.paused ? '继续' : '暂停';
+  },
+
+  updateSpeedButtons() {
+    document.getElementById('btn-speed1').classList.toggle('active-speed', G.speedMultiplier === 1);
+    document.getElementById('btn-speed2').classList.toggle('active-speed', G.speedMultiplier === 2);
+    document.getElementById('btn-speed3').classList.toggle('active-speed', G.speedMultiplier === 3);
+    document.getElementById('btn-speed5').classList.toggle('active-speed', G.speedMultiplier === 5);
+    document.getElementById('btn-speed10').classList.toggle('active-speed', G.speedMultiplier === 10);
+  },
+
+  showOverlay() {
+    document.getElementById('overlay').classList.remove('hidden');
+  },
+
+  hideOverlay() {
+    document.getElementById('overlay').classList.add('hidden');
+  },
+
+  hideMenu() {
+    const menu = document.getElementById('main-menu');
+    menu.classList.add('fade-out');
+    setTimeout(() => menu.classList.add('hidden'), 400);
+  },
+
+  showNewGameConfirm() {
+    document.getElementById('confirm-newgame').classList.remove('hidden');
+  },
+
+  hideNewGameConfirm() {
+    document.getElementById('confirm-newgame').classList.add('hidden');
+  },
+
+  showMapConfig() {
+    document.getElementById('map-config').classList.remove('hidden');
+    document.querySelector('#main-menu .menu-buttons').classList.add('hidden');
+    document.querySelector('#main-menu .menu-title-box').classList.add('hidden');
+  },
+
+  hideMapConfig() {
+    document.getElementById('map-config').classList.add('hidden');
+    document.querySelector('#main-menu .menu-buttons').classList.remove('hidden');
+    document.querySelector('#main-menu .menu-title-box').classList.remove('hidden');
+  },
+
+  startBuild() {
+    G.phase = 'build';
+    G.passengersDeliveredToday = 0;
+    G.paused = false;
+
+    G.trackDrag.active = false;
+    G.trackDrag.lastGX = -1;
+    G.trackDrag.lastGY = -1;
+    G.platDrag.active = false;
+    G.platDrag.dir = null;
+
+    document.getElementById('sidebar').classList.remove('hidden');
+    document.getElementById('settlement-panel').classList.add('hidden');
+    document.getElementById('gameover-panel').classList.add('hidden');
+    document.getElementById('operate-tools').classList.add('hidden');
+    document.getElementById('tool-track').parentElement.querySelectorAll('.build-only').forEach(b => b.classList.remove('hidden'));
+    G.operateSubTool = null;
+    this.hideOverlay();
+    this.updateShopDisplay();
+    this.updateTopBar();
+    Renderer.resize();
+    AudioMgr.setMusicPhase('build');
+  },
+
+  startDay() {
+    AudioMgr.play('day_start');
+    AudioMgr.setMusicPhase('operate');
+    const depotKey = Graph.key(G.depotX, G.depotY);
+    let depotConnected = false;
+    const depotCells = [
+      { x: G.depotX - 1, y: G.depotY - 1 },
+      { x: G.depotX,     y: G.depotY - 1 },
+      { x: G.depotX - 1, y: G.depotY },
+      { x: G.depotX,     y: G.depotY },
+    ];
+    for (const cell of depotCells) {
+      const key = Graph.key(cell.x, cell.y);
+      if (Graph.getDegree(key) > 0) {
+        Graph.addEdge(depotKey, key);
+        depotConnected = true;
+        break;
+      }
+    }
+
+    if (!depotConnected) {
+      this.flashMessage('铁路未连接到车辆段！');
+      return;
+    }
+    if (G.depotTrains.length === 0) {
+      this.flashMessage('车辆段没有可用列车！请先编组列车。');
+      return;
+    }
+
+    G.phase = 'operate';
+    G.dayTime = 600;
+    G.paused = false;
+    G.speedMultiplier = 1;
+    G._passengerAccum = {};
+    G.stationQueues = {};
+    G.totalGeneratedToday = 0;
+    G.lastDeductHour = 6;
+    this.updatePauseButton();
+    this.updateSpeedButtons();
+    this.updateTopBar();
+
+    document.getElementById('sidebar').classList.add('hidden');
+    document.getElementById('tool-track').parentElement.querySelectorAll('.build-only').forEach(b => b.classList.add('hidden'));
+    document.getElementById('operate-tools').classList.remove('hidden');
+    G.operateSubTool = null;
+    Ui.updateOperateToolButtons();
+    Input.switchTool('track');
+    Renderer.resize();
+
+  },
+
+  nextCycle() {
+    if (G.tutorialId) {
+      G.passengersDeliveredToday = 0;
+      G.totalGeneratedToday = 0;
+      G.stationQueues = {};
+      for (const st of G.stations) G.stationQueues[st.id] = {};
+      G.dayNumber++;
+      document.getElementById('settlement-panel').classList.add('hidden');
+      this.hideOverlay();
+      this.startBuild();
+      Renderer.centerCamera();
+      return;
+    }
+
+    G.gold += G.passengersDeliveredToday * G.passengerPrice;
+    G.gold -= G.maintenanceCost;
+
+    if (G.satisfaction < 10) {
+      G.lowSatisfactionDays++;
+      if (G.lowSatisfactionDays >= 3) {
+        this.showGameOver('满意度过低，线路被废弃');
+        return;
+      }
+    } else {
+      G.lowSatisfactionDays = 0;
+    }
+
+    G.passengersDeliveredToday = 0;
+    G.totalGeneratedToday = 0;
+    G.stationQueues = {};
+
+    if (G.gold < 0) {
+      this.showGameOver('破产');
+      return;
+    }
+
+    G.dayNumber++;
+    document.getElementById('settlement-panel').classList.add('hidden');
+    this.hideOverlay();
+    saveGame();
+    this.startBuild();
+  },
+
+  showSettlement() {
+    const income = G.passengersDeliveredToday * G.passengerPrice;
+    const nextGold = G.gold + income - G.maintenanceCost;
+
+    document.getElementById('settle-delivered').textContent = G.passengersDeliveredToday;
+    document.getElementById('settle-income').textContent = '￥' + income;
+    document.getElementById('settle-maintenance').textContent = '￥' + G.maintenanceCost;
+    document.getElementById('settle-gold').textContent = '￥' + Math.max(0, nextGold);
+
+    let satChange = '';
+    const oldSat = G.satisfaction;
+    if (G.totalGeneratedToday > 0) {
+      const rate = G.passengersDeliveredToday / G.totalGeneratedToday;
+      if (rate > 0.8) { G.satisfaction = Math.min(100, oldSat + 10); satChange = '+10%'; }
+      else if (rate > 0.5) { G.satisfaction = Math.min(100, oldSat + 5); satChange = '+5%'; }
+    }
+    const allZero = G.stations.every(st => {
+      const q = G.stationQueues[st.id] || {};
+      return Object.values(q).reduce((a,b)=>a+b,0) === 0;
+    });
+    if (allZero) { G.satisfaction = Math.min(100, G.satisfaction + 3); satChange = (satChange ? satChange + ' +3%' : '+3%'); }
+    const satEl = document.getElementById('settle-satisfaction');
+    if (satEl) {
+      const newSat = Math.round(G.satisfaction);
+      satEl.textContent = satChange ? Math.round(oldSat) + '% → ' + newSat + '% (' + satChange + ')' : Math.round(oldSat) + '%';
+    }
+
+    document.getElementById('settlement-panel').classList.remove('hidden');
+    this.showOverlay();
+    this.updateTopBar();
+    AudioMgr.play('settlement');
+    AudioMgr.setMusicPhase('build');
+  },
+
+  showGameOver(reason) {
+    AudioMgr.play('gameover');
+    AudioMgr.stopMusic();
+    document.getElementById('gameover-total').textContent = G.totalPassengersDelivered;
+    document.getElementById('gameover-days').textContent = G.dayNumber - 1;
+    const title = document.querySelector('#gameover-panel h2');
+    if (title) title.textContent = reason || '破产！';
+    document.getElementById('gameover-panel').classList.remove('hidden');
+    document.getElementById('settlement-panel').classList.add('hidden');
+    document.getElementById('shop-panel').classList.add('hidden');
+    this.showOverlay();
+    G.phase = 'gameover';
+  },
+
+  batchBuy(resource, count) {
+    const price = G.shopPrices[resource] * count;
+    if (G.gold < price) {
+      AudioMgr.play('buy_fail');
+      this.flashMessage('资金不足！');
+      return;
+    }
+    AudioMgr.play('buy_success');
+    G.gold -= price;
+    if (resource === 'trackFragment') G.trackFragments += count;
+    else if (resource === 'platformComponent') G.platformComponents += count;
+    else if (resource === 'wagon') G.wagons += count;
+    G._dirty = true;
+    this.updateShopDisplay();
+    this.updateTopBar();
+  },
+
+  updateShopDisplay() {
+    document.getElementById('res-track').textContent = G.trackFragments;
+    document.getElementById('res-platform').textContent = G.platformComponents;
+    document.getElementById('res-wagon').textContent = G.wagons;
+    for (const btn of document.querySelectorAll('.buy-btn')) {
+      const resource = btn.dataset.resource;
+      const count = parseInt(btn.dataset.count) || 1;
+      btn.disabled = G.gold < G.shopPrices[resource] * count;
+    }
+  },
+
+  flashMessage(msg) {
+    if (this.flashTimer) clearTimeout(this.flashTimer);
+    let el = document.getElementById('flash-msg');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'flash-msg';
+      el.style.cssText =
+        'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#FFF;padding:8px 20px;border-radius:4px;font-size:14px;z-index:200;pointer-events:none;';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.opacity = '1';
+    this.flashTimer = setTimeout(() => { el.style.opacity = '0'; }, 1200);
+  },
+
+  openSettings() {
+    document.getElementById('settings-overlay').classList.remove('hidden');
+    document.getElementById('ta-export').value = exportToBase64();
+    const muteBtn = document.getElementById('aud-master-mute');
+    if (muteBtn) muteBtn.textContent = AudioMgr.masterEnabled ? '🔇 总静音' : '🔊 取消静音';
+  },
+
+  closeSettings() {
+    document.getElementById('settings-overlay').classList.add('hidden');
+  },
+
+  switchSettingsTab(tabId) {
+    document.querySelectorAll('.settings-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    document.querySelectorAll('.settings-content').forEach(c => c.classList.add('hidden'));
+    document.getElementById(tabId).classList.remove('hidden');
+  },
+
+  copyExport() {
+    const ta = document.getElementById('ta-export');
+    navigator.clipboard.writeText(ta.value).then(() => this.flashMessage('已复制到剪贴板'));
+  },
+
+  confirmImport() {
+    const b64 = document.getElementById('ta-import').value.trim();
+    if (!b64) { this.flashMessage('请粘贴存档文本'); return; }
+    if (importFromBase64(b64)) {
+      this.flashMessage('导入成功，即将刷新');
+      setTimeout(() => location.reload(), 500);
+    } else {
+      this.flashMessage('存档格式无效');
+    }
+  },
+
+  confirmDeleteSave() {
+    deleteSave();
+    this.flashMessage('存档已删除');
+  },
+
+  confirmReset() {
+    deleteSave();
+    location.reload();
+  },
+};
+</script>
+
+<script>const TUTORIAL_DATA = {
+  id: 'full_tutorial',
+  title: '铁路调度入门',
+  version: 2,
+
+  mapPreset: {
+    gridW: 32,
+    gridH: 24,
+    startingResources: { gold: 100, trackFragments: 15, platformComponents: 5, wagons: 4 },
+    stations: [
+      { id: 'A', x: 8,  y: 12, color: '#E84A4A', flowLevel: 30 },
+      { id: 'B', x: 18, y: 10, color: '#4A90D9', flowLevel: 20, appearsOnDay: 2 },
+      { id: 'C', x: 20, y: 12, color: '#50B86C', flowLevel: 40 },
+    ],
+    depot: { x: 25, y: 13 },
+    prebuiltEdges: (() => {
+      const pairs = [];
+      const k = (x, y) => x + ',' + y;
+      for (let x = 20; x >= 15; x--) {
+        pairs.push([k(x, 12), k(x - 1, 12)]);
+      }
+      return pairs;
+    })(),
+  },
+
+  steps: [
+    {
+      id: 's1',
+      text: '先给车站装站台。点底部<span class="tut-hl">「站台」</span>，在<span class="tut-hl">A站</span>（红色虚线框）内<span class="tut-hl">横向拖拽</span>——方向决定朝向，拉 2 格即可。',
+      highlight: [
+        { type: 'dom', selector: '#tool-platform', desc: '站台按钮' },
+        { type: 'zone', x: 6, y: 10, w: 8, h: 5, desc: 'A站' },
+      ],
+      phaseCheck: [
+        () => G.selectedTool === 'platform',
+        null,
+      ],
+      allowActions: ['drag_platform'],
+      check: () => G.platforms.some(p => p.stationId === 'A'),
+    },
+    {
+      id: 's2',
+      text: '好，<span class="tut-hl">C站</span>（绿色框）也来一段——同样<span class="tut-hl">横向拖拽</span>，拉 2 格。',
+      highlight: { type: 'zone', x: 18, y: 10, w: 7, h: 5, desc: 'C站' },
+      allowActions: ['drag_platform'],
+      check: () => G.platforms.some(p => p.stationId === 'C'),
+    },
+    {
+      id: 's3',
+      text: '站台就位，开始铺铁路。切到<span class="tut-hl">「铺轨」</span>，从A站向交叉路口方向拖拽画线。',
+      highlight: [
+        { type: 'dom', selector: '#tool-track', desc: '铺轨按钮' },
+        { type: 'zone', x: 7, y: 10, w: 8, h: 5, desc: 'A→路口铁路' },
+      ],
+      phaseCheck: [
+        () => G.selectedTool === 'track',
+        null,
+      ],
+      allowActions: ['drag_track'],
+      check: () => Tutorial.helpers.pathBetweenStations('A', 'C') && Tutorial.helpers.nodeConnected('14,12'),
+    },
+    {
+      id: 's4',
+      text: '轨道碎片快用完了。去<span class="tut-hl">左侧商店</span>买一些——点轨道碎片的<span class="tut-hl">「5」</span>或<span class="tut-hl">「10」</span>。',
+      highlight: { type: 'dom', selector: '#shop-panel', desc: '商店面板' },
+      allowActions: [],
+      check: () => G.trackFragments >= 11,
+    },
+    {
+      id: 's5',
+      text: '继续往右画，从<span class="tut-hl">C站</span>延伸轨道到<span class="tut-hl">车辆段</span>——这样列车才能从段里开上正线。',
+      highlight: { type: 'zone', x: 20, y: 10, w: 7, h: 5, desc: 'C→车辆段' },
+      allowActions: ['drag_track'],
+      bubblePin: 'bottom-center',
+      check: () => Tutorial.helpers.depotConnected(),
+    },
+    {
+      id: 's6a',
+      text: '来，造一列车。点地图上的<span class="tut-hl">紫色车辆段</span>，打开编组菜单。',
+      highlight: { type: 'zone', x: 23, y: 11, w: 5, h: 5, desc: '车辆段' },
+      allowActions: ['click_depot'],
+      check: () => {
+        const rp = document.getElementById('right-panel');
+        if (rp && rp.classList.contains('hidden')) return false;
+        return rp && rp.innerHTML.includes('车辆段');
+      },
+    },
+    {
+      id: 's6b',
+      text: '用 <span class="tut-hl">+/−</span> 调车厢数，然后点<span class="tut-hl">「创建」</span>——造一列列车，等一下发车用。',
+      highlight: { type: 'dom', selector: '#right-panel', desc: '车辆段面板' },
+      allowActions: ['click_depot'],
+      check: () => G.depotTrains.length >= 1,
+    },
+
+    {
+      id: 's7',
+      text: '万事俱备。点底部<span class="tut-hl">「开始运营 ▸」</span>，进入白天。',
+      highlight: { type: 'dom', selector: '#btn-start-day', desc: '开始运营按钮' },
+      allowActions: [],
+      check: () => G.phase === 'operate',
+    },
+    {
+      id: 's8',
+      text: '列车还在段里。点<span class="tut-hl">车辆段</span>，选一列车<span class="tut-hl">发车</span>，它就会冲上正线。',
+      highlight: { type: 'zone', x: 23, y: 11, w: 5, h: 5, desc: '车辆段' },
+      allowActions: ['click_depot'],
+      check: () => G.activeTrains.length >= 1,
+    },
+    {
+      id: 's9',
+      text: '列车自动跑起来了！到站停车、乘客上下，全程自动驾驶。<br>试试右上角<span class="tut-hl">倍速按钮</span>——调成 3x 或 5x 看看加速效果。',
+      highlight: { type: 'dom', selector: '#time-control', desc: '倍速控制' },
+      bubblePin: 'bottom-center',
+      check: () => Tutorial.checkTimer(10),
+    },
+    {
+      id: 's10',
+      text: '底部多了<span class="tut-hl">「启停」</span>按钮。先点它选中，再点一列运行中的列车——你可以手动把车扣在站里。',
+      highlight: [
+        { type: 'dom', selector: '#btn-operate-stop', desc: '启停按钮' },
+        null,
+      ],
+      phaseCheck: [
+        () => G.operateSubTool === 'stop',
+        () => Tutorial.flags.usedStop,
+      ],
+      allowActions: ['click_train'],
+      check: () => Tutorial.flags.usedStop,
+    },
+    {
+      id: 's11',
+      text: '<span class="tut-hl">「调头」</span>也是同样用法。选它点列车，车就掉头反向走——死胡同里用得着。',
+      highlight: [
+        { type: 'dom', selector: '#btn-operate-reverse', desc: '调头按钮' },
+        null,
+      ],
+      phaseCheck: [
+        () => G.operateSubTool === 'reverse',
+        () => Tutorial.flags.usedReverse,
+      ],
+      allowActions: ['click_train'],
+      bubblePin: 'bottom-center',
+      check: () => Tutorial.flags.usedReverse,
+    },
+    {
+      id: 's12',
+      text: '注意顶部<span class="tut-hl">满意度</span> 🙂。运人效率高，满意度涨、客流多；积压严重，满意度掉、客流少。<br>这是循环反馈——客流越多调度压力越大。',
+      highlight: { type: 'dom', selector: '#satisfaction-label', desc: '满意度' },
+      bubblePin: 'top-right',
+      check: () => Tutorial.checkTimer(8),
+    },
+    {
+      id: 's13',
+      text: '天快黑了。结算时会自动弹出<span class="tut-hl">结算面板</span>——看看今天运了多少人、挣了多少。',
+      highlight: null,
+      bubblePin: 'bottom-center',
+      check: () => G.dayNumber === 2,
+    },
+
+    {
+      id: 's14',
+      text: '新的一天。地图上多了个<span class="tut-hl">B站</span>（蓝色虚线框）——先给它建一段站台。',
+      highlight: { type: 'zone', x: 16, y: 8, w: 5, h: 5, desc: 'B站' },
+      allowActions: ['drag_platform'],
+      setup() {
+        const b = TUTORIAL_DATA.mapPreset.stations.find(s => s.id === 'B');
+        G.stations.push({ id: b.id, x: b.x, y: b.y, color: b.color, flowLevel: b.flowLevel });
+        G.stationQueues[b.id] = {};
+      },
+      check: () => G.platforms.some(p => p.stationId === 'B'),
+    },
+    {
+      id: 's15',
+      text: '从交叉路口的<span class="tut-hl">黑点</span>（道岔节点）向B站<span class="tut-hl">↘ 斜向</span>拖拽铺轨。<br>必须从黑点直接走斜线——如果先横后竖走直角折线，道岔无法切换到这个方向！',
+      highlight: { type: 'zone', x: 14, y: 9, w: 5, h: 4, desc: '路口→B站' },
+      allowActions: ['drag_track'],
+      bubblePin: 'bottom-center',
+      check: () => (G.connectionMap['14,12'] || []).length >= 3 && Tutorial.helpers.stationInNetworkWithDepot('B'),
+    },
+    {
+      id: 's16',
+      text: '线路扩展好了，点<span class="tut-hl">「开始运营」</span>。',
+      highlight: { type: 'dom', selector: '#btn-start-day', desc: '开始运营按钮' },
+      allowActions: [],
+      check: () => G.phase === 'operate',
+    },
+
+    {
+      id: 's17',
+      text: '交叉路口那个<span class="tut-hl">小黑点</span>看到没？那就是<span class="tut-hl">道岔</span>。点一下试试——列车路径方向变了！',
+      highlight: { type: 'zone', x: 13, y: 11, w: 3, h: 3, desc: '三向道岔' },
+      allowActions: ['click_switch'],
+      check: () => Tutorial.flags.switchToggled,
+    },
+    {
+      id: 's18',
+      text: '每次点道岔都会循环切换方向。试着多切几次，看列车跟着怎么走——<span class="tut-hl">进路控制</span>的核心就是这个。',
+      highlight: null,
+      allowActions: ['click_switch'],
+      bubblePin: 'bottom-center',
+      check: () => Tutorial.checkTimer(10),
+    },
+    {
+      id: 's19',
+      text: '白天结束了。你完整跑了两天的铁路调度运营！<br><br>站台 → 轨道 → 编组 → 运营 → 道岔<br><br>进入结算，恭喜完成教程！',
+      highlight: null,
+      allowActions: [],
+      check: () => G.dayNumber === 3,
+    },
+  ],
+
+  completeMessage: {
+    title: '教程完成！',
+    lines: [
+      '你已经掌握了铁路调度的基本流程：',
+      '修建轨道 → 建造站台 → 编组列车 → 运营调度 → 结算收入',
+      '',
+      '车站越多、线路越密，调度越有挑战。去自由模式里试试吧！',
+    ],
+    buttons: [
+      { text: '返回主菜单', action: 'menu' },
+      { text: '自由模式', action: 'freeplay' },
+    ],
+  },
+};
+</script>
+
+<script>const Tutorial = {
+  active: false,
+  stepIdx: 0,
+  stepPhase: 0,
+  stepStartTime: 0,
+  stepCheckTimer: 0,
+  data: null,
+  flags: { usedStop: false, usedReverse: false, switchToggled: false },
+  _bubbleVisible: false,
+
+  helpers: {
+    pathBetweenStations(aId, bId) {
+      const aPlats = G.platforms.filter(p => p.stationId === aId);
+      const bPlats = G.platforms.filter(p => p.stationId === bId);
+      if (aPlats.length === 0 || bPlats.length === 0) return false;
+
+      const starts = [];
+      for (const p of aPlats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) starts.push(key);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) starts.push(adj);
+        }
+      }
+      if (starts.length === 0) return false;
+
+      const targets = new Set();
+      for (const p of bPlats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) targets.add(key);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) targets.add(adj);
+        }
+      }
+      if (targets.size === 0) return false;
+
+      const visited = new Set();
+      const queue = [];
+      for (const s of starts) {
+        if (targets.has(s)) return true;
+        visited.add(s);
+        queue.push(s);
+      }
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        const neighbors = G.connectionMap[cur];
+        if (!neighbors) continue;
+        for (const n of neighbors) {
+          if (targets.has(n)) return true;
+          if (!visited.has(n)) { visited.add(n); queue.push(n); }
+        }
+      }
+      return false;
+    },
+
+    pathBetweenNodes(k1, k2) {
+      if (k1 === k2) return true;
+      const visited = new Set();
+      const queue = [k1];
+      visited.add(k1);
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        const neighbors = G.connectionMap[cur];
+        if (!neighbors) continue;
+        for (const n of neighbors) {
+          if (n === k2) return true;
+          if (!visited.has(n)) { visited.add(n); queue.push(n); }
+        }
+      }
+      return false;
+    },
+
+    depotConnected() {
+      const depotCells = [
+        (G.depotX - 1) + ',' + (G.depotY - 1),
+        G.depotX + ',' + (G.depotY - 1),
+        (G.depotX - 1) + ',' + G.depotY,
+        G.depotX + ',' + G.depotY,
+      ];
+      for (const cell of depotCells) {
+        const deg = (G.connectionMap[cell] || []).length;
+        if (deg > 0) return true;
+      }
+      return false;
+    },
+
+    stationHasTracks(sId) {
+      const plats = G.platforms.filter(p => p.stationId === sId);
+      for (const p of plats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) return true;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) return true;
+        }
+      }
+      return false;
+    },
+
+    stationInNetworkWithDepot(sId) {
+      const depotCells = [
+        (G.depotX - 1) + ',' + (G.depotY - 1),
+        G.depotX + ',' + (G.depotY - 1),
+        (G.depotX - 1) + ',' + G.depotY,
+        G.depotX + ',' + G.depotY,
+      ];
+      let depotStart = null;
+      for (const cell of depotCells) {
+        if ((G.connectionMap[cell] || []).length > 0) { depotStart = cell; break; }
+      }
+      if (!depotStart) return false;
+
+      const plats = G.platforms.filter(p => p.stationId === sId);
+      const targets = new Set();
+      for (const p of plats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) targets.add(key);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) targets.add(adj);
+        }
+      }
+      if (targets.size === 0) return false;
+
+      const visited = new Set();
+      const queue = [depotStart];
+      visited.add(depotStart);
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        if (targets.has(cur)) return true;
+        const neighbors = G.connectionMap[cur];
+        if (!neighbors) continue;
+        for (const n of neighbors) {
+          if (!visited.has(n)) { visited.add(n); queue.push(n); }
+        }
+      }
+      return false;
+    },
+
+    getPlatformCellsAt(stationId) {
+      const cells = new Set();
+      for (const p of G.platforms) {
+        if (p.stationId === stationId) cells.add(p.x + ',' + p.y);
+      }
+      return cells;
+    },
+
+    nodeConnected(key) {
+      return (G.connectionMap[key] || []).length >= 2;
+    },
+
+    diagonalJunctionBranch(jKey, jx, jy) {
+      const ns = G.connectionMap[jKey] || [];
+      for (const nk of ns) {
+        const [nx, ny] = nk.split(',').map(Number);
+        if ((nx - jx) !== 0 && (ny - jy) !== 0) return true;
+      }
+      return false;
+    },
+
+    pathThroughNodeFromDepot(sId, nodeKey) {
+      const depotCells = [
+        (G.depotX - 1) + ',' + (G.depotY - 1),
+        G.depotX + ',' + (G.depotY - 1),
+        (G.depotX - 1) + ',' + G.depotY,
+        G.depotX + ',' + G.depotY,
+      ];
+      let depotStart = null;
+      for (const cell of depotCells) {
+        if ((G.connectionMap[cell] || []).length > 0) { depotStart = cell; break; }
+      }
+      if (!depotStart) return false;
+
+      const plats = G.platforms.filter(p => p.stationId === sId);
+      if (plats.length === 0) return false;
+
+      const targets = new Set();
+      for (const p of plats) {
+        const key = p.x + ',' + p.y;
+        if (G.connectionMap[key]) targets.add(key);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const adj = (p.x + dx) + ',' + (p.y + dy);
+          if (G.connectionMap[adj]) targets.add(adj);
+        }
+      }
+      if (targets.size === 0) return false;
+
+      const visited = new Set();
+      const queue = [depotStart];
+      visited.add(depotStart);
+
+      let reached = false;
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        if (targets.has(cur)) reached = true;
+        const neighbors = G.connectionMap[cur];
+        if (!neighbors) continue;
+        for (const n of neighbors) {
+          if (!visited.has(n)) { visited.add(n); queue.push(n); }
+        }
+      }
+
+      return reached && visited.has(nodeKey);
+    },
+  },
+
+  start() {
+    this.active = true;
+    this.stepIdx = 0;
+    this.stepPhase = 0;
+    this.stepStartTime = 0;
+    this.flags = { usedStop: false, usedReverse: false, switchToggled: false };
+    this._flashPending = false;
+    this.data = TUTORIAL_DATA;
+
+    MenuDecor.stop();
+    this._loadMapPreset();
+    this._showUI();
+    this._enterStep();
+    AudioMgr.setMusicPhase('build');
+  },
+
+  _loadMapPreset() {
+    const mp = this.data.mapPreset;
+    G.GRID_W = mp.gridW;
+    G.GRID_H = mp.gridH;
+    G.terrain = new Uint8Array(mp.gridW * mp.gridH);
+    G.zoom = 0.65;
+    G.offsetX = 0;
+    G.offsetY = 0;
+    G.gold = mp.startingResources.gold;
+    G.trackFragments = mp.startingResources.trackFragments;
+    G.platformComponents = mp.startingResources.platformComponents;
+    G.wagons = mp.startingResources.wagons;
+    G.dayNumber = 1;
+    G.phase = 'build';
+    G.paused = false;
+    G.speedMultiplier = 1;
+    G.passengersDeliveredToday = 0;
+    G.totalPassengersDelivered = 0;
+    G.totalGeneratedToday = 0;
+    G.satisfaction = 100;
+    G.lowSatisfactionDays = 0;
+    G.lastDeductHour = 6;
+    G.connectionMap = {};
+    G.activeSwitches = {};
+    G._switchMeta = {};
+    G._graphCachesDirty = true;
+    G.platforms = [];
+    G._stationGroupsCache = null;
+    G._stationGroupsDirty = true;
+    G.depotTrains = [];
+    G.activeTrains = [];
+    G.nextTrainId = 1;
+    G.stationQueues = {};
+    G.selectedTool = 'track';
+    G.operateSubTool = null;
+    G.selectedItem = null;
+    G.undoStack = [];
+    G.infoTarget = null;
+    G.trackDrag = { active: false, startX: -1, startY: -1 };
+    G.platDrag = { active: false, startX: -1, startY: -1, dir: null };
+    G._dirty = false;
+    G.tutorialId = this.data.id;
+    G.tutorialStep = 0;
+    G.stationQueues = {};
+
+    G.stations = mp.stations
+      .filter(s => !s.appearsOnDay || s.appearsOnDay <= G.dayNumber)
+      .map(s => ({ id: s.id, x: s.x, y: s.y, color: s.color, flowLevel: s.flowLevel }));
+
+    for (const st of G.stations) {
+      G.stationQueues[st.id] = {};
+    }
+
+    G.depotX = mp.depot.x;
+    G.depotY = mp.depot.y;
+
+    for (const [k1, k2] of mp.prebuiltEdges) {
+      if (!G.connectionMap[k1]) G.connectionMap[k1] = [];
+      if (!G.connectionMap[k2]) G.connectionMap[k2] = [];
+      if (!G.connectionMap[k1].includes(k2)) G.connectionMap[k1].push(k2);
+      if (!G.connectionMap[k2].includes(k1)) G.connectionMap[k2].push(k1);
+    }
+    G._graphCachesDirty = true;
+  },
+
+  _showUI() {
+    const spot = document.getElementById('tutorial-spotlight');
+    if (spot) spot.classList.remove('hidden');
+    const bubble = document.getElementById('tutorial-bubble');
+    if (bubble) bubble.classList.remove('hidden');
+    const skip = document.getElementById('tutorial-skip');
+    if (skip) skip.classList.remove('hidden');
+    document.getElementById('tutorial-complete').classList.add('hidden');
+    document.getElementById('sidebar').classList.remove('hidden');
+    document.getElementById('settlement-panel').classList.add('hidden');
+    document.getElementById('gameover-panel').classList.add('hidden');
+    document.getElementById('operate-tools').classList.add('hidden');
+    document.getElementById('overlay').classList.add('hidden');
+    document.querySelectorAll('#bottom-bar .build-only').forEach(b => b.classList.remove('hidden'));
+
+    Ui.updateShopDisplay();
+    Ui.updateTopBar();
+    Ui.updateToolButtons();
+    Renderer.resize();
+    Renderer.centerCamera();
+  },
+
+  _hideUI() {
+    const spot = document.getElementById('tutorial-spotlight');
+    if (spot) spot.classList.add('hidden');
+    const bubble = document.getElementById('tutorial-bubble');
+    if (bubble) bubble.classList.add('hidden');
+    const skip = document.getElementById('tutorial-skip');
+    if (skip) skip.classList.add('hidden');
+  },
+
+  _enterStep() {
+    const step = this.currentStepRaw();
+    if (!step) return;
+    this.stepPhase = 0;
+    this.stepStartTime = 0;
+    this.stepCheckTimer = 0;
+
+    if (step.setup) step.setup();
+
+    G.tutorialStep = this.stepIdx;
+
+    this._updateBubbleText();
+    this._updateProgressDots();
+    this._showBubble();
+  },
+
+  _advanceStep() {
+    if (this._flashPending) return;
+    this._flashPending = true;
+    this._flashComplete();
+    setTimeout(() => {
+      this._flashPending = false;
+      this.stepIdx++;
+      if (this.stepIdx >= this.data.steps.length) {
+        this._complete();
+        return;
+      }
+      this._enterStep();
+    }, 500);
+  },
+
+  _flashComplete() {
+    const bubble = document.getElementById('tutorial-text');
+    if (bubble) {
+      const orig = bubble.innerHTML;
+      bubble.innerHTML = '<span style="color:#50B86C;font-weight:600;">✓ 完成</span>';
+      setTimeout(() => { bubble.innerHTML = orig; }, 400);
+    }
+    const spot = document.getElementById('tutorial-spotlight');
+    if (spot) {
+      spot.style.cssText = spot.style.cssText.replace(/pointer-events: none/, '') + 'animation: tutSpotGreen 0.5s ease-out';
+      setTimeout(() => { spot.style.animation = ''; }, 500);
+    }
+  },
+
+  currentStepRaw() {
+    if (!this.data) return null;
+    return this.data.steps[this.stepIdx] || null;
+  },
+
+  _updateBubbleText() {
+    const step = this.currentStepRaw();
+    if (!step) return;
+    const el = document.getElementById('tutorial-text');
+    if (el) el.innerHTML = step.text;
+  },
+
+  _updateProgressDots() {
+    const el = document.getElementById('tutorial-dots');
+    if (!el) return;
+    const total = this.data.steps.length;
+    let html = '';
+    for (let i = 0; i < total; i++) {
+      let cls = 'tdot';
+      if (i < this.stepIdx) cls += ' done';
+      else if (i === this.stepIdx) cls += ' current';
+      html += '<span class="' + cls + '"></span>';
+    }
+    el.innerHTML = html;
+  },
+
+  _getTargetRect() {
+    const step = this.currentStepRaw();
+    if (!step) return null;
+    const rawHl = step.highlight;
+
+    let hl = null;
+    if (Array.isArray(rawHl)) {
+      hl = rawHl[this.stepPhase] || rawHl[rawHl.length - 1];
+    } else {
+      hl = rawHl;
+    }
+    if (!hl) return null;
+
+    if (hl.type === 'dom') {
+      const el = document.querySelector(hl.selector);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.left, y: r.top, w: r.width, h: r.height, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+    }
+
+    if (hl.type === 'zone') {
+      const cx = hl.x + hl.w / 2;
+      const cy = hl.y + hl.h / 2;
+      const tl = gridToScreen(hl.x, hl.y);
+      const br = gridToScreen(hl.x + hl.w, hl.y + hl.h);
+      const r = { x: tl.x, y: tl.y, w: br.x - tl.x, h: br.y - tl.y };
+      return { x: r.x, y: r.y, w: r.w, h: r.h, cx: r.x + r.w / 2, cy: r.y + r.h / 2 };
+    }
+
+    return null;
+  },
+
+  _showBubble() {
+    if (this._bubbleVisible) return;
+    this._bubbleVisible = true;
+    const bubble = document.getElementById('tutorial-bubble');
+    if (bubble) {
+      bubble.classList.remove('hidden');
+      bubble.classList.add('tut-bubble-enter');
+      setTimeout(() => bubble.classList.remove('tut-bubble-enter'), 300);
+    }
+    this._positionBubble();
+  },
+
+  _positionBubble() {
+    const step = this.currentStepRaw();
+    const bubble = document.getElementById('tutorial-bubble');
+    if (!bubble) return;
+
+    if (step && step.bubblePin) {
+      const margin = 16;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const bw = 320;
+      const bh = 100;
+      let top, left;
+
+      if (step.bubblePin === 'top-right') {
+        top = 140;
+        left = vw - bw - margin;
+      } else if (step.bubblePin === 'top-center') {
+        top = margin + 50;
+        left = (vw - bw) / 2;
+      } else if (step.bubblePin === 'bottom-center') {
+        top = vh - bh - margin - 40;
+        left = (vw - bw) / 2;
+      } else if (step.bubblePin === 'bottom-right') {
+        top = vh - bh - margin - 40;
+        left = vw - bw - margin;
+      } else {
+        top = margin + 50;
+        left = (vw - bw) / 2;
+      }
+
+      bubble.style.top = top + 'px';
+      bubble.style.left = left + 'px';
+      bubble.style.transform = 'none';
+      bubble.classList.remove('arrow-top', 'arrow-bottom', 'arrow-left', 'arrow-right');
+      return;
+    }
+
+    const rect = this._getTargetRect();
+    if (!rect) {
+      bubble.style.top = '50%';
+      bubble.style.left = '50%';
+      bubble.style.transform = 'translate(-50%, -50%)';
+      bubble.classList.remove('arrow-top', 'arrow-bottom', 'arrow-left', 'arrow-right');
+      return;
+    }
+
+    const bw = bubble.offsetWidth || 320;
+    const bh = bubble.offsetHeight || 100;
+    const margin = 16;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let top, left, arrowDir;
+
+    const tryAbove = rect.y - bh - margin;
+    const tryBelow = rect.y + rect.h + margin;
+    const tryLeft = rect.x - bw - margin;
+    const tryRight = rect.x + rect.w + margin;
+
+    if (tryAbove > 0) {
+      top = tryAbove;
+      left = Math.max(margin, Math.min(vw - bw - margin, rect.cx - bw / 2));
+      arrowDir = 'bottom';
+    } else if (tryBelow + bh < vh) {
+      top = tryBelow;
+      left = Math.max(margin, Math.min(vw - bw - margin, rect.cx - bw / 2));
+      arrowDir = 'top';
+    } else if (tryLeft > 0) {
+      top = Math.max(margin, Math.min(vh - bh - margin, rect.cy - bh / 2));
+      left = tryLeft;
+      arrowDir = 'right';
+    } else if (tryRight + bw < vw) {
+      top = Math.max(margin, Math.min(vh - bh - margin, rect.cy - bh / 2));
+      left = tryRight;
+      arrowDir = 'left';
+    } else {
+      top = Math.max(margin, Math.min(vh - bh - margin, rect.y - bh - margin > 0 ? rect.y - bh - margin : rect.y + rect.h + margin));
+      left = Math.max(margin, Math.min(vw - bw - margin, rect.cx - bw / 2));
+      arrowDir = top > rect.cy ? 'bottom' : 'top';
+    }
+
+    bubble.style.top = top + 'px';
+    bubble.style.left = left + 'px';
+    bubble.style.transform = 'none';
+    bubble.classList.remove('arrow-top', 'arrow-bottom', 'arrow-left', 'arrow-right');
+    if (arrowDir) bubble.classList.add('arrow-' + arrowDir);
+  },
+
+  update() {
+    if (!this.active) return;
+
+    const isSettlement = G.phase === 'settlement';
+
+    if (!isSettlement) {
+      const spot = document.getElementById('tutorial-spotlight');
+      if (spot) spot.classList.remove('hidden');
+      const bubble = document.getElementById('tutorial-bubble');
+      if (bubble) bubble.classList.remove('hidden');
+      const skip = document.getElementById('tutorial-skip');
+      if (skip) skip.classList.remove('hidden');
+
+      const step = this.currentStepRaw();
+      if (step) {
+        const rawHl = step.highlight;
+        if (Array.isArray(rawHl) && step.phaseCheck && this.stepPhase < step.phaseCheck.length - 1) {
+          const pc = step.phaseCheck[this.stepPhase];
+          if (pc && pc()) {
+            this.stepPhase++;
+          }
+        }
+
+        let stepDone = false;
+        if (typeof step.check === 'function') {
+          try { stepDone = step.check(); } catch (e) { stepDone = false; }
+        }
+
+        if (stepDone) {
+          this._advanceStep();
+          return;
+        }
+
+        this._renderSpotlight();
+        this._positionBubble();
+      }
+    } else {
+      const spot = document.getElementById('tutorial-spotlight');
+      if (spot && !spot.classList.contains('hidden')) spot.classList.add('hidden');
+      const bubble = document.getElementById('tutorial-bubble');
+      if (bubble && !bubble.classList.contains('hidden')) bubble.classList.add('hidden');
+      const step = this.currentStepRaw();
+      if (step) {
+        let stepDone = false;
+        if (typeof step.check === 'function') {
+          try { stepDone = step.check(); } catch (e) { stepDone = false; }
+        }
+        if (stepDone) {
+          this._advanceStep();
+        }
+      }
+    }
+  },
+
+  checkTimer(seconds) {
+    if (!this.stepCheckTimer) {
+      this.stepCheckTimer = performance.now();
+      return false;
+    }
+    return (performance.now() - this.stepCheckTimer) >= seconds * 1000;
+  },
+
+  gateAction(type) {
+    if (!this.active) return true;
+    const step = this.currentStepRaw();
+    if (!step) return true;
+    if (!step.allowActions) return true;
+    const allowed = step.allowActions;
+    if (!allowed.includes(type)) {
+      Ui.flashMessage('当前步骤不支持此操作');
+      return false;
+    }
+    return true;
+  },
+
+  isActionAllowed(type) {
+    if (!this.active) return true;
+    const step = this.currentStepRaw();
+    if (!step) return true;
+    if (!step.allowActions) return true;
+    return step.allowActions.includes(type);
+  },
+
+  _renderSpotlight() {
+    const canvas = document.getElementById('tutorial-spotlight');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, w, h);
+
+    const rect = this._getTargetRect();
+    if (!rect) return;
+
+    ctx.globalCompositeOperation = 'destination-out';
+    const pad = 6;
+    ctx.fillRect(rect.x - pad, rect.y - pad, rect.w + pad * 2, rect.h + pad * 2);
+
+    ctx.globalCompositeOperation = 'source-over';
+    const t = Date.now() * 0.003;
+    const alpha = 0.5 + 0.3 * Math.sin(t);
+    ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 3]);
+    ctx.lineDashOffset = t * 20;
+    ctx.strokeRect(rect.x - pad, rect.y - pad, rect.w + pad * 2, rect.h + pad * 2);
+    ctx.setLineDash([]);
+  },
+
+  skip() {
+    this.active = false;
+    G.tutorialId = null;
+    G.tutorialStep = 0;
+    this._hideUI();
+    document.getElementById('tutorial-complete').classList.add('hidden');
+    document.getElementById('main-menu').classList.remove('hidden', 'fade-out');
+    document.getElementById('main-menu').querySelector('.menu-buttons').classList.remove('hidden');
+    document.querySelector('#main-menu .menu-title-box').classList.remove('hidden');
+    document.getElementById('map-config').classList.add('hidden');
+    G.phase = 'build';
+    MenuDecor.start();
+    AudioMgr.stopMusic();
+  },
+
+  _complete() {
+    this.active = false;
+    G.tutorialId = null;
+    this._hideUI();
+    document.getElementById('tutorial-complete').classList.remove('hidden');
+    const linesEl = document.getElementById('tc-lines');
+    if (linesEl && this.data.completeMessage) {
+      linesEl.innerHTML = this.data.completeMessage.lines
+        .filter(l => l).map(l => '<div>' + l + '</div>').join('');
+    }
+    document.getElementById('sidebar').classList.add('hidden');
+    document.querySelectorAll('#bottom-bar .build-only').forEach(b => b.classList.add('hidden'));
+    document.getElementById('overlay').classList.add('hidden');
+  },
+
+  completeAction(action) {
+    document.getElementById('tutorial-complete').classList.add('hidden');
+    if (action === 'menu') {
+      document.getElementById('main-menu').classList.remove('hidden', 'fade-out');
+      document.getElementById('main-menu').querySelector('.menu-buttons').classList.remove('hidden');
+      document.querySelector('#main-menu .menu-title-box').classList.remove('hidden');
+      document.getElementById('map-config').classList.add('hidden');
+      document.getElementById('sidebar').classList.add('hidden');
+      document.getElementById('bottom-bar').querySelectorAll('.build-only').forEach(b => b.classList.add('hidden'));
+      document.getElementById('overlay').classList.add('hidden');
+      G.phase = 'build';
+      MenuDecor.start();
+      AudioMgr.stopMusic();
+    } else if (action === 'freeplay') {
+      G.phase = 'build';
+      G.paused = false;
+      G.satisfaction = 100;
+      G.lowSatisfactionDays = 0;
+      G.gold = 500;
+      G.trackFragments = 30;
+      G.platformComponents = 5;
+      G.wagons = 4;
+      G.dayNumber = 1;
+      G.passengersDeliveredToday = 0;
+      G.totalPassengersDelivered = 0;
+      G.totalGeneratedToday = 0;
+      G.lastDeductHour = 6;
+      G.stationQueues = {};
+      for (const st of G.stations) G.stationQueues[st.id] = {};
+      if (G.activeTrains.length > 0) {
+        for (const t of [...G.activeTrains]) {
+          G.activeTrains.splice(G.activeTrains.indexOf(t), 1);
+          t.state = 'in_depot';
+          G.depotTrains.push(t);
+        }
+      }
+      document.getElementById('sidebar').classList.remove('hidden');
+      document.getElementById('bottom-bar').querySelectorAll('.build-only').forEach(b => b.classList.remove('hidden'));
+      document.getElementById('overlay').classList.add('hidden');
+      Ui.updateShopDisplay();
+      Ui.updateTopBar();
+      Ui.updateToolButtons();
+      Renderer.resize();
+      Renderer.centerCamera();
+    }
+    MenuDecor.stop();
+  },
+};
+
+function gridToScreen(gx, gy) {
+  const wx = gx * G.CELL_SIZE;
+  const wy = gy * G.CELL_SIZE;
+  const sx = wx * G.zoom + G.offsetX;
+  const sy = wy * G.zoom + G.offsetY;
+  const canvas = document.getElementById('game-canvas');
+  const rect = canvas ? canvas.getBoundingClientRect() : { left: 0, top: 0 };
+  return { x: sx + rect.left, y: sy + rect.top };
+}
+</script>
+
+<script>let lastTimestamp = 0;
+let accumulator = 0;
+let resizePending = true;
+const TICK = 1 / 60;
+
+function cfgStationsVal() {
+  document.getElementById('cfg-stations-val').textContent =
+    document.getElementById('cfg-stations').value + ' 个';
+}
+
+function cfgMapscaleVal() {
+  const scale = parseInt(document.getElementById('cfg-mapscale').value) / 10;
+  const w = Math.floor(192 * scale);
+  const h = Math.floor(144 * scale);
+  document.getElementById('cfg-mapscale-val').textContent = w + '×' + h;
+}
+
+function init() {
+  const canvas = document.getElementById('game-canvas');
+  Renderer.init(canvas);
+
+  const loaded = loadGame();
+
+  document.addEventListener('pointerdown', function unlockAudio() {
+    AudioMgr.resume();
+    document.removeEventListener('pointerdown', unlockAudio);
+  }, { once: true });
+
+  Ui.init();
+
+  document.getElementById('menu-continue').classList.toggle('hidden', !saveExists());
+
+  document.getElementById('menu-new-game').addEventListener('click', () => {
+    if (saveExists()) {
+      Ui.showNewGameConfirm();
+    } else {
+      Ui.showMapConfig();
+    }
+  });
+
+  document.getElementById('confirm-yes').addEventListener('click', () => {
+    deleteSave();
+    Ui.hideNewGameConfirm();
+    Ui.showMapConfig();
+  });
+
+  document.getElementById('confirm-no').addEventListener('click', () => {
+    Ui.hideNewGameConfirm();
+  });
+
+  document.getElementById('cfg-start').addEventListener('click', () => {
+    const mRatio = parseInt(document.getElementById('cfg-mountain').value) / 100;
+    const rRatio = parseInt(document.getElementById('cfg-river').value) / 100;
+    const stationCount = parseInt(document.getElementById('cfg-stations').value);
+    const mapScale = parseInt(document.getElementById('cfg-mapscale').value) / 10;
+    startNewGame({ mountainRatio: mRatio, riverRatio: rRatio, stationCount, mapScale });
+  });
+
+  document.getElementById('cfg-back').addEventListener('click', () => {
+    Ui.hideMapConfig();
+  });
+
+  document.getElementById('cfg-mountain').addEventListener('input', () => {
+    const mv = parseInt(document.getElementById('cfg-mountain').value);
+    document.getElementById('cfg-mountain-val').textContent = mv + '%';
+    document.getElementById('cfg-river').max = Math.min(50, 80 - mv);
+    const rv = parseInt(document.getElementById('cfg-river').value);
+    document.getElementById('cfg-plain-val').textContent = (100 - mv - rv) + '%';
+  });
+
+  document.getElementById('cfg-river').addEventListener('input', () => {
+    const rv = parseInt(document.getElementById('cfg-river').value);
+    document.getElementById('cfg-river-val').textContent = rv + '%';
+    document.getElementById('cfg-mountain').max = Math.min(50, 80 - rv);
+    const mv = parseInt(document.getElementById('cfg-mountain').value);
+    document.getElementById('cfg-plain-val').textContent = (100 - mv - rv) + '%';
+  });
+
+  document.getElementById('menu-continue').addEventListener('click', () => {
+    Ui.startBuild();
+    Renderer.centerCamera();
+    MenuDecor.stop();
+    Ui.hideMenu();
+  });
+
+  document.getElementById('menu-tutorial').addEventListener('click', () => {
+    Ui.hideMenu();
+    Tutorial.start();
+  });
+
+  document.getElementById('menu-settings').addEventListener('click', () => {
+    window.open('https://github.com/cxxy161/Rail-Network-Dispatch', '_blank');
+  });
+
+  MenuDecor.init();
+
+  Renderer.resize();
+  Renderer.centerCamera();
+
+  Input.init(canvas);
+  window.addEventListener('resize', () => {
+    Renderer.resize();
+    Renderer.centerCamera();
+  });
+
+  let _wasPausedBeforeHidden = false;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      _wasPausedBeforeHidden = G.paused;
+      G.paused = true;
+      AudioMgr.suspend();
+    } else {
+      if (!_wasPausedBeforeHidden) {
+        G.paused = false;
+      }
+      AudioMgr.resume();
+      lastTimestamp = performance.now();
+    }
+  });
+
+  document.getElementById('tutorial-skip').addEventListener('click', () => {
+    Tutorial.skip();
+  });
+  document.getElementById('tc-menu').addEventListener('click', () => {
+    Tutorial.completeAction('menu');
+  });
+  document.getElementById('tc-freeplay').addEventListener('click', () => {
+    Tutorial.completeAction('freeplay');
+  });
+
+  lastTimestamp = performance.now();
+  requestAnimationFrame(gameLoop);
+}
+
+function startNewGame(opts) {
+  resetGame(opts);
+  Ui.startBuild();
+  Renderer.centerCamera();
+  MenuDecor.stop();
+  Ui.hideMenu();
+}
+
+function gameLoop(ts) {
+  let dt = (ts - lastTimestamp) / 1000;
+  lastTimestamp = ts;
+  if (dt > 0.1) dt = 0.1;
+
+  if (resizePending) {
+    Renderer.resize();
+    Renderer.centerCamera();
+    resizePending = false;
+  }
+
+  accumulator += dt;
+  while (accumulator >= TICK) {
+    update(TICK);
+    accumulator -= TICK;
+  }
+
+  Renderer.render();
+  requestAnimationFrame(gameLoop);
+}
+
+function update(dt) {
+  Ui.updateTopBar();
+  Ui.updateShopDisplay();
+  if (G.infoTarget) updateInfoPopup();
+  if (G.tutorialId) Tutorial.update();
+  if (G.phase === 'operate') updateOperate(dt);
+}
+
+function updateOperate(dt) {
+  if (G.paused) return;
+  const realDt = dt * G.speedMultiplier;
+  G.dayTime -= realDt;
+  Station.tickPassengers(realDt);
+
+  const clk = dayTimeToClock();
+  if (clk.h !== G.lastDeductHour) {
+    G.lastDeductHour = clk.h;
+    for (const st of G.stations) {
+      const queue = G.stationQueues[st.id] || {};
+      const total = Object.values(queue).reduce((a, b) => a + b, 0);
+      const platformCells = Math.max(1, G.platforms.filter(p => p.stationId === st.id).length);
+      const avg = total / platformCells;
+      if (avg >= 100) G.satisfaction = Math.max(0, G.satisfaction - 1.0);
+      else if (avg >= 50) G.satisfaction = Math.max(0, G.satisfaction - 0.5);
+    }
+  }
+
+  if (G.dayTime <= 0) {
+    G.dayTime = 0;
+    endDay();
+    return;
+  }
+  for (const train of G.activeTrains) {
+    Train.update(train, realDt);
+  }
+}
+
+function endDay() {
+  G.phase = 'settlement';
+  for (const train of [...G.activeTrains]) {
+    Train.recall(train);
+    train.trail = [];
+  }
+  Ui.showSettlement();
+}
+
+init();
+</script>
+</body>
+</html>

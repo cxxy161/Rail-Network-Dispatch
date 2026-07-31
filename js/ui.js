@@ -1,5 +1,6 @@
 const Ui = {
   flashTimer: null,
+  _satWarnTimer: 0,
 
   init() {
     document.getElementById('tool-track').addEventListener('click', () => Input.switchTool('track'));
@@ -31,6 +32,7 @@ const Ui = {
       e.stopPropagation();
       if (G.phase === 'operate') {
         G.paused = !G.paused;
+        AudioMgr.play('pause');
         this.updatePauseButton();
       }
     });
@@ -80,6 +82,8 @@ const Ui = {
       tabBtn.addEventListener('click', () => this.switchSettingsTab(tabBtn.dataset.tab));
     }
 
+    this.initAudioSettings();
+
     window.addEventListener('beforeunload', (e) => {
       if (G._dirty) {
         e.preventDefault();
@@ -104,6 +108,42 @@ const Ui = {
     document.getElementById('tool-eraser').classList.toggle('active', G.selectedTool === 'eraser');
   },
 
+  initAudioSettings() {
+    const sfxBox = document.getElementById('aud-sfx-enabled');
+    const musicBox = document.getElementById('aud-music-enabled');
+    const sfxVol = document.getElementById('aud-sfx-vol');
+    const musicVol = document.getElementById('aud-music-vol');
+    if (!sfxBox || !musicBox || !sfxVol || !musicVol) return;
+
+    sfxBox.checked = AudioMgr.sfxEnabled;
+    musicBox.checked = AudioMgr.musicEnabled;
+    sfxVol.value = Math.round(AudioMgr.sfxVol * 100);
+    musicVol.value = Math.round(AudioMgr.musicVol * 100);
+    document.getElementById('aud-sfx-vol-val').textContent = sfxVol.value + '%';
+    document.getElementById('aud-music-vol-val').textContent = musicVol.value + '%';
+
+    sfxBox.addEventListener('change', () => AudioMgr.setSfxEnabled(sfxBox.checked));
+    musicBox.addEventListener('change', () => AudioMgr.setMusicEnabled(musicBox.checked));
+    sfxVol.addEventListener('input', () => {
+      const v = sfxVol.value / 100;
+      AudioMgr.setSfxVolume(v);
+      document.getElementById('aud-sfx-vol-val').textContent = sfxVol.value + '%';
+    });
+    musicVol.addEventListener('input', () => {
+      const v = musicVol.value / 100;
+      AudioMgr.setMusicVolume(v);
+      document.getElementById('aud-music-vol-val').textContent = musicVol.value + '%';
+    });
+
+    const muteBtn = document.getElementById('aud-master-mute');
+    if (muteBtn) {
+      muteBtn.addEventListener('click', () => {
+        AudioMgr.setMasterEnabled(!AudioMgr.masterEnabled);
+        muteBtn.textContent = AudioMgr.masterEnabled ? '🔇 总静音' : '🔊 取消静音';
+      });
+    }
+  },
+
   updateOperateToolButtons() {
     const stopBtn = document.getElementById('btn-operate-stop');
     const revBtn = document.getElementById('btn-operate-reverse');
@@ -119,6 +159,14 @@ const Ui = {
     document.getElementById('satisfaction-val').textContent = Math.round(G.satisfaction) + '%';
     const sl = document.getElementById('satisfaction-label');
     sl.className = G.satisfaction > 70 ? 'satisfaction-high' : G.satisfaction > 30 ? 'satisfaction-mid' : 'satisfaction-low';
+
+    if (G.phase === 'operate' && G.satisfaction <= 30) {
+      const now = performance.now();
+      if (now - this._satWarnTimer > 15000) {
+        this._satWarnTimer = now;
+        AudioMgr.play('congestion_warning');
+      }
+    }
 
     if (G.phase === 'operate') {
       const clk = dayTimeToClock();
@@ -196,9 +244,12 @@ const Ui = {
     this.updateShopDisplay();
     this.updateTopBar();
     Renderer.resize();
+    AudioMgr.setMusicPhase('build');
   },
 
   startDay() {
+    AudioMgr.play('day_start');
+    AudioMgr.setMusicPhase('operate');
     const depotKey = Graph.key(G.depotX, G.depotY);
     let depotConnected = false;
     const depotCells = [
@@ -320,9 +371,13 @@ const Ui = {
     document.getElementById('settlement-panel').classList.remove('hidden');
     this.showOverlay();
     this.updateTopBar();
+    AudioMgr.play('settlement');
+    AudioMgr.setMusicPhase('build');
   },
 
   showGameOver(reason) {
+    AudioMgr.play('gameover');
+    AudioMgr.stopMusic();
     document.getElementById('gameover-total').textContent = G.totalPassengersDelivered;
     document.getElementById('gameover-days').textContent = G.dayNumber - 1;
     const title = document.querySelector('#gameover-panel h2');
@@ -337,9 +392,11 @@ const Ui = {
   batchBuy(resource, count) {
     const price = G.shopPrices[resource] * count;
     if (G.gold < price) {
+      AudioMgr.play('buy_fail');
       this.flashMessage('资金不足！');
       return;
     }
+    AudioMgr.play('buy_success');
     G.gold -= price;
     if (resource === 'trackFragment') G.trackFragments += count;
     else if (resource === 'platformComponent') G.platformComponents += count;
@@ -378,6 +435,8 @@ const Ui = {
   openSettings() {
     document.getElementById('settings-overlay').classList.remove('hidden');
     document.getElementById('ta-export').value = exportToBase64();
+    const muteBtn = document.getElementById('aud-master-mute');
+    if (muteBtn) muteBtn.textContent = AudioMgr.masterEnabled ? '🔇 总静音' : '🔊 取消静音';
   },
 
   closeSettings() {

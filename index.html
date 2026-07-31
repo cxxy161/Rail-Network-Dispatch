@@ -215,7 +215,33 @@
       <button id="btn-delete-save" class="settings-btn danger">删除存档</button>
       <button id="btn-reset-game" class="settings-btn danger">重置游戏</button>
     </div>
-    <div id="tab-game" class="settings-content hidden">暂未开放</div>
+    <div id="tab-game" class="settings-content hidden">
+      <div class="settings-section">
+        <label>🔊 音效</label>
+        <div class="settings-row">
+          <span>启用</span>
+          <input type="checkbox" id="aud-sfx-enabled">
+        </div>
+        <div class="settings-row">
+          <span>音量</span>
+          <input type="range" id="aud-sfx-vol" min="0" max="100" value="70">
+          <span id="aud-sfx-vol-val">70%</span>
+        </div>
+        <hr>
+        <label>🎵 音乐</label>
+        <div class="settings-row">
+          <span>启用</span>
+          <input type="checkbox" id="aud-music-enabled">
+        </div>
+        <div class="settings-row">
+          <span>音量</span>
+          <input type="range" id="aud-music-vol" min="0" max="100" value="20">
+          <span id="aud-music-vol-val">20%</span>
+        </div>
+        <hr>
+        <button id="aud-master-mute" class="settings-btn">🔇 总静音</button>
+      </div>
+    </div>
     <div id="tab-ui" class="settings-content hidden">暂未开放</div>
     <br>
     <button id="btn-settings-close" class="settings-btn">关闭</button>
@@ -223,6 +249,7 @@
 </div>
 
 <script src="js/gameState.js"></script>
+<script src="js/audio.js"></script>
 <script src="js/terrain.js"></script>
 <script src="js/menuDecor.js"></script>
 <script src="js/gridGraph.js"></script>

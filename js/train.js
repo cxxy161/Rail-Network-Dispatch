@@ -53,7 +53,16 @@ const Train = {
       reversed: false,
       nextDesiredKey: null,
       prevKey: null,
+      _lastBrakeSfx: 0,
     };
+  },
+
+  _playBrakeSound(train) {
+    const now = performance.now();
+    if (now - (train._lastBrakeSfx || 0) > 2000) {
+      train._lastBrakeSfx = now;
+      AudioMgr.play('emergency_brake');
+    }
   },
 
   dispatch(train) {
@@ -80,6 +89,7 @@ const Train = {
     train.passengers = {};
     train.lastDockedStationId = null;
     G.activeTrains.push(train);
+    AudioMgr.play('train_departure');
     return true;
   },
 
@@ -175,6 +185,7 @@ const Train = {
     } else {
       if (travelLeft <= DECEL_END) {
         if (G.cellOccupancy[train.toKey] && G.cellOccupancy[train.toKey] !== train.id) {
+          this._playBrakeSound(train);
           train.speed = 0; return;
         }
         this.arriveNode(train, train.toKey, train.fromKey); return;
@@ -192,6 +203,7 @@ const Train = {
     if (train.t >= 1) {
       train.t = 1;
       if (G.cellOccupancy[train.toKey] && G.cellOccupancy[train.toKey] !== train.id) {
+        this._playBrakeSound(train);
         train.speed = 0; return;
       }
       this.arriveNode(train, train.toKey, train.fromKey);
@@ -276,10 +288,14 @@ const Train = {
             this._advanceOccupied(train, nextKey || fromKey);
             train.fromKey = nodeKey;
             train.toKey = nextKey || fromKey;
-            train.dockedTimer = train.carCount * 2.5;
+            const platformCells = G.platforms.filter(p => p.stationId === stationId).length;
+            const penalty = train.carCount > platformCells ? 1.7 : 1;
+            train.dockedTimer = train.carCount * 2.5 * penalty;
             train.t = 0;
             train.speed = 0;
             train.state = 'docked';
+            AudioMgr.play('train_arrive');
+            AudioMgr.play('train_board');
             this.boardAtStation(train, nodeKey);
           } else if (nextKey) {
             this._tryEnterCell(train, nodeKey, nextKey, fromKey);

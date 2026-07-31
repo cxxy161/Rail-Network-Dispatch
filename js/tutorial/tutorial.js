@@ -219,6 +219,7 @@ const Tutorial = {
     this._loadMapPreset();
     this._showUI();
     this._enterStep();
+    AudioMgr.setMusicPhase('build');
   },
 
   _loadMapPreset() {
@@ -649,6 +650,7 @@ const Tutorial = {
     document.getElementById('map-config').classList.add('hidden');
     G.phase = 'build';
     MenuDecor.start();
+    AudioMgr.stopMusic();
   },
 
   _complete() {
@@ -678,6 +680,7 @@ const Tutorial = {
       document.getElementById('overlay').classList.add('hidden');
       G.phase = 'build';
       MenuDecor.start();
+      AudioMgr.stopMusic();
     } else if (action === 'freeplay') {
       G.phase = 'build';
       G.paused = false;

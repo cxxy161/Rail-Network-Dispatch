@@ -37,6 +37,7 @@ const Station = {
     G.platforms.push({ x: gx, y: gy, dir: dir, stationId: station.id });
     G._stationGroupsDirty = true;
     G.platformComponents--;
+    AudioMgr.play('platform_place');
     return { type: 'add_platform', x: gx, y: gy, dir: dir, stationId: station.id };
   },
 

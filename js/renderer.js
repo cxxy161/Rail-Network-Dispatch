@@ -2,6 +2,7 @@ const Renderer = {
   canvas: null,
   ctx: null,
   depotImg: null,
+  _congestionWarn: {},
 
   init(canvas) {
     this.canvas = canvas;
@@ -607,6 +608,15 @@ const Renderer = {
         ctx.fillStyle = color;
         ctx.font = `bold ${G.CELL_SIZE * 0.18}px sans-serif`;
         ctx.fillText('⚠', cx, cy - G.CELL_SIZE * 0.3);
+      }
+
+      if (avg >= 100) {
+        if (!this._congestionWarn[sid]) {
+          this._congestionWarn[sid] = true;
+          AudioMgr.play('congestion_warning');
+        }
+      } else if (this._congestionWarn[sid]) {
+        delete this._congestionWarn[sid];
       }
     }
   },

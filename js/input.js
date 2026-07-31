@@ -34,6 +34,7 @@ const Input = {
   undoLast() {
     if (G.undoStack.length === 0) return null;
     const action = G.undoStack.pop();
+    AudioMgr.play('undo');
 
     if (action.type === 'add_edges') {
       for (const pair of action.pairs) {
@@ -189,6 +190,10 @@ const Input = {
     if (edges.length > 0) {
       this.pushUndo({ type: 'add_edges', pairs: edges.map(e => [e.k1, e.k2]) });
       G._dirty = true;
+      const n = Math.min(edges.length, 14);
+      for (let i = 0; i < n; i++) {
+        setTimeout(() => AudioMgr.play('track_place'), i * 28);
+      }
     }
 
     G.trackDrag.startX = -1;
@@ -287,6 +292,7 @@ const Input = {
       const removed = Station.removePlatform(gx, gy);
       if (removed) {
         this.dragBatchPlats.push({ type: 'remove_platform', platform: removed });
+        AudioMgr.play('eraser');
       }
       return;
     }
@@ -298,6 +304,7 @@ const Input = {
         G.trackFragments++;
         this.dragBatchEdges.push({ type: 'remove_edge', k1: key, k2: nk });
       }
+      if (neighbors.length > 0) AudioMgr.play('eraser');
       return;
     }
   },
@@ -447,6 +454,7 @@ const Input = {
     if (G.activeSwitches[key] !== undefined) {
       if (Tutorial.gateAction('click_switch')) {
         Graph.cycleSwitch(key);
+        AudioMgr.play('switch_clack');
         Tutorial.flags.switchToggled = true;
       }
       return;
@@ -586,6 +594,7 @@ const Input = {
       e.preventDefault();
       if (G.phase === 'operate') {
         G.paused = !G.paused;
+        AudioMgr.play('pause');
         Ui.updatePauseButton();
       }
       return;

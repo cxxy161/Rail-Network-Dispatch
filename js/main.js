@@ -21,6 +21,11 @@ function init() {
 
   const loaded = loadGame();
 
+  document.addEventListener('pointerdown', function unlockAudio() {
+    AudioMgr.resume();
+    document.removeEventListener('pointerdown', unlockAudio);
+  }, { once: true });
+
   Ui.init();
 
   document.getElementById('menu-continue').classList.toggle('hidden', !saveExists());
@@ -103,10 +108,12 @@ function init() {
     if (document.hidden) {
       _wasPausedBeforeHidden = G.paused;
       G.paused = true;
+      AudioMgr.suspend();
     } else {
       if (!_wasPausedBeforeHidden) {
         G.paused = false;
       }
+      AudioMgr.resume();
       lastTimestamp = performance.now();
     }
   });
