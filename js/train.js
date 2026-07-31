@@ -444,9 +444,9 @@ const Train = {
       train.t = 0;
     }
 
-    // Rebuild trail: head-first from the new head (old tail), keeping only the
-    // portion of the old trail BEHIND the tail (index tailIdx..end), angles +π.
-    // This keeps the new head continuously connected to the path, avoiding gaps.
+    // Rebuild trail: head-first from the new head (old tail). The body extends
+    // from the new head BACK toward the old head (the side the train was on),
+    // so iterate the old trail from the tail index DOWN to index 0.
     const [fx2, fy2] = train.fromKey.split(',').map(Number);
     const [tx2, ty2] = train.toKey.split(',').map(Number);
     const hx = fx2 * cs + cs / 2 + (tx2 * cs + cs / 2 - (fx2 * cs + cs / 2)) * train.t;
@@ -454,7 +454,7 @@ const Train = {
     const headAng = Math.atan2(ty2 - fy2, tx2 - fx2);
 
     const newTrail = [{ x: hx, y: hy, angle: headAng }];
-    for (let j = tailIdx; j < oldTrail.length; j++) {
+    for (let j = tailIdx - 1; j >= 0; j--) {
       const p = oldTrail[j];
       let a = p.angle + Math.PI;
       if (a > Math.PI) a -= 2 * Math.PI;
