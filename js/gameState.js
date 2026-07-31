@@ -233,6 +233,13 @@ function loadGame() {
 
     G.depotTrains = data.depotTrains || [{ id: 1, carCount: 2, passengers: {} }];
     G.activeTrains = (data.activeTrains || []).map(t => ({ ...t }));
+    for (const t of G.activeTrains) {
+      t.state = 'in_depot';
+      t.trail = [];
+      G.depotTrains.push(t);
+    }
+    G.activeTrains = [];
+    G.cellOccupancy = {};
     G.nextTrainId = data.nextTrainId || 2;
     G.passengersDeliveredToday = data.passengersDeliveredToday || 0;
     G.totalPassengersDelivered = data.totalPassengersDelivered || 0;
