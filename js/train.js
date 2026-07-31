@@ -346,7 +346,7 @@ const Train = {
 
   _trailPosAt(trail, targetDist) {
     if (!trail || trail.length === 0) return null;
-    if (trail.length < 2) return { x: trail[0].x, y: trail[0].y, angle: trail[0].angle };
+    if (trail.length < 2) return { x: trail[0].x, y: trail[0].y, angle: trail[0].angle, index: 1 };
     const biasedDist = Math.max(0, targetDist) + 3;
     let accum = 0;
     for (let i = 1; i < trail.length; i++) {
@@ -363,13 +363,14 @@ const Train = {
           x: trail[i - 1].x + (trail[i].x - trail[i - 1].x) * t,
           y: trail[i - 1].y + (trail[i].y - trail[i - 1].y) * t,
           angle: trail[i - 1].angle + da * t,
+          index: i,
         };
       }
     }
     const last = trail[trail.length - 1];
     const remaining = biasedDist - accum;
     const la = last.angle;
-    return { x: last.x - Math.cos(la) * remaining, y: last.y - Math.sin(la) * remaining, angle: la };
+    return { x: last.x - Math.cos(la) * remaining, y: last.y - Math.sin(la) * remaining, angle: la, index: trail.length };
   },
 
   reverseTrain(train) {
@@ -394,8 +395,10 @@ const Train = {
 
     // New head = old tail position (rearmost car along the old trail).
     let T = null;
+    let tailIdx = oldTrail.length;
     if (oldTrail.length >= 2) {
       T = this._trailPosAt(oldTrail, trainLen);
+      if (T) tailIdx = T.index;
     } else {
       const [fx, fy] = train.fromKey.split(',').map(Number);
       const hx = fx * cs + cs / 2, hy = fy * cs + cs / 2;
@@ -405,7 +408,8 @@ const Train = {
         const [nx, ny] = dirKey.split(',').map(Number);
         angle = Math.atan2(ny - fy, nx - fx);
       }
-      T = { x: hx - Math.cos(angle) * trainLen, y: hy - Math.sin(angle) * trainLen, angle: angle };
+      T = { x: hx - Math.cos(angle) * trainLen, y: hy - Math.sin(angle) * trainLen, angle: angle, index: oldTrail.length };
+      tailIdx = oldTrail.length;
     }
 
     if (train.occupiedCells) train.occupiedCells.reverse();
@@ -440,23 +444,26 @@ const Train = {
       train.t = 0;
     }
 
-    // Rebuild trail head-first from the new head (old tail), angles flipped +π.
-    const newTrail = [];
-    for (let i = oldTrail.length - 1; i >= 0; i--) {
-      const p = oldTrail[i];
+    // Rebuild trail: head-first from the new head (old tail), keeping only the
+    // portion of the old trail BEHIND the tail (index tailIdx..end), angles +π.
+    // This keeps the new head continuously connected to the path, avoiding gaps.
+    const [fx2, fy2] = train.fromKey.split(',').map(Number);
+    const [tx2, ty2] = train.toKey.split(',').map(Number);
+    const hx = fx2 * cs + cs / 2 + (tx2 * cs + cs / 2 - (fx2 * cs + cs / 2)) * train.t;
+    const hy = fy2 * cs + cs / 2 + (ty2 * cs + cs / 2 - (fy2 * cs + cs / 2)) * train.t;
+    const headAng = Math.atan2(ty2 - fy2, tx2 - fx2);
+
+    const newTrail = [{ x: hx, y: hy, angle: headAng }];
+    for (let j = tailIdx; j < oldTrail.length; j++) {
+      const p = oldTrail[j];
       let a = p.angle + Math.PI;
       if (a > Math.PI) a -= 2 * Math.PI;
       if (a < -Math.PI) a += 2 * Math.PI;
       newTrail.push({ x: p.x, y: p.y, angle: a });
     }
-    const [fx2, fy2] = train.fromKey.split(',').map(Number);
-    const [tx2, ty2] = train.toKey.split(',').map(Number);
-    const hx = fx2 * cs + cs / 2 + (tx2 * cs + cs / 2 - (fx2 * cs + cs / 2)) * train.t;
-    const hy = fy2 * cs + cs / 2 + (ty2 * cs + cs / 2 - (fy2 * cs + cs / 2)) * train.t;
-    if (newTrail.length > 0) {
-      newTrail[0] = { x: hx, y: hy, angle: Math.atan2(ty2 - fy2, tx2 - fx2) };
-    } else {
-      newTrail.push({ x: hx, y: hy, angle: Math.atan2(ty2 - fy2, tx2 - fx2) });
+    // Fallback: no recorded path behind the tail, extend straight backward.
+    if (newTrail.length < 2) {
+      newTrail.push({ x: hx - Math.cos(headAng) * trainLen, y: hy - Math.sin(headAng) * trainLen, angle: headAng });
     }
     train.trail = newTrail;
 
